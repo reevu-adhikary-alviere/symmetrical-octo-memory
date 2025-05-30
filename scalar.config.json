@@ -2,20 +2,27 @@
   "$schema": "https://cdn.scalar.com/schema/scalar-config.json",
   "subdomain": "my-awesome-documentation-reevu",
   "theme": "purple",
-  "guides": [
+  "sidebar": [
     {
+      "type": "group",
       "name": "My Documentation Site",
-      "sidebar": [
+      "entries": [
         {
-          "path": "docs/introduction.md",
-          "type": "page"
+          "type": "page",
+          "path": "docs/introduction.md"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "name": "API Reference",
+      "entries": [
+        {
+          "type": "openapi",
+          "path": "docs/swagger_1.yaml"
         }
       ]
     }
   ],
-  "references": [{
-      "name": "API Reference",
-      "path": "docs/swagger_1.yaml"
-    }],
-   "publishOnMerge": true
+  "publishOnMerge": true
 }
