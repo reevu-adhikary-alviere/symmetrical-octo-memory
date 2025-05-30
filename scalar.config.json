@@ -16,5 +16,6 @@
   "references": [{
       "name": "API Reference",
       "path": "docs/swagger_1.yaml"
-    }]
+    }],
+   "publishOnMerge": true
 }
