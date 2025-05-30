@@ -1,6 +1,7 @@
 {
   "$schema": "https://cdn.scalar.com/schema/scalar-config.json",
   "subdomain": "my-awesome-documentation-reevu",
+  "theme": "purple",
   "guides": [
     {
       "name": "My Documentation Site",
