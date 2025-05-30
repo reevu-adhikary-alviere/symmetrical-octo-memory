@@ -4,24 +4,14 @@
   "theme": "purple",
   "sidebar": [
     {
-      "type": "group",
-      "name": "My Documentation Site",
-      "entries": [
-        {
-          "type": "page",
-          "path": "docs/introduction.md"
-        }
-      ]
+      "type": "page",
+      "name": "Introduction",
+      "path": "docs/introduction.md"
     },
     {
-      "type": "group",
+      "type": "openapi",
       "name": "API Reference",
-      "entries": [
-        {
-          "type": "openapi",
-          "path": "docs/swagger_1.yaml"
-        }
-      ]
+      "path": "docs/swagger_1.yaml"
     }
   ],
   "publishOnMerge": true
