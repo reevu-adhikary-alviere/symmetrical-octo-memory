@@ -1,16 +1,18 @@
+
 {
-  "$schema": "https://cdn.scalar.com/schema/scalar-config.json",
   "subdomain": "my-awesome-documentation-reevu",
-  "sidebar": [
+  "references": [
     {
-      "type": "page",
-      "name": "Introduction",
-      "path": "docs/introduction.md"
-    },
-    {
-      "type": "openapi",
       "name": "API Reference",
       "path": "docs/swagger_1.yaml"
+    }
+  ],
+  "guides": [
+    {
+      "name": "Getting Started",
+      "sidebar": [
+        { "path": "docs/introduction.md", "type": "page", "name": "Introduction" }
+      ]
     }
   ],
   "publishOnMerge": true,
