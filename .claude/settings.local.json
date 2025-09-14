@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:guides.scalar.com)",
+      "Bash(npx @scalar/cli project check-config:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
