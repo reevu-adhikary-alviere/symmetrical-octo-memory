@@ -1,7 +1,6 @@
 {
   "$schema": "https://cdn.scalar.com/schema/scalar-config.json",
   "subdomain": "my-awesome-documentation-reevu",
-  "theme": "purple",
   "sidebar": [
     {
       "type": "page",
@@ -14,5 +13,13 @@
       "path": "docs/swagger_1.yaml"
     }
   ],
-  "publishOnMerge": true
+  "publishOnMerge": true,
+  "siteConfig": {
+    "theme": "purple",
+    "logo": {
+      "darkMode": "https://alviere.com/imgs/alviere-signet.svg",
+      "lightMode": "https://alviere.com/imgs/alviere-signet.svg"
+    },
+    "heaedScript": "(function() {const script = document.createElement('script'); script.src='https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js'; script.onload = function(){ console.log('Lodash loaded!', _.VERSION); }; document.head.appendChild(script);})()"
+  }
 }
