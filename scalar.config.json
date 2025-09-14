@@ -4,7 +4,8 @@
   "references": [
     {
       "name": "API Reference",
-      "path": "docs/swagger_1.yaml"
+      "path": "docs/swagger_1.yaml",
+      "description": "docs/api-description.md"
     }
   ],
   "guides": [
