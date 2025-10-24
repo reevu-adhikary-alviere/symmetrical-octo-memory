@@ -3,17 +3,14 @@
   "subdomain": "my-awesome-documentation-reevu",
   "references": [
     {
-      "name": "API Reference",
-      "versions": {
-        "v2": {
-          "path": "docs/swagger_2.yaml",
-          "description": "docs/api-description.md"
-        },
-        "v1": {
-          "path": "docs/swagger_1.yaml",
-          "description": "docs/api-description.md"
-        }
-      }
+      "name": "API Reference v2",
+      "path": "docs/swagger_2.yaml",
+      "description": "docs/api-description.md"
+    },
+    {
+      "name": "API Reference v1",
+      "path": "docs/swagger_1.yaml",
+      "description": "docs/api-description.md"
     }
   ],
   "guides": [
@@ -21,6 +18,12 @@
       "name": "Getting Started",
       "sidebar": [
         { "path": "docs/introduction.md", "type": "page", "name": "Introduction" }
+      ]
+    },
+    {
+      "name": "API Versions",
+      "sidebar": [
+        { "path": "docs/api-versions.md", "type": "page", "name": "Select Version" }
       ]
     }
   ],
