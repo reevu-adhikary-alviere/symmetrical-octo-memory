@@ -3,8 +3,13 @@
   "subdomain": "my-awesome-documentation-reevu",
   "references": [
     {
-      "name": "API Reference",
+      "name": "API Reference v1",
       "path": "docs/swagger_1.yaml",
+      "description": "docs/api-description.md"
+    },
+    {
+      "name": "API Reference v2",
+      "path": "docs/swagger_2.yaml",
       "description": "docs/api-description.md"
     }
   ],
