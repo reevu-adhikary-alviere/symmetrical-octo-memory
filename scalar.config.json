@@ -4,13 +4,19 @@
   "references": [
     {
       "name": "API Reference",
-      "path": "docs/swagger_2.yaml",
-      "description": "docs/api-description.md"
-    },
-    {
-      "name": "API Reference v1",
-      "path": "docs/swagger_1.yaml",
-      "description": "docs/api-description.md"
+      "description": "docs/api-description.md",
+      "sources": [
+        {
+          "title": "API v1",
+          "slug": "api-v1",
+          "path": "docs/swagger_2.yaml"
+        },
+        {
+          "title": "API v2",
+          "slug": "api-v2",
+          "path": "docs/swagger_1.yaml"
+        }
+      ]
     }
   ],
   "guides": [
