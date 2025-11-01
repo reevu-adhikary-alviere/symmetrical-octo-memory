@@ -1,22 +1,36 @@
-// Custom dropdown for API version selector
+// Custom dropdown for API version selector - Only shows on API Reference pages
 (function() {
   'use strict';
 
   function createVersionDropdown() {
+    // Only run on API reference pages
+    const currentPath = window.location.pathname;
+    if (!currentPath.includes('/references/')) {
+      return;
+    }
+
     // Wait for Scalar to initialize
     const checkInterval = setInterval(() => {
+      // Find the sidebar - look for common Scalar sidebar selectors
       const sidebar = document.querySelector('[data-sidebar]') || 
-                     document.querySelector('.scalar-sidebar') ||
+                     document.querySelector('[class*="sidebar"]') ||
                      document.querySelector('aside') ||
                      document.querySelector('nav');
       
+      // Find the search bar - look for common search input selectors
       const searchBar = document.querySelector('input[type="search"]') ||
-                       document.querySelector('[placeholder*="Search"]') ||
-                       document.querySelector('.search') ||
-                       document.querySelector('[role="search"]');
+                       document.querySelector('input[placeholder*="Search" i]') ||
+                       document.querySelector('input[placeholder*="Find" i]') ||
+                       document.querySelector('[class*="search"] input') ||
+                       document.querySelector('[role="search"] input');
 
       if (sidebar && searchBar) {
         clearInterval(checkInterval);
+        
+        // Check if dropdown already exists
+        if (document.getElementById('api-version-selector')) {
+          return;
+        }
         
         // Create dropdown container
         const dropdownContainer = document.createElement('div');
@@ -28,13 +42,14 @@
         dropdown.id = 'api-version-selector';
         dropdown.setAttribute('aria-label', 'Select API Version');
         
-        // Add options - Slugs are auto-generated from reference names in scalar.config.json
-        // Format: "API Reference v2" becomes "api-reference-v2"
+        // Add options - slugs are auto-generated from reference names
+        // "API Reference" becomes "api-reference"
+        // "API Reference v1" becomes "api-reference-v1"
         const versions = [
-          { name: 'API Reference v2', slug: 'api-reference-v2', default: true },
-          { name: 'API Reference v1', slug: 'api-reference-v1', default: false }
+          { name: 'v2 (Latest)', slug: 'api-reference', default: true },
+          { name: 'v1', slug: 'api-reference-v1', default: false }
           // Add v3 here when you create it:
-          // { name: 'API Reference v3', slug: 'api-reference-v3', default: false }
+          // { name: 'v3', slug: 'api-reference-v3', default: false }
         ];
         
         versions.forEach(version => {
@@ -52,7 +67,6 @@
           const hash = window.location.hash;
           
           // Navigate to the selected API reference
-          // Scalar Docs uses routes like /references/api-reference-v2
           const basePath = currentPath.split('/references')[0] || '';
           const newUrl = `${basePath}/references/${selectedSlug}${hash}`;
           
@@ -61,16 +75,11 @@
         
         dropdownContainer.appendChild(dropdown);
         
-        // Insert after search bar or at the top of sidebar
-        if (searchBar && searchBar.parentNode) {
-          // Try to insert after search bar
-          const searchContainer = searchBar.closest('.search-container') || 
-                                  searchBar.parentNode;
-          if (searchContainer && searchContainer.nextSibling) {
-            searchContainer.parentNode.insertBefore(dropdownContainer, searchContainer.nextSibling);
-          } else {
-            searchContainer.parentNode.appendChild(dropdownContainer);
-          }
+        // Insert after search bar in the sidebar
+        const searchParent = searchBar.parentElement;
+        if (searchParent) {
+          // Insert dropdown container right after the search bar's parent
+          searchParent.insertAdjacentElement('afterend', dropdownContainer);
         } else {
           // Fallback: insert at the beginning of sidebar
           sidebar.insertBefore(dropdownContainer, sidebar.firstChild);
@@ -83,7 +92,13 @@
             const match = currentPath.match(/\/references\/([^\/]+)/);
             if (match) {
               const currentSlug = match[1];
-              dropdown.value = currentSlug;
+              // Map slugs: "api-reference" or "api-reference-v2" -> "api-reference"
+              // "api-reference-v1" -> "api-reference-v1"
+              if (currentSlug === 'api-reference' || currentSlug === 'api-reference-v2') {
+                dropdown.value = 'api-reference';
+              } else if (currentSlug === 'api-reference-v1') {
+                dropdown.value = 'api-reference-v1';
+              }
             }
           }
         }
@@ -92,12 +107,17 @@
         
         // Listen for URL changes (for SPA navigation)
         let lastUrl = window.location.href;
-        setInterval(() => {
+        const urlCheckInterval = setInterval(() => {
           if (window.location.href !== lastUrl) {
             lastUrl = window.location.href;
             updateDropdownFromURL();
           }
         }, 100);
+        
+        // Clean up interval when page unloads
+        window.addEventListener('beforeunload', () => {
+          clearInterval(urlCheckInterval);
+        });
       }
     }, 100);
 
@@ -113,5 +133,8 @@
   } else {
     createVersionDropdown();
   }
+  
+  // Also run on navigation (for SPA)
+  window.addEventListener('popstate', createVersionDropdown);
 })();
 
