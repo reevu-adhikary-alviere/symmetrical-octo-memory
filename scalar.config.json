@@ -19,12 +19,6 @@
       "sidebar": [
         { "path": "docs/introduction.md", "type": "page", "name": "Introduction" }
       ]
-    },
-    {
-      "name": "API Versions",
-      "sidebar": [
-        { "path": "docs/api-versions.md", "type": "page", "name": "Select Version" }
-      ]
     }
   ],
   "publishOnMerge": true,

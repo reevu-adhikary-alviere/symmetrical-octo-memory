@@ -1,3 +1,14 @@
+/* Hide API Reference v1 from top navigation - only show it in the sidebar dropdown */
+a[href*="/references/api-reference-v1"]:not(.api-version-dropdown a),
+[href*="/references/api-reference-v1"]:not(.api-version-dropdown *) {
+  display: none !important;
+}
+
+/* Keep it visible in dropdown */
+.api-version-dropdown option {
+  display: block !important;
+}
+
 /* Custom dropdown button for API version selector */
 .api-version-dropdown-container {
   margin: 12px 16px;
