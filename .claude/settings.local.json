@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:guides.scalar.com)",
-      "Bash(npx @scalar/cli project check-config:*)"
+      "Bash(npx @scalar/cli project check-config:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(scalar project preview:*)",
+      "WebFetch(domain:fumanew23dec2025.vercel.app)"
     ],
     "deny": [],
     "ask": []

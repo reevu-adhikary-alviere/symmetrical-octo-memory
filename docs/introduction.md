@@ -1,80 +1,158 @@
+---
+title: Introduction
+description: "Start here for the HIVE platform docs: guides, API reference, SDKs, and example requests."
+---
+
 # Introduction
 
-Welcome to your new documentation site!
-
-Here's a little bit about how to format your markdown to get the most out of your Scalar docs.
-
-## Headings, Titles and Front Matter
-
-It's expected that each file only contains one `h1` heading. This will be used as the page title.
-If an h1 heading is not found, the title from the front matter will be used.
-
-```md
----
-# Note: title will be overridden with the first h1 if it exists
-title: Front matter Title
-description: "This page was parsed using all markdown!"
----
-```
-
-## Text Decoration
-
-Standard git markdown is supported with text decorations like **bold**, _italic_, and `code`.
-
-> You can also provide quotes  
-> ...on multiple lines
-
-## Components
-
-Scalar also supports a number of extended components to help you format your content.
-
-### Buttons
-
-::scalar-button[My Button]{href=https://scalar.com icon=solid/mail-send-envelope }
-
-### Callouts
-
-:::scalar-callout{ type=info }
-Callouts can be used **highlight** important information
+:::scalar-callout{type="info"}
+HIVE Platform: embedded finance APIs for banking, payments, and card issuing.
 :::
 
-### Code Blocks
+Build banking, payments, and card issuing into your product. One integration, complete financial infrastructure.
 
-Const blocks are supported with syntax highlighting.
+::scalar-button{title="Get Started" href="/guides/quickstart"}
 
-```c++ Some Title
-int b = 10;
+
+
+## Start building in minutes
+
+::::scalar-row
+:::scalar-card{title="Quickstart" icon="check-circle"}
+Set up authentication, make your first API call, and create a test account in under 5 minutes.  
+[Open the quickstart](/guides/quickstart)
+:::
+:::scalar-card{title="Authentication" icon="lock"}
+OAuth 2.0, API keys, token refresh, and scopes for your integration.  
+[Authentication guide](/guides/authentication)
+:::
+:::scalar-card{title="Sandbox Environment" icon="flask"}
+Test with mock data and simulated responses before going live.  
+[Sandbox overview](/guides/environments)
+:::
+::::
+
+:::scalar-callout{type="warning"}
+Production access requires platform approval. Reach out to your Alviere contact to enable live credentials.
+:::
+
+## Explore the API
+
+The HIVE APIs are available in two versions. Use the version that matches your integration plan and program launch timeline.
+
+::::scalar-row
+:::scalar-card{title="Accounts" icon="users"}
+Consumer and business account profiles.  
+[Explore API v1](/api-v1)
+:::
+:::scalar-card{title="Wallets" icon="wallet"}
+Multi-currency wallets and balances.  
+[Explore API v1](/api-v1)
+:::
+:::scalar-card{title="Cards" icon="credit-card"}
+Virtual and physical card issuance.  
+[Explore API v1](/api-v1)
+:::
+:::scalar-card{title="Transactions" icon="arrows-left-right"}
+Payments, transfers, and activity.  
+[Explore API v1](/api-v1)
+:::
+::::
+
+::::scalar-row
+:::scalar-card{title="Authentication" icon="key"}
+Access tokens, sessions, and client credentials.  
+[Explore API v1](/api-v1)
+:::
+:::scalar-card{title="Beneficiaries" icon="user-circle"}
+Payout recipients and verification.  
+[Explore API v2](/api-v2)
+:::
+:::scalar-card{title="Webhooks" icon="bell"}
+Real-time event delivery.  
+[Explore API v2](/api-v2)
+:::
+:::scalar-card{title="Errors" icon="warning"}
+Error codes and troubleshooting patterns.  
+[Explore API v1](/api-v1)
+:::
+::::
+
+## Simple, powerful API
+
+Use clean REST endpoints to create accounts, issue cards, and move money.
+
+::::scalar-tabs
+:::scalar-tab{ title="cURL" }
+```bash
+# Create a new wallet for a user
+curl -X POST https://api.alviere.com/v1/wallets \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "account_id": "acc_1234567890",
+    "currency": "USD",
+    "nickname": "Primary Wallet"
+  }'
 ```
+:::
+:::scalar-tab{ title="JavaScript" }
+```javascript
+import { Alviere } from '@alviere/sdk';
 
-### Lists
+const alviere = new Alviere({
+  apiKey: process.env.ALVIERE_API_KEY
+});
 
-- One
-- Two
-- Three
+const wallet = await alviere.wallets.create({
+  accountId: 'acc_1234567890',
+  currency: 'USD',
+  nickname: 'Primary Wallet'
+});
+```
+:::
+:::scalar-tab{ title="Python" }
+```python
+from alviere import Alviere
 
-1. Apples
-2. Oranges
-3. Bananas
-   1. Are
-   2. Yellow
-      Asdasd
+alviere = Alviere(api_key=os.environ["ALVIERE_API_KEY"])
 
-- [x] First
-- [ ] Task
-- [ ] Todo
+wallet = alviere.wallets.create(
+    account_id="acc_1234567890",
+    currency="USD",
+    nickname="Primary Wallet"
+)
+```
+:::
+::::
 
-### Images
+Key capabilities include:
 
-![My Image](https://mdg.imgix.net/assets/images/san-juan-mountains.jpg "The Image Title")
+- Predictable, resource-based JSON APIs
+- Idempotent requests for safe retries
+- Webhooks for real-time event notifications
+- SDK support for web and mobile stacks
 
-### Embeds
+## SDKs and tools
 
-::scalar-embed[Some Caption]{src=https://www.youtube.com/embed/jfKfPfyJRdk caption='Overridden Caption'}
+::::scalar-row
+:::scalar-card{title="JavaScript SDK" icon="terminal"}
+`npm install @alviere/sdk`
+:::
+:::scalar-card{title="iOS SDK" icon="apple-logo"}
+Swift Package Manager distribution.
+:::
+:::scalar-card{title="Android SDK" icon="android-logo"}
+Published on Maven Central.
+:::
+:::scalar-card{title="REST API" icon="code"}
+OpenAPI 3.0 specs for tooling and codegen.
+:::
+::::
 
-### Fineprint
+## Authoring docs
 
-::scalar-fineprint[Some fine text in a block]{}
+Need to update or extend the docs? Scalar supports GitHub Flavored Markdown plus components like buttons and callouts.
+[Markdown support guide](https://guides.scalar.com/scalar/scalar-docs/components/markdown-support)
 
-### Math
-
-::scalar-math[y =\sum_{a}^{b}\int_{1}^{2}x + \Delta d \beta \models \ncong \bowtie \frac{\partial }{\partial y}]{caption='Some Caption'}
+::scalar-fineprint[Need help fast? Contact support for onboarding, credentials, or troubleshooting.]{}
