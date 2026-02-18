@@ -1,34 +1,75 @@
-
 {
-  "$schema": "https://cdn.scalar.com/schema/scalar-config.json",
-  "subdomain": "my-awesome-documentation-reevu",
-  "references": [
-    {
-      "name": "API v1",
-      "slug": "api-v1",
-      "path": "docs/swagger_2.yaml"
-    },
-    {
-      "name": "API v2",
-      "slug": "api-v2",
-      "path": "docs/swagger_1.yaml"
-    }
-  ],
-  "guides": [
-    {
-      "name": "Getting Started",
-      "sidebar": [
-        { "path": "docs/overview.md", "type": "page", "name": "Platform Overview" },
-        { "path": "docs/introduction.md", "type": "page", "name": "Introduction" }
-      ]
-    }
-  ],
+  "scalar": "2.0.0",
+  "$schema": "https://cdn.scalar.com/schema/scalar-config-next.json",
   "publishOnMerge": true,
+  "insertPageTitles": true,
   "siteConfig": {
+    "subdomain": "my-awesome-documentation-reevu",
+    "head": {
+      "links": [],
+      "meta": [],
+      "styles": [],
+      "scripts": [
+        {
+          "path": "docs/scripts/version-switcher.js"
+        }
+      ]
+    },
     "theme": "purple",
     "logo": {
       "darkMode": "https://alviere.com/imgs/alviere-signet.svg",
       "lightMode": "https://alviere.com/imgs/alviere-signet.svg"
+    }
+  },
+  "versions": {
+    "default": {
+      "header": [
+        {
+          "type": "link",
+          "title": "Getting Started",
+          "to": "/getting-started"
+        },
+        {
+          "type": "link",
+          "title": "API v1",
+          "to": "/api-v1"
+        },
+        {
+          "type": "link",
+          "title": "API v2",
+          "to": "/api-v2"
+        }
+      ],
+      "routes": {
+        "/getting-started": {
+          "title": "Getting Started",
+          "type": "group",
+          "children": {
+            "/platform-overview": {
+              "type": "page",
+              "filepath": "docs/overview.md",
+              "title": "Platform Overview"
+            },
+            "/introduction": {
+              "type": "page",
+              "filepath": "docs/introduction.md",
+              "title": "Introduction"
+            }
+          }
+        },
+        "/api-v1": {
+          "title": "API v1",
+          "type": "openapi",
+          "filepath": "docs/swagger_2.yaml",
+          "config": {}
+        },
+        "/api-v2": {
+          "title": "API v2",
+          "type": "openapi",
+          "filepath": "docs/swagger_1.yaml",
+          "config": {}
+        }
+      }
     }
   }
 }
