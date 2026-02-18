@@ -28,6 +28,7 @@
       'padding:12px 16px;border-bottom:1px solid var(--scalar-border-color,#333);';
 
     var select = document.createElement('select');
+    select.setAttribute('aria-label', 'API Version');
     select.style.cssText = [
       'width:100%',
       'padding:8px 12px',
@@ -84,12 +85,14 @@
     return false;
   }
 
-  if (!tryInject()) {
-    var observer = new MutationObserver(function (mutations, obs) {
-      if (tryInject()) obs.disconnect();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
+  // Keep observer running to handle sidebar re-renders during SPA navigation.
+  // injectDropdown() guards against double-injection via #scalar-version-switcher check.
+  var observer = new MutationObserver(function () {
+    tryInject();
+  });
+
+  tryInject();
+  observer.observe(document.body, { childList: true, subtree: true });
 
   window.addEventListener('popstate', updateDropdown);
   window.addEventListener('hashchange', updateDropdown);
