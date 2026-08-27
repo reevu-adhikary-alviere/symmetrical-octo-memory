@@ -1,11 +1,11 @@
 ---
 title: "Activity"
-description: "Non-transactional account events: denied card authorizations and card replacements"
+description: "Non-transactional account events: card creation, denied authorizations, and card replacements"
 ---
 
 # Activity
 
-Activity records account-level events that moved no money and therefore never appear as transactions. Today that means two things: card authorizations that were declined, and cards that were replaced or reissued. Use activity to drive in-app notifications, support tooling, and audit trails.
+Activity records account-level events that moved no money and therefore never appear as transactions. Today that means three things: cards being created, card authorizations being declined, and cards being replaced or reissued. Use activity to drive in-app notifications, support tooling, and audit trails.
 
 If money moved, it is a [transaction](/guides/transactions/transactions-overview), not an activity. The two feeds do not overlap.
 
@@ -24,7 +24,7 @@ curl -G https://api.snd.alviere.com/activities \
 |---|---|
 | `account_uuid` | Scope to one account |
 | `wallet_uuid` | Scope to one wallet |
-| `type` | `DENIED_AUTHORIZATION` or `CARD_REPLACEMENT` |
+| `type` | `CARD_CREATED`, `DENIED_AUTHORIZATION`, or `CARD_REPLACEMENT` |
 | `entity_type` | `ISSUED_CARD` |
 | `entity_uuid` | Scope to one entity, currently one issued card |
 | `created_after`, `created_before` | Timestamp range |
@@ -81,6 +81,22 @@ Issuing a new PAN is the point of a replacement: it stops continued unauthorized
 | `waive_fees_reason`, `waive_fees_description` | Why it was waived |
 
 The presence or absence of `replacement_card_uuid` is the reliable way to tell a replacement from a reissue in your own processing.
+
+## Card created
+
+A `CARD_CREATED` activity fires when a card is issued on the account. It is the cheapest way to keep your own card list in sync without polling `GET /issued-cards`.
+
+`type_details.card_created_details` carries:
+
+| Field | Values |
+|---|---|
+| `card_uuid` | The new card |
+| `type` | `DEBIT`, `PREPAID`, `PREPAID_NON_RELOADABLE`, `GIFT` |
+| `genre` | `DIGITAL`, `VIRTUAL`, `PHYSICAL` |
+| `brand` | Card brand, e.g. `VISA` |
+| `product_id` | The product ID assigned when your card issuance service was set up |
+
+`genre` is what tells you whether anything physical is being mailed, and therefore whether the cardholder should expect a `READY_TO_ACTIVATE` step. See [Issued Cards](/guides/cards/cards) for the full lifecycle.
 
 ## Related
 
