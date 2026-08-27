@@ -77,15 +77,38 @@ There are 47 transaction types. You will never handle all of them: your program'
 
 Nine of the 47 never appear on a wallet ledger. They exist at the vault or passthrough scope, so if you are reading `GET /wallets/{wallet_uuid}/transactions` you will not see them. Read `GET /transactions` instead.
 
+## Types are operations, not rails
+
+This is the distinction that trips people up most, so it is worth stating before the tables.
+
+A transaction type tells you **what operation happened**. It does not tell you **which rail carried the money**. The two are orthogonal, and there is no `ACH` transaction type because ACH is not an operation.
+
+ACH shows up under whichever type matches the operation:
+
+| Type | The ACH operation |
+|---|---|
+| `LOAD_FUNDS` | Pull. Debits a bank account to fund a wallet |
+| `BANK_DEBIT` | Pull. Debits a bank account |
+| `PAYMENT` | Pull. What `POST /v3/ach/debit` creates |
+| `WITHDRAW_FUNDS` | Push. Credits an external bank account |
+| `REFUND` | Sometimes, when the refund goes back over ACH |
+| `RETURN` | The payer's bank sending a pull back |
+
+So an ACH debit created through `POST /v3/ach/debit` lands in your ledger as a `PAYMENT`, not as anything named ACH. If you are reconciling ACH volume, filtering for a single type will undercount it.
+
+The same logic runs the other way: `LOAD_FUNDS` and `WITHDRAW_FUNDS` are not ACH-only. Both also carry card. The type is the operation; check `type_details` for the rail.
+
+The sandbox agrees with this grouping. `POST mock.snd.alviere.com/generateReturn` accepts exactly `LOAD_FUNDS`, `PAYMENT`, `WITHDRAW_FUNDS`, and `BANK_DEBIT`, because those are the pulls and pushes that ACH can return. See [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction).
+
 ### Money in
 
 | Type | What creates it | Wallet scope |
 |---|---|---|
-| `LOAD_FUNDS` | `POST /wallets/{wallet_uuid}/load`. Pulls from a saved card or bank payment method | Yes |
+| `LOAD_FUNDS` | `POST /wallets/{wallet_uuid}/load`. Pulls from a saved card or bank payment method. Over ACH this is a pull | Yes |
 | `CASH_LOADING` | A barcode redeemed at a retail location | Yes |
 | `CHECK_DEPOSIT` | `POST /wallets/{wallet_uuid}/check-deposits` | Yes |
-| `BANK_DEBIT` | An ACH debit against a payer's bank account | Yes |
-| `PAYMENT` | A V3 acceptance charge, card or ACH | Yes |
+| `BANK_DEBIT` | A debit against a payer's bank account | Yes |
+| `PAYMENT` | A V3 acceptance charge. Both `POST /v3/cards/debit` and `POST /v3/ach/debit` create one | Yes |
 | `INTERNATIONAL_TRANSFER` | `POST /wallets/{wallet_uuid}/remittances` | Yes |
 | `INSTANT_BANK_TRANSFER` | An instant-rail bank transfer | Yes |
 | `INSTANT_PAYMENT_REQUEST` | A request for payment on an instant rail | Yes |
@@ -95,8 +118,8 @@ Nine of the 47 never appear on a wallet ledger. They exist at the vault or passt
 
 | Type | What creates it | Wallet scope |
 |---|---|---|
-| `WITHDRAW_FUNDS` | `POST /wallets/{wallet_uuid}/withdraw` to an external card or bank | Yes |
-| `BANK_CREDIT` | An ACH credit pushing funds to an external bank | Yes |
+| `WITHDRAW_FUNDS` | `POST /wallets/{wallet_uuid}/withdraw` to an external card or bank. Over ACH this is a push | Yes |
+| `BANK_CREDIT` | A credit pushing funds to an external bank account | Yes |
 | `CHECK_DISBURSEMENT` | A check issued out of a wallet | Yes |
 | `EXTERNAL_CREDIT`, `EXTERNAL_DEBIT` | Movement between a treasury vault and the external bank behind it | No |
 
