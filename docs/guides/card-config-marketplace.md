@@ -10,7 +10,7 @@ You run a platform where many sellers transact through you, the Etsy or Substack
 You don't need anything marketplace-specific on the API call. Each seller gets their own account, the buyer's card is charged at your checkout, and the fee-rules engine routes commission to your platform and the rest to the seller.
 
 :::scalar-callout{type="info"}
-Commission rules are configured by your program manager. You don't set them in code today.
+Commission rules are fee rules. Create them with `POST /v3/fee-rules`, or have your program manager configure them for you. A `PROGRAM`-scoped rule applies to every account without further wiring; an `ACCOUNT`-scoped rule applies only to the accounts you associate with it.
 :::
 
 :::scalar-callout{type="warning"}

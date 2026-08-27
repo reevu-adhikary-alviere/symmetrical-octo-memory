@@ -35,7 +35,10 @@ V3 introduces payment acceptance and modernized platform operations:
 
 **Payment Acceptance**
 - Card Payments: `/v3/cards/*`
-- Bank Payments: `/v3/ach/debit`, plus instant rails (in development)
+- Bank Payments: `/v3/ach/debit`
+- Instant rails: `/v3/instant/transfer` and `/v3/instant/request` (request for payment)
+- Fee Rules: `/v3/fee-rules/*`
+- Scheduled Payments: `/v3/schedule/*`
 
 **Platform & Operations**
 - Authentication, Beneficiaries, Transactions, Webhooks

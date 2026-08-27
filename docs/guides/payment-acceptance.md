@@ -51,7 +51,7 @@ Payouts (money going **out** to a card or bank: push-to-card, ACH credit, withdr
 | **US-only** | No multi-currency acquiring, no EU local schemes, no DCC, no PSD2/SCA |
 | **Not a payment facilitator** | Card statements show one program-level descriptor; chargebacks happen at the program level, not per sub-merchant. No per-sub-merchant MCC or statement descriptors |
 | **Settlement to a designated account** | Each charge sets `destination.wallet_uuid` for where funds land |
-| **Fee rules are configured for you** | Talk to your program manager to set up `SERVICE_FEE` and `CONVENIENCE_FEE` rules |
+| **Fee rules are an API** | Create `SERVICE_FEE` and `CONVENIENCE_FEE` rules with `POST /v3/fee-rules`, or have your program manager set them up |
 | **V3 endpoints** for new acceptance work | Existing V2 integrations keep running |
 
 ## Where to start

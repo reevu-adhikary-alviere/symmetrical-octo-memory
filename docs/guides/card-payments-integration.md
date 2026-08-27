@@ -43,7 +43,7 @@ Setting `destination.wallet_uuid` is what turns the same primitive into "direct 
 
 ## How fees work
 
-The same charge can carry two kinds of fee. Both are set up as rules by your program manager. You don't configure them in code today.
+The same charge can carry two kinds of fee. Both are fee rules, which you can create yourself with `POST /v3/fee-rules` or have your program manager set up. Rules are scoped `PROGRAM` (applies to every account) or `ACCOUNT` (applies only where explicitly associated). An unassociated `ACCOUNT` rule applies to nothing.
 
 | Who charges who | Fee type | Where the money lands |
 |---|---|---|
