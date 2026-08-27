@@ -26,7 +26,7 @@ curl --location --request POST 'https://mock.snd.alviere.com/shipCard' \
 Then call the `Activate Card` endpoint to activate the card. The last 4 digits and expiration date are in the Portal under the cardholder's issued card section.
 
 :::scalar-callout{type="info"}
-You won't need this step in production. The card must be in `SET_TO_EMBOSS` or `PROCESSING` status before you call this endpoint — `CREATED` won't work.
+You won't need this step in production. The card must be in `SET_TO_EMBOSS` or `PROCESSING` status before you call this endpoint. `CREATED` won't work.
 :::
 
 ## Simulate a card swipe
@@ -59,7 +59,7 @@ You can simulate different card brands at card creation by setting a specific fi
 | `firstName` = `Baymax` | AMEX |
 | `firstName` = `DISCO` | DISCOVERY |
 
-## Shipping address — returned mail
+## Shipping address and returned mail
 
 To simulate returned mail on a physical card, use one of these addresses in the `Create Card` request:
 

@@ -1,13 +1,13 @@
 ---
-title: "Bill Pay / Utility"
-description: "Let payers pay utilities, government agencies, and billers by card — with an optional convenience fee"
+title: "Bill Pay"
+description: "Let payers pay their bills by card, with an optional convenience fee"
 ---
 
-# Bill Pay / Utility
+# Bill Pay
 
-A payer (consumer or business) pays a biller — utility, government agency, school, HOA, insurance — by card. Funds settle into the biller's account. You own the payer experience (bill presentment, notifications, autopay scheduling); Alviere processes the card and posts the funds.
+A payer (consumer or business) pays a biller by card. Funds settle into the biller's account. You own the payer experience (bill presentment, notifications, autopay scheduling); Alviere processes the card and posts the funds.
 
-Common setups: utility aggregators, municipal payment portals, education billing, property-tax portals.
+The pattern fits any platform that collects payments on behalf of the organizations doing the billing, whether that's one biller or thousands.
 
 Card is a great **convenience rail** when payers want instant confirmation. Many programs offer ACH alongside via [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) for cost-sensitive payers.
 
@@ -19,17 +19,17 @@ Card is a great **convenience rail** when payers want instant confirmation. Many
 | Invoice / amount due | Biller billing systems | The `amount` you send is the validated balance |
 | Notifications | Your email/SMS | Subscribe to webhooks for success and failure events |
 | Autopay / scheduling | Your scheduler | Trigger `POST /v3/cards/debit` on the due date |
-| Legacy ACH / lockbox | Biller's bank | Can run alongside — Alviere handles the card path |
+| Legacy ACH / lockbox | Biller's bank | Can run alongside. Alviere handles the card path |
 
 ## How accounts are set up
 
 ```
 Your platform (the program)
-└── Biller accounts         one per biller (utility, city, school district)
+└── Biller accounts         one per biller
     └── Biller balance        where card payments land
 ```
 
-**Payer accounts are optional.** Many bill-pay flows are **guest card pay** — pass card details inline on the charge without creating a `CONSUMER` account.
+**Payer accounts are optional.** Many bill-pay flows are **guest card pay**. Pass card details inline on the charge without creating a `CONSUMER` account.
 
 ## Charge a card
 
@@ -45,7 +45,7 @@ POST /v3/cards/debit
   },
   "external_id": "billpay_9f3a2c",
   "metadata": {
-    "biller_id": "utility_pge",
+    "biller_id": "biller_1042",
     "account_number_last4": "4821"
   },
   "description": "Electric bill May 2024"
@@ -63,7 +63,7 @@ Billers often charge a flat fee to cover card processing. Configure a fee rule a
 
 ## Card vs. ACH for bill pay
 
-Card gives payers instant confirmation; ACH costs the biller less. Many bill-pay platforms offer both rails through Alviere — see [Accept bank payments](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) for the full cost-and-experience comparison.
+Card gives payers instant confirmation; ACH costs the biller less. Many bill-pay platforms offer both rails through Alviere. See [Accept bank payments](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) for the full cost-and-experience comparison.
 
 ## Related
 

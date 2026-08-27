@@ -396,7 +396,7 @@
                     "/card-config-bill-pay": {
                       "type": "page",
                       "filepath": "docs/guides/card-config-bill-pay.md",
-                      "title": "Bill pay & utility"
+                      "title": "Bill pay"
                     }
                   }
                 }

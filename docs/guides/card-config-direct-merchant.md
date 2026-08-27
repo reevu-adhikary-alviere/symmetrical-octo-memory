@@ -5,7 +5,7 @@ description: "Sell your own goods online and receive card payments into a single
 
 # Direct Merchant Ecommerce
 
-You sell your own goods or services and receive card payments into one account. There's no marketplace split at checkout — you're both the seller and the one getting paid.
+You sell your own goods or services and receive card payments into one account. There's no marketplace split at checkout. You're both the seller and the one getting paid.
 
 Typical setups: a standalone ecommerce store, a DTC brand, a B2B invoice payment portal, or a SaaS subscription billing flow.
 
@@ -16,7 +16,7 @@ Typical setups: a standalone ecommerce store, a DTC brand, a B2B invoice payment
 | Storefront / cart | Shopify, custom, headless | Your checkout calls `POST /v3/cards/debit` |
 | Order management | OMS, Shopify order ID | Pass `external_id` and `metadata.order_id` on the charge |
 | Tax | Avalara, TaxJar | You calculate tax; pass it as part of `amount` |
-| Fulfillment | WMS, 3PL | Out of scope — happens after payment |
+| Fulfillment | WMS, 3PL | Out of scope. Happens after payment |
 | Accounting | QuickBooks, Xero | Pull settled transactions from Alviere |
 | Fraud | Signifyd, in-house | Run checks before you call `debit` |
 
@@ -50,8 +50,8 @@ What happens when you make this call:
 
 Two options for billing:
 
-- **Configured fee rule** — `SERVICE_FEE`, `DEDUCT` deducts the Alviere processing fee from your account at charge time
-- **External billing** — no fee rule; you're billed separately off-platform
+- **Configured fee rule**. `SERVICE_FEE`, `DEDUCT` deducts the Alviere processing fee from your account at charge time.
+- **External billing**. No fee rule; you're billed separately off-platform.
 
 ## Things to know
 
@@ -64,4 +64,4 @@ Two options for billing:
 
 - [Accept card payments](/guides/payment-acceptance/online-payments/card-payments/introduction)
 - [Payment Acceptance overview](/guides/payment-acceptance/payment-acceptance)
-- [Payment Methods](/guides/resources/payment-methods) — save cards before charging them
+- [Payment Methods](/guides/resources/payment-methods). Save cards before charging them.

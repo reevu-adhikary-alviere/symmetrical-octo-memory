@@ -5,7 +5,7 @@ description: "Release check and ACH deposit funds before standard settlement"
 
 # Early Release of Funds
 
-Mobile check and ACH deposits normally follow the "good funds" model — there's a waiting period before settlement clears. That's safer against fraud, but it leaves customers waiting on money they need to spend.
+Mobile check and ACH deposits normally follow the "good funds" model. There's a waiting period before settlement clears. That's safer against fraud, but it leaves customers waiting on money they need to spend.
 
 The Early Release of Funds feature lets you release deposited funds early, using your own business rules to decide who gets early access and how much.
 
@@ -28,7 +28,7 @@ flowchart LR
 5. **Settlement reconciles.** When the original funds settle, any prefunding coverage is reconciled.
 
 :::scalar-callout{type="info"}
-Fund movement between buckets is automated — the wallet updates in real time.
+Fund movement between buckets is automatic. The wallet updates in real time.
 :::
 
 ## API integration
@@ -74,8 +74,8 @@ POST /transactions/release
 |-------|-------------|
 | `external_id` | Identifier for the service fee |
 | `description` | Brief description of the fee |
-| `calc_type` | Calculation type — only `DEDUCT` is supported for releases |
-| `category` | Fee category — only `release_fee` with its value is supported for releases |
+| `calc_type` | Calculation type. Only `DEDUCT` is supported for releases |
+| `category` | Fee category. Only `release_fee` with its value is supported for releases |
 
 ## Deciding when to release
 
@@ -87,8 +87,8 @@ Funding instruments represent the bank account or financial source behind a depo
 
 | Field | Description |
 |-------|-------------|
-| `funding_instrument_uuid` | Unique token identifying the funding source. Shared across all programs on Alviere, so you can leverage cross-program fraud intelligence. Created the first time a new payor is identified. |
-| `bank_account_details` | Routing and bank account numbers — lets you identify transactions from known, trusted bank accounts |
+| `funding_instrument_uuid` | Unique token identifying the funding source. Shared across all programs on Alviere, so a payor flagged on one program is recognizable on yours. Created the first time a new payor is identified. |
+| `bank_account_details` | Routing and bank account numbers. Lets you identify transactions from known, trusted bank accounts |
 
 ### Transactional history
 

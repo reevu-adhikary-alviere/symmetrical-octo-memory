@@ -15,6 +15,6 @@ Global Money Transfer endpoints live in the [V2 API Reference](/api-v2) under **
 
 ## Related
 
-- [Beneficiaries & Payouts](/guides/resources/beneficiaries) — set up recipients and payout methods
-- [Transactions Overview](/guides/transactions/transactions-overview) — statuses and lifecycle
-- [Internal Transfers](/guides/transactions/internal-transfers) — same-program transfers
+- [Beneficiaries & Payouts](/guides/resources/beneficiaries). Set up recipients and payout methods.
+- [Transactions Overview](/guides/transactions/transactions-overview). Statuses and lifecycle.
+- [Internal Transfers](/guides/transactions/internal-transfers). Same-program transfers.

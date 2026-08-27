@@ -5,7 +5,7 @@ description: "Develop and test in Sandbox, run live in Production"
 
 # Environments
 
-Alviere gives you two environments — sandbox for testing, production for live operations. Each has its own Portal and API base URL.
+Alviere gives you two environments: sandbox for testing, production for live operations. Each has its own Portal and API base URL.
 
 | Environment | Portal | API |
 |-------------|--------|-----|
@@ -16,7 +16,7 @@ Alviere gives you two environments — sandbox for testing, production for live 
 
 - Built for development and testing
 - An isolated environment for integrating against the sandbox API
-- **No backend integration** — KYC/KYB validations and real-money transfers don't run in sandbox
+- **No backend integration**. KYC/KYB validations and real-money transfers don't run in sandbox.
 
 ## Production
 

@@ -13,7 +13,7 @@ Everything you need to integrate Alviere into your product.
 
 ::::scalar-row
 :::scalar-card{title="Accept payments" icon="storefront"}
-Take card and bank payments online — direct, marketplace, bill pay, and a drop-in checkout.
+Take card and bank payments online: direct, marketplace, bill pay, and a drop-in checkout.
 [Payment Acceptance](/guides/payment-acceptance/payment-acceptance)
 :::
 :::scalar-card{title="Issue cards" icon="credit-card"}

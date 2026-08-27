@@ -5,7 +5,7 @@ description: "Set up the people and entities your customers send money to, and t
 
 # Beneficiaries & Payouts
 
-A beneficiary is someone (or some entity) designated to receive funds in a domestic or international transaction. Each beneficiary can have multiple payout methods — bank accounts, cards, e-wallets, or cash pickup locations — covering the different ways money can actually reach them.
+A beneficiary is someone (or some entity) designated to receive funds in a domestic or international transaction. Each beneficiary can have multiple payout methods, covering the different ways money can actually reach them: bank accounts, cards, e-wallets, or cash pickup locations.
 
 ```mermaid
 graph LR
@@ -40,11 +40,11 @@ The same person can exist as both a `LOCAL` and `INTERNATIONAL` beneficiary. For
 |--------|-------------|
 | `CREATED` | Record created, validation in progress |
 | `PROCESSING` | Undergoing sanctions screening |
-| `ACTIVE` | Verified — funds can be sent |
+| `ACTIVE` | Verified. Funds can be sent |
 | `PENDING_USER` | Additional information required from the customer |
 | `MANUAL_REVIEW` | Under review by Alviere's compliance team |
 | `REJECTED` | Declined by compliance |
-| `DELETED` | Removed at the customer's request — **final** |
+| `DELETED` | Removed at the customer's request. **Final** |
 
 **Status reasons**
 
@@ -57,10 +57,10 @@ The same person can exist as both a `LOCAL` and `INTERNATIONAL` beneficiary. For
 
 ## Data quality
 
-Transactions go through validation checks. Incomplete or inaccurate beneficiary data leads to delays or outright rejections — make sure the data you submit matches the receiving bank's records.
+Transactions go through validation checks. Incomplete or inaccurate beneficiary data leads to delays or outright rejections. Make sure the data you submit matches the receiving bank's records.
 
 :::scalar-callout{type="info"}
-A full reference of validation requirements is being expanded — see the [V2 API Reference](/api-v2) for current field constraints.
+A full reference of validation requirements is being expanded. See the [V2 API Reference](/api-v2) for current field constraints.
 :::
 
 ## Payout methods
@@ -86,12 +86,12 @@ Which payout methods are available depends on your program configuration.
 | Status | Description |
 |--------|-------------|
 | `ACTIVE` | Funds can be disbursed through this method |
-| `DELETED` | Removed at the customer's request — **final** |
+| `DELETED` | Removed at the customer's request. **Final** |
 
 ### Immutability
 
-Account information on a payout method **cannot be changed** after it's created — that's a compliance requirement. The only fields you can update later are:
+Account information on a payout method **cannot be changed** after it's created. That's a compliance requirement. The only fields you can update later are:
 
-- `external_id` — your reference for external systems
-- `label` — human-readable description
-- `primary` — whether this is the default payout method for the beneficiary
+- `external_id`. Your reference for external systems.
+- `label`. Human-readable description.
+- `primary`. Whether this is the default payout method for the beneficiary.

@@ -1,5 +1,5 @@
 ---
-title: "Alviere Checkout — Web"
+title: "Alviere Checkout for Web"
 description: "Load the SDK, drop in the <alviere-checkout-express> web component, handle events, and theme it"
 ---
 
@@ -44,7 +44,7 @@ window.addEventListener('alviere:ready', () => {
 ></alviere-checkout-express>
 ```
 
-The funds settle into the wallet you set as `destination-wallet-uuid` — the same settlement model as the [card](/guides/payment-acceptance/online-payments/card-payments/introduction) and [bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) APIs.
+The funds settle into the wallet you set as `destination-wallet-uuid`. That's the same settlement model as the [card](/guides/payment-acceptance/online-payments/card-payments/introduction) and [bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) APIs.
 
 :::scalar-callout{type="warning"}
 **Never ship `client-secret` to a browser.** In production, your server mints a short-lived session via `/sdk/auth/generate/web/session` and the component consumes that token. `client-id` / `client-secret` attributes are for local development only.
@@ -91,13 +91,13 @@ checkout.addEventListener('alviere:flow:step-error', (e) => {
 
 | Event | Detail |
 |---|---|
-| `alviere:payment:processing` | `{ transactionUuid, externalId }` — debit created, awaiting bank |
+| `alviere:payment:processing` | `{ transactionUuid, externalId }`. Debit created, awaiting bank |
 | `alviere:flow:complete` | `{ transactionUuid, paymentMethodUuid, externalId, amount, currency }` |
 | `alviere:flow:step-error` | `{ step, error, externalId }` |
 
 ## 4. Theming
 
-The component renders in a shadow DOM, so your page styles never leak in — only design tokens do. Override any `--alv-*` token on `:root` or a wrapping element:
+The component renders in a shadow DOM, so your page styles never leak in. Only design tokens do. Override any `--alv-*` token on `:root` or a wrapping element:
 
 ```css
 :root {
@@ -109,13 +109,13 @@ The component renders in a shadow DOM, so your page styles never leak in — onl
 
 ## Production checklist
 
-- Use the scoped-session endpoint — never put `client-secret` in the browser
+- Use the scoped-session endpoint. Never put `client-secret` in the browser
 - Pin the script with Subresource Integrity (`integrity=`) and `crossorigin="anonymous"`
 - Set a strict referrer policy (`strict-origin-when-cross-origin`)
 - Keep a CSP that disallows `eval` and third-party inline scripts
 
 ## Related
 
-- [Accept bank payments](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) — the ACH rail Checkout runs on
-- [Accept card payments](/guides/payment-acceptance/online-payments/card-payments/introduction) — enable cards with `methods="bank,card"`
+- [Accept bank payments](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). The ACH rail Checkout runs on.
+- [Accept card payments](/guides/payment-acceptance/online-payments/card-payments/introduction). Enable cards with `methods="bank,card"`.
 - [Payment Methods](/guides/resources/payment-methods)

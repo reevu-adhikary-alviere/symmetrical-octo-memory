@@ -65,7 +65,7 @@
             { label: 'Pay by Bank', href: '/guides/payment-acceptance/online-payments/pay-by-bank/introduction' },
             { label: 'Direct merchant ecommerce', href: '/guides/payment-acceptance/use-cases/card-config-direct-merchant' },
             { label: 'Marketplace', href: '/guides/payment-acceptance/use-cases/card-config-marketplace' },
-            { label: 'Bill pay & utility', href: '/guides/payment-acceptance/use-cases/card-config-bill-pay' },
+            { label: 'Bill pay', href: '/guides/payment-acceptance/use-cases/card-config-bill-pay' },
           ],
         },
       ],

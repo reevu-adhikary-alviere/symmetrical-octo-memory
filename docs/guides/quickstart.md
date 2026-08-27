@@ -11,8 +11,8 @@ Make your first authenticated API call against the Alviere sandbox in a few minu
 
 The HIVE Platform exposes RESTful APIs with predictable, resource-oriented endpoints.
 
-- **JSON responses** — every response is JSON-encoded
-- **Standard HTTP** — conventional response codes, authentication, and verbs
+- **JSON responses**. Every response is JSON-encoded.
+- **Standard HTTP**. Conventional response codes, authentication, and verbs.
 
 | Method | Purpose |
 |--------|---------|
@@ -53,6 +53,6 @@ If you get a `2xx` back with the account's wallets, you're set.
 
 ## Next steps
 
-- [Authentication](/guides/getting-started/authentication) — OAuth 2.0 and API key management
-- [Environments](/guides/getting-started/environments) — sandbox vs. production configuration
-- [Error Codes](/guides/getting-started/error-codes) — how to handle the errors you'll see
+- [Authentication](/guides/getting-started/authentication). OAuth 2.0 and API key management.
+- [Environments](/guides/getting-started/environments). Sandbox vs. production configuration.
+- [Error Codes](/guides/getting-started/error-codes). How to handle the errors you'll see.

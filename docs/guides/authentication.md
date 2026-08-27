@@ -5,7 +5,7 @@ description: "Get an access token and authorize every API call you make to Alvie
 
 # Authentication
 
-Alviere uses the **OpenID** authentication standard. Every API call needs a valid access token — your first call should always be to the authentication endpoint to get one.
+Alviere uses the **OpenID** authentication standard. Every API call needs a valid access token. Your first call should always be to the authentication endpoint to get one.
 
 ## Get API credentials
 
@@ -34,10 +34,10 @@ sequenceDiagram
     API-->>Client: Response
 ```
 
-1. **Get an access token** — call the authentication endpoint first.
-2. **Parse the response** — the JWT response includes:
-   - `access_token` — the token you'll send on subsequent calls
-   - `expires_in` — token lifetime in seconds
+1. **Get an access token**. Call the authentication endpoint first.
+2. **Parse the response**. The JWT response includes:
+   - `access_token`. The token you'll send on subsequent calls.
+   - `expires_in`. Token lifetime in seconds.
 3. **Send the token** on every other request:
 
 ```bash

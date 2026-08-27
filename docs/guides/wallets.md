@@ -1,18 +1,18 @@
 ---
 title: "Wallets"
-description: "Multi-purpose ledgers attached to accounts — balances, transfers, card funding, and more"
+description: "Multi-purpose ledgers attached to accounts: balances, transfers, card funding, and more"
 ---
 
 # Wallets
 
-A wallet is the core ledger on an account — it tracks balances, money in and out, and what the account holder can spend. Each account can have one or more wallets.
+A wallet is the core ledger on an account. It tracks balances, money in and out, and what the account holder can spend. Each account can have one or more wallets.
 
 ## What you can do with a wallet
 
-- **Move money between wallets** — between the same account or to a different account holder
-- **Send to an external bank** — withdraw to a connected bank account
-- **Load funds in** — deposit from a saved payment method
-- **Fund issued cards** — back card spending with the wallet balance
+- **Move money between wallets**. Between the same account or to a different account holder.
+- **Send to an external bank**. Withdraw to a connected bank account.
+- **Load funds in**. Deposit from a saved payment method.
+- **Fund issued cards**. Back card spending with the wallet balance.
 
 ## Wallet types
 
@@ -20,7 +20,7 @@ A wallet is the core ledger on an account — it tracks balances, money in and o
 |------|-------------|
 | `CHECKING` | Flexible wallet for everyday transactions |
 | `PREPAID` | Preloaded with a set amount for specific spending limits |
-| `PREPAID_NON_RELOADABLE` | Single-load wallet — cannot be reloaded after the initial amount is spent |
+| `PREPAID_NON_RELOADABLE` | Single-load wallet. Cannot be reloaded after the initial amount is spent |
 | `SAVINGS` | Long-term fund storage that generates yield over time |
 | `PASSTHROUGH` | Passthrough wallet for remittance-only profiles |
 

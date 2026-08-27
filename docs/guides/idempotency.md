@@ -5,7 +5,7 @@ description: "Use external_id to stop a retried request from creating a duplicat
 
 # Idempotency
 
-A financial operation must never run twice because of a network retry. On Alviere you guard against that with **`external_id`** — your own unique identifier that you send on each write request.
+A financial operation must never run twice because of a network retry. On Alviere you guard against that with **`external_id`**, your own unique identifier that you send on each write request.
 
 ## How it works
 
@@ -30,14 +30,14 @@ curl -X POST https://api.snd.alviere.com/v3/cards/debit \
 | Scenario | Result |
 |----------|--------|
 | First request with a given `external_id` | Processed normally |
-| Repeat request with the same `external_id` | Rejected with **`409 Conflict`** — no second operation is created |
+| Repeat request with the same `external_id` | Rejected with **`409 Conflict`**. No second operation is created |
 
-A duplicate is **rejected**, not silently replayed. So if a write returns `409`, treat it as "the original already went through" — look up that operation by its `external_id` and reconcile, rather than retrying again.
+A duplicate is **rejected**, not silently replayed. So if a write returns `409`, treat it as "the original already went through." Look up that operation by its `external_id` and reconcile, rather than retrying again.
 
 ## Requirements
 
 - `external_id` must be unique per operation
-- On a retry, send the **same** `external_id` as the original request — that's what lets Alviere recognize the duplicate
+- On a retry, send the **same** `external_id` as the original request. That's what lets Alviere recognize the duplicate
 
 :::scalar-callout{type="warning"}
 Always set `external_id` on financial writes (card debits, ACH debits, and other money-movement requests) so a network retry can't create a duplicate charge.

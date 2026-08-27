@@ -15,6 +15,6 @@ Cash loading endpoints live in the [V2 API Reference](/api-v2) under **Money Mov
 
 ## Related
 
-- [Wallets](/guides/resources/wallets) — where loaded cash lands
-- [Test Cash Loading](/guides/sandbox-testing/test-cash-loading) — sandbox testing
-- [Transactions Overview](/guides/transactions/transactions-overview) — statuses and lifecycle
+- [Wallets](/guides/resources/wallets). Where loaded cash lands.
+- [Test Cash Loading](/guides/sandbox-testing/test-cash-loading). Sandbox testing.
+- [Transactions Overview](/guides/transactions/transactions-overview). Statuses and lifecycle.

@@ -1,5 +1,5 @@
 ---
-title: "Card Payments — Integration"
+title: "Card Payments Integration"
 description: "Charge a card with POST /v3/cards/debit, route funds with destination.wallet_uuid, and apply fee splits"
 ---
 
@@ -35,26 +35,26 @@ curl -X POST https://api.snd.alviere.com/v3/cards/debit \
 |---|---|
 | `amount` | Decimal string, e.g. `"108.00"` |
 | `auth_type` | `AUTHCAP` authorizes and captures in one step |
-| `external_id` | Your unique reference — guards against [duplicate charges](/guides/getting-started/idempotency) on retry |
-| `source` | The card to charge — a saved `payment_method_uuid` or an inline `card` |
-| `destination.wallet_uuid` | The account that gets paid — this is what selects the business model |
+| `external_id` | Your unique reference. Guards against [duplicate charges](/guides/getting-started/idempotency) on retry |
+| `source` | The card to charge: a saved `payment_method_uuid` or an inline `card` |
+| `destination.wallet_uuid` | The account that gets paid. This is what selects the business model |
 
 Setting `destination.wallet_uuid` is what turns the same primitive into "direct merchant," "marketplace," or "bill pay."
 
 ## How fees work
 
-The same charge can carry two kinds of fee. Both are set up as rules by your program manager — you don't configure them in code today.
+The same charge can carry two kinds of fee. Both are set up as rules by your program manager. You don't configure them in code today.
 
 | Who charges who | Fee type | Where the money lands |
 |---|---|---|
 | **Platform** charges **seller** (commission) | `SERVICE_FEE` (DEDUCT) | Your platform |
 | **Seller** charges **buyer** (payer upcharge) | `CONVENIENCE_FEE` (UPCHARGE) | Seller's account |
 
-The account you set as `destination.wallet_uuid` is always the one that gets paid — fees are computed and routed automatically. See each business model for a worked example: [direct merchant](/guides/payment-acceptance/use-cases/card-config-direct-merchant), [marketplace](/guides/payment-acceptance/use-cases/card-config-marketplace), [bill pay](/guides/payment-acceptance/use-cases/card-config-bill-pay).
+The account you set as `destination.wallet_uuid` is always the one that gets paid. Fees are computed and routed automatically. See each business model for a worked example: [direct merchant](/guides/payment-acceptance/use-cases/card-config-direct-merchant), [marketplace](/guides/payment-acceptance/use-cases/card-config-marketplace), [bill pay](/guides/payment-acceptance/use-cases/card-config-bill-pay).
 
 ## API reference
 
-Card Payments endpoints live under `/v3/cards/*` in the [V3 API Reference](/api-v3). Looking for push-to-card payouts? Those are disbursements (`POST /v3/cards/push`), not acceptance — find them under **Payouts**.
+Card Payments endpoints live under `/v3/cards/*` in the [V3 API Reference](/api-v3). Looking for push-to-card payouts? Those are disbursements (`POST /v3/cards/push`), not acceptance. Find them under **Payouts**.
 
 ## Next steps
 

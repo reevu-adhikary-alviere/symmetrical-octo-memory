@@ -5,12 +5,12 @@ description: "Subscribe to real-time event notifications from the Alviere platfo
 
 # Webhooks
 
-Webhooks deliver events from Alviere to your system in real time. When a transaction settles, an account changes status, or a card is activated, Alviere posts the event to a URL you've registered — so you don't have to poll for it.
+Webhooks deliver events from Alviere to your system in real time. When a transaction settles, an account changes status, or a card is activated, Alviere posts the event to a URL you've registered, so you don't have to poll for it.
 
 Events are grouped into **subscriptions**. Each subscription type posts to a URL you provide at subscription time.
 
 :::scalar-callout{type="info"}
-Webhooks are asynchronous and represent things that have already happened — they don't block or slow down the underlying operation.
+Webhooks are asynchronous and represent things that have already happened. They don't block or slow down the underlying operation.
 :::
 
 ## Subscriptions
@@ -98,7 +98,7 @@ Sample HMAC verification code (Node.js, Python, Go, etc.) is being expanded here
 Alviere expects a `200` HTTP status from your endpoint. If it gets anything else, the event is retried with polynomial backoff starting at 20ms and increasing up to 2 minutes between retries.
 
 :::scalar-callout{type="warning"}
-Retries are continuous and block subsequent messages — Alviere strictly maintains **FIFO (first-in, first-out) ordering**. A stuck event delays every event behind it. Make sure your endpoint returns `200` promptly.
+Retries are continuous and block subsequent messages, because Alviere maintains **FIFO (first-in, first-out) ordering**. A stuck event delays every event behind it. Make sure your endpoint returns `200` promptly.
 :::
 
 ## Event payloads
@@ -106,7 +106,7 @@ Retries are continuous and block subsequent messages — Alviere strictly mainta
 The `entity` object contains the full entity state at the moment of the event. On a status change, for example, you receive the entity with its new status.
 
 :::scalar-callout{type="info"}
-Per-event payload examples for each subscription type are being expanded here — see the [V2 API Reference](/api-v2) for the current schemas.
+Per-event payload examples for each subscription type are being expanded here. See the [V2 API Reference](/api-v2) for the current schemas.
 :::
 
 ## How to subscribe

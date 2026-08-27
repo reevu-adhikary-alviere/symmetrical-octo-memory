@@ -25,20 +25,20 @@ If you hit a 5xx, contact ops@alviere.com right away.
 | Code | Text | Description |
 |------|------|-------------|
 | 201 | OK | The request executed successfully |
-| 400 | Bad Request | The request was malformed — usually missing parameters |
+| 400 | Bad Request | The request was malformed, usually missing parameters |
 | 401 | Not authorized | The request wasn't authorized, or had an invalid/missing API token |
 | 403 | Forbidden | The API token doesn't have the required permissions |
 | 404 | Not Found | The resource doesn't exist |
-| 409 | Conflict | The request conflicts with another — often duplicate idempotency keys |
+| 409 | Conflict | The request conflicts with another, often duplicate idempotency keys |
 | 500–504 | Server Error | Unexpected issue on Alviere's side |
 
 ## Validation responses
 
 Some response bodies include a `validation` section with the specific outcome:
 
-- **Result** — `ACCEPTED` or `REJECTED`
-- **Error code** — a unique Alviere error code
-- **Description** — what went wrong
+- **Result**. `ACCEPTED` or `REJECTED`.
+- **Error code**. A unique Alviere error code.
+- **Description**. What went wrong.
 
 ```json
 {
@@ -57,7 +57,7 @@ If the request has no issues, these fields are empty.
 All Alviere error codes below are returned with HTTP 400 responses.
 
 :::scalar-callout{type="info"}
-The full reference of Alviere error codes is being expanded here — see the [V2 API Reference](/api-v2) or [V3 API Reference](/api-v3) for the current list, organized by endpoint.
+The full reference of Alviere error codes is being expanded here. See the [V2 API Reference](/api-v2) or [V3 API Reference](/api-v3) for the current list, organized by endpoint.
 :::
 
 :::scalar-callout{type="info"}

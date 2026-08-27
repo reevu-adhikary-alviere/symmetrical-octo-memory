@@ -28,7 +28,7 @@ Sandbox isn't connected to external services, but you should still never use a r
 | `5152537170792358` | MASTERCARD | DEBIT |
 | `5105105105105100` | MASTERCARD | PREPAID |
 
-## Card payment methods — unhappy paths
+## Card payment methods: unhappy paths
 
 | Status | Test conditions |
 |--------|----------------|
@@ -45,7 +45,7 @@ Sandbox isn't connected to external services, but you should still never use a r
 | `$39.87` | `FAILED` | `3DS_AUTH_EXPIRED` |
 | Any other amount | `PENDING` | `3DS_AUTH_REQUIRED` |
 
-## Bank payment methods — unhappy paths
+## Bank payment methods: unhappy paths
 
 | Status | Test conditions |
 |--------|----------------|

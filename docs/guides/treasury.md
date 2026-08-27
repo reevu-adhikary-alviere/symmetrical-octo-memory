@@ -5,12 +5,12 @@ description: "Program-level ledgers and bank accounts that power funding, settle
 
 # Treasury Vaults
 
-Treasury vaults are program-level entities that act as both a ledger and an underlying bank account managed by your company. They power the fund flows behind each financial module in your program — prefunding consumer wallets, holding loss reserves, settling card transactions, collecting fees, and so on.
+Treasury vaults are program-level entities that act as both a ledger and an underlying bank account managed by your company. They power the fund flows behind each financial module in your program: prefunding consumer wallets, holding loss reserves, settling card transactions, collecting fees, and so on.
 
 Each vault type can be linked to specific payment methods (typically bank accounts via ACH, but also credit or debit cards) for loading and withdrawing funds.
 
 :::scalar-callout{type="info"}
-You'll manage treasury vaults through Alviere's Portal under "Treasury Management" — access is usually restricted to users with Finance profiles.
+You'll manage treasury vaults through Alviere's Portal under "Treasury Management." Access is usually restricted to users with Finance profiles.
 :::
 
 ## Vault types
@@ -44,4 +44,4 @@ graph TD
     TV <-->|load / withdrawsettle / prefund| Wallet
 ```
 
-Vaults sit at the **program** level — they hold and move funds on behalf of the program itself. Consumer wallets sit at the **account** level — they hold funds belonging to your end customers. Fund flows between the two are what make operations like prefunding, fee collection, and settlement possible.
+Vaults sit at the **program** level and hold and move funds on behalf of the program itself. Consumer wallets sit at the **account** level and hold funds belonging to your end customers. Fund flows between the two are what make operations like prefunding, fee collection, and settlement possible.

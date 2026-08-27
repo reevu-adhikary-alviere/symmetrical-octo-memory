@@ -5,7 +5,7 @@ description: "Collect KYC and KYB documents, verify them, and handle resubmissio
 
 # Identity (Dossier)
 
-A dossier is how you collect and verify the documents that prove a customer's identity, address, or business standing — the KYC and KYB part of onboarding. Every dossier is attached to an account (consumer, business, or stakeholder).
+A dossier is how you collect and verify the documents that prove a customer's identity, address, or business standing. That's the KYC and KYB part of onboarding. Every dossier is attached to an account (consumer, business, or stakeholder).
 
 ## Lifecycle
 
@@ -29,16 +29,16 @@ stateDiagram-v2
 | `CREATED` | Dossier submitted via API |
 | `PENDING` | Under verification |
 | `MANUAL_REVIEW` | Requires manual verification by compliance |
-| `VERIFIED` | Approved — identity confirmed |
+| `VERIFIED` | Approved. Identity confirmed |
 | `REJECTED` | Denied (inauthentic documents, poor quality, etc.) |
 | `FAILED` | Verification failed due to invalid document formats |
-| `EXPIRED` | Document has passed its valid date — account reverts to `PENDING_USER` for resubmission |
+| `EXPIRED` | Document has passed its valid date. The account reverts to `PENDING_USER` for resubmission |
 | `DELETED` | Removed from the system |
 
 ## Document types
 
 :::scalar-callout{type="info"}
-The full reference of supported document types is being expanded — see the [V2 API Reference](/api-v2) for the current list and per-type requirements.
+The full reference of supported document types is being expanded. See the [V2 API Reference](/api-v2) for the current list and per-type requirements.
 :::
 
 ## Creating a dossier
@@ -55,8 +55,8 @@ For stakeholder accounts, the parent business account can't be in `INACTIVE`, `D
 
 When verification fails, you have two options:
 
-1. **Update a single document** — replace just the document that failed
-2. **Replace the entire dossier** — submit a complete new set
+1. **Update a single document**. Replace just the document that failed.
+2. **Replace the entire dossier**. Submit a complete new set.
 
 Updates are only allowed when **all** these conditions are met:
 
@@ -68,7 +68,7 @@ Updates are only allowed when **all** these conditions are met:
 
 ## Real-time verification
 
-Set `real_time_verification` when creating a dossier to get immediate feedback on uploaded documents — useful when you don't want to wait for the async verification that runs after all KYC stages complete.
+Set `real_time_verification` when creating a dossier to get immediate feedback on uploaded documents, useful when you don't want to wait for the async verification that runs after all KYC stages complete.
 
 | Outcome | Dossier status | Details |
 |---------|---------------|---------|
@@ -82,5 +82,5 @@ Not every document type supports real-time verification. Check with your Alviere
 ## Document fail reasons
 
 :::scalar-callout{type="info"}
-The full reference of document `fail_reasons` values is being expanded — see the [V2 API Reference](/api-v2) for the current list.
+The full reference of document `fail_reasons` values is being expanded. See the [V2 API Reference](/api-v2) for the current list.
 :::

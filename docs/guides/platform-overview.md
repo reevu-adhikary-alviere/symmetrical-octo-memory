@@ -5,7 +5,7 @@ description: "How Programs, Modules, and Entities fit together on the HIVE Platf
 
 # Platform Overview
 
-The HIVE Platform organizes everything around three ideas: **Programs** (the contract between your company and Alviere), **Modules** (the financial features turned on for a program), and **Entities** (the API objects you'll work with — accounts, wallets, cards, transactions, etc.).
+The HIVE Platform organizes everything around three ideas: **Programs** (the contract between your company and Alviere), **Modules** (the financial features turned on for a program), and **Entities** (the API objects you'll work with: accounts, wallets, cards, transactions, and so on).
 
 ## Programs
 
@@ -20,7 +20,7 @@ Each program has its own:
 - Fraud prevention and compliance rules
 
 :::scalar-callout{type="info"}
-Every account belongs to exactly one program — data is never shared across programs, even within the same brand. Program configuration is handled by your Alviere program manager.
+Every account belongs to exactly one program. Data is never shared across programs, even within the same brand. Your Alviere program manager configures the program.
 :::
 
 ## Modules
@@ -39,7 +39,7 @@ Modules are clusters of features that deliver a specific financial service. Your
 
 ## Entity hierarchy
 
-Every object in HIVE belongs to a clear parent-child hierarchy. Knowing this map makes the API a lot easier to navigate — when you create or query an entity, you'll always know what it depends on.
+Every object in HIVE belongs to a clear parent-child hierarchy. Knowing this map makes the API a lot easier to navigate. When you create or query an entity, you'll always know what it depends on.
 
 ```mermaid
 graph TD

@@ -1,11 +1,11 @@
 ---
 title: "Transactions Overview"
-description: "Transaction scopes, statuses, and types — how money movement is recorded on Alviere"
+description: "Transaction scopes, statuses, and types: how Alviere records money movement"
 ---
 
 # Transactions Overview
 
-A transaction represents a single financial operation or movement of funds on the HIVE Platform. Every monetary action — loading funds, card purchases, transfers, fees — is captured as a transaction so you have an auditable record of where money came from and where it went.
+A transaction represents a single financial operation or movement of funds on the HIVE Platform. Alviere captures every monetary action as a transaction, whether that's loading funds, a card purchase, a transfer, or a fee, so you have an auditable record of where money came from and where it went.
 
 ## Transaction scopes
 
@@ -58,14 +58,14 @@ stateDiagram-v2
 | Status | Description |
 |--------|-------------|
 | `CREATED` | Transaction initialized |
-| `PROCESSING` | In progress — a ledger transaction requiring a payment action |
+| `PROCESSING` | In progress. A ledger transaction requiring a payment action |
 | `PROCESSING_PAYMENT` | Funds being sourced from a payment method (e.g. card) |
 | `COMPLETED` | Funds successfully transferred |
 | `FAILED` | Could not process (e.g. declined card) |
 | `ERROR` | A system anomaly prevented processing |
 | `CANCELED_USER` | Halted by customer or agent via Portal |
 | `CANCELED_SYSTEM` | Canceled by an automated system rule |
-| `VOIDED` | Nullified before payment execution — no debit or credit occurred |
+| `VOIDED` | Nullified before payment execution. No debit or credit occurred |
 | `PENDING` | Awaiting customer action or fund settlement |
 | `MANUAL_REVIEW` | Under review by Alviere's compliance and risk team |
 | `WAITING` | On standby for wallet balance availability or prefunding vault input |
@@ -74,5 +74,5 @@ stateDiagram-v2
 ## Transaction types
 
 :::scalar-callout{type="info"}
-The full reference of transaction types — load, withdraw, P2P, card purchase, international transfer, check deposit, and more — is being expanded here. See the [V2 API Reference](/api-v2) or [V3 API Reference](/api-v3) for the current list and per-type fields.
+The full reference of transaction types is being expanded here: load, withdraw, P2P, card purchase, international transfer, check deposit, and more. See the [V2 API Reference](/api-v2) or [V3 API Reference](/api-v3) for the current list and per-type fields.
 :::

@@ -5,10 +5,10 @@ description: "Trigger specific KYC outcomes in Sandbox by submitting test data"
 
 # KYC Scenarios
 
-You can simulate every KYC processing stage in Sandbox by submitting specific data attributes on the `Create Account` request. The conditions below trigger particular outcomes — pass anything else and the account passes all stages automatically and becomes `ACTIVE`.
+You can simulate every KYC processing stage in Sandbox by submitting specific data attributes on the `Create Account` request. The conditions below trigger particular outcomes. Pass anything else and the account clears all stages automatically and becomes `ACTIVE`.
 
 :::scalar-callout{type="info"}
-If you submit data that doesn't match any of the conditions below, all processing stages are automatically accepted — the account becomes `ACTIVE` as long as the required data is present.
+If you submit data that doesn't match any of the conditions below, all processing stages are automatically accepted. The account becomes `ACTIVE` as long as the required data is present.
 :::
 
 ## Fraud
@@ -33,25 +33,25 @@ PO Box regex:
 ## Identity / Identity Optional SSN
 
 :::scalar-callout{type="info"}
-The full reference of identity verification scenarios is being expanded here — see the [V2 API Reference](/api-v2) for the current list.
+The full reference of identity verification scenarios is being expanded here. See the [V2 API Reference](/api-v2) for the current list.
 :::
 
-## Identity Optional SSN — additional scenarios
+## Identity Optional SSN: additional scenarios
 
 These cover consumers providing a Mexican ID or passport without an SSN.
 
 | Test conditions | Account status | Action required |
 |-----------------|---------------|-----------------|
-| `first_name` = `James`, `last_name` = `Smith` + all other info and documents (MC_DOCUMENT_FRONT, MC_DOCUMENT_BACK, SELFIE) — system does **not** find SSN match | `ACTIVE` | None |
-| `first_name` = `James`, `last_name` = `May` + all other info and documents — system **does** find SSN match | `PENDING_USER` (REQUIRES_LAST_4_SSN) | Update the account with any `ssn` value (4 or 9 digits) |
+| `first_name` = `James`, `last_name` = `Smith` + all other info and documents (MC_DOCUMENT_FRONT, MC_DOCUMENT_BACK, SELFIE), system does **not** find SSN match | `ACTIVE` | None |
+| `first_name` = `James`, `last_name` = `May` + all other info and documents, system **does** find SSN match | `PENDING_USER` (REQUIRES_LAST_4_SSN) | Update the account with any `ssn` value (4 or 9 digits) |
 
 ## Documents / Documents Optional Full SSN
 
 :::scalar-callout{type="info"}
-The full reference of document verification scenarios is being expanded here — see the [V2 API Reference](/api-v2) for the current list.
+The full reference of document verification scenarios is being expanded here. See the [V2 API Reference](/api-v2) for the current list.
 :::
 
-### Documents Optional Full SSN — additional scenarios
+### Documents Optional Full SSN: additional scenarios
 
 | Test conditions | Account status | Action required |
 |-----------------|---------------|-----------------|

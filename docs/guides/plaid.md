@@ -5,7 +5,7 @@ description: "Link bank accounts through Plaid Link, with Alviere brokering the 
 
 # Plaid Integration
 
-Plaid Link lets your users securely connect their bank account to your app. It's a drop-in SDK that handles credential validation, multi-factor auth, and error handling — and you never see the sensitive credentials, only a tokenized result.
+Plaid Link lets your users securely connect their bank account to your app. It's a drop-in SDK that handles credential validation, multi-factor auth, and error handling. You never see the sensitive credentials, only a tokenized result.
 
 Alviere brokers the token exchange so the linked bank account ends up as a payment method on the customer's Alviere account, ready to debit or credit.
 
@@ -15,36 +15,36 @@ Before writing code, register your app with Plaid through Alviere and configure 
 
 ### Web
 
-1. Create a **redirect URI** — a blank web page you host (e.g. `https://example.com/oauth-page.html`) that lets users resume Link after completing OAuth on their bank's site
+1. Create a **redirect URI**, a blank web page you host (e.g. `https://example.com/oauth-page.html`) that lets users resume Link after completing OAuth on their bank's site
 2. Hand the redirect URI to your Alviere representative for configuration
 3. Integrate Plaid Link using the [vanilla JavaScript](https://plaid.com/docs/link/web/#installation) or [React](https://plaid.com/docs/link/web/#installation) library
 
 ### iOS
 
-1. Set up **universal links** for your app — Plaid uses these for OAuth-based banks
+1. Set up **universal links** for your app. Plaid uses these for OAuth-based banks
 2. Specify a Plaid path (e.g. `https://app.example.com/plaid`). See [Plaid's universal links docs](https://plaid.com/docs/link/ios/#set-up-universal-links) if you don't have universal links yet.
 3. Hand the universal link path to your Alviere representative
-4. Install the Plaid Link SDK via SPM, CocoaPods, or manually — see [Plaid iOS docs](https://plaid.com/docs/link/ios/#installation)
+4. Install the Plaid Link SDK via SPM, CocoaPods, or manually. See [Plaid iOS docs](https://plaid.com/docs/link/ios/#installation)
 
 :::scalar-callout{type="info"}
-Skip the camera support step — Alviere doesn't have it enabled.
+Skip the camera support step. Alviere doesn't have it enabled.
 :::
 
 ### Android
 
 1. Hand your **app package name** to your Alviere representative
-2. Install the Plaid Link SDK via Maven — see [Plaid Android docs](https://plaid.com/docs/link/android/#add-the-plaidlink-sdk-to-your-app)
+2. Install the Plaid Link SDK via Maven. See [Plaid Android docs](https://plaid.com/docs/link/android/#add-the-plaidlink-sdk-to-your-app)
 
 :::scalar-callout{type="info"}
-Skip the identity verification step — Alviere doesn't have it enabled.
+Skip the identity verification step. Alviere doesn't have it enabled.
 :::
 
 ### React Native
 
 Do the platform-specific setup first:
 
-- **iOS** — configure universal links (see iOS section above), hand the link to Alviere
-- **Android** — hand your app package name to Alviere
+- **iOS**. Configure universal links (see iOS section above), hand the link to Alviere.
+- **Android**. Hand your app package name to Alviere.
 
 Then install the SDK following the [iOS setup](https://plaid.com/docs/link/react-native/ios-setup/#ios-setup) and [Android setup](https://plaid.com/docs/link/react-native/android-setup/#add-plaidpackage-to-your-application) guides.
 
@@ -86,7 +86,7 @@ sequenceDiagram
 
 ### OAuth flow
 
-Some banks (Chase, for example) require OAuth, which temporarily sends users to the bank's website or app. The Plaid Link SDK manages this redirect for you — no extra setup needed.
+Some banks (Chase, for example) require OAuth, which temporarily sends users to the bank's website or app. The Plaid Link SDK manages this redirect for you. No extra setup needed.
 
 ```mermaid
 sequenceDiagram
@@ -107,7 +107,7 @@ The token request and bank account linking steps are the same as the standard fl
 
 ## Updating an account
 
-Update mode handles re-authentication when access to a linked bank stops working — after a password change, an MFA reset, an account lock, and so on.
+Update mode handles re-authentication when access to a linked bank stops working: after a password change, an MFA reset, an account lock, and so on.
 
 On Alviere, this shows up as a bank with status `PENDING` and `status_reason` `NEEDS_UPDATE`.
 

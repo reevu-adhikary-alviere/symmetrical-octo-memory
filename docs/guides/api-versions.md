@@ -9,12 +9,12 @@ Alviere has two API versions live today. The short answer:
 
 | Version | Use it for |
 |---|---|
-| **V2** | Existing BAAS integrations — accounts, wallets, remittances, card issuance |
+| **V2** | Existing BAAS integrations: accounts, wallets, remittances, card issuance |
 | **V3** | Payment Acceptance, the new card endpoints, bank payments, webhooks |
 
 New Payment Acceptance work happens in V3. V2 keeps running for the integrations already built on it, and picks up new optional fields over time.
 
-## V2 — HIVE Platform
+## V2: HIVE Platform
 
 V2 is the production API most existing partners run today. It covers the full HIVE platform:
 
@@ -29,13 +29,13 @@ Browse the [V2 API Reference](/api-v2) under **Core Platform**, **Money Movement
 V2 is stable. Existing endpoints can pick up new optional fields, but breaking changes and new resources land in V3 instead.
 :::
 
-## V3 — Payment Acceptance and modernized platform operations
+## V3: Payment Acceptance and modernized platform operations
 
 V3 introduces payment acceptance and modernized platform operations:
 
 **Payment Acceptance**
-- Card Payments — `/v3/cards/*`
-- Bank Payments — `/v3/ach/debit`, plus instant rails (in development)
+- Card Payments: `/v3/cards/*`
+- Bank Payments: `/v3/ach/debit`, plus instant rails (in development)
 
 **Platform & Operations**
 - Authentication, Beneficiaries, Transactions, Webhooks
@@ -43,7 +43,7 @@ V3 introduces payment acceptance and modernized platform operations:
 **Payouts & adjacent** (money out, not acceptance in)
 - Push-to-card, ACH credit, fee rules, scheduled transactions
 
-Browse the [V3 API Reference](/api-v3) — grouped under **Payment Acceptance** and **Platform & Operations**.
+Browse the [V3 API Reference](/api-v3), grouped under **Payment Acceptance** and **Platform & Operations**.
 
 ## Which one should I integrate?
 

@@ -7,24 +7,24 @@ description: "Accept ACH debit payments with bank linking, recurring debits, ret
 
 Accept ACH debits from your payers' bank accounts. Pay by Bank gives you bank linking, instant verification, recurring debits with retry handling, NSF logic, and settlement webhooks.
 
-Best for utilities, telecom, insurance premiums, and government or municipal payments — anywhere you want a lower-cost alternative to card and you're comfortable with a 1-3 day settlement window.
+Use it anywhere you want a lower-cost alternative to card and can live with a 1-3 day settlement window. The savings matter most on recurring and high-ticket charges, where interchange takes a real bite out of the margin.
 
 ## When to use Pay by Bank
 
 | Your use case | What to use |
 |---|---|
-| Embedded finance — accounts, wallets, KYC, card issuance | HIVE Platform guides + V2 API |
+| Embedded finance: accounts, wallets, KYC, card issuance | HIVE Platform guides + V2 API |
 | ACH acceptance only (e.g. enterprise bill pay) | Pay by Bank + V3 ACH endpoints |
 | Card at checkout with a convenience fee | [Bill Pay (Card)](/guides/payment-acceptance/use-cases/card-config-bill-pay) |
 | Lower-cost recurring bill pay | Pay by Bank |
 
 ## What you'll build
 
-1. **Bank linking** — hosted or SDK flow so payers can connect their bank account
-2. **Recurring debits** — stored mandates, automatic retries, NSF handling
-3. **Checkout** — optional white-label payment page
-4. **Reconciliation** — files and APIs to post settled payments into your accounting system
-5. **Returns** — NACHA return-window handling with webhook notifications
+1. **Bank linking**. Hosted or SDK flow so payers can connect their bank account.
+2. **Recurring debits**. Stored mandates, automatic retries, NSF handling.
+3. **Checkout**. Optional white-label payment page.
+4. **Reconciliation**. Files and APIs to post settled payments into your accounting system.
+5. **Returns**. NACHA return-window handling with webhook notifications.
 
 Save bank accounts via [Payment Methods](/guides/resources/payment-methods) before debiting them.
 
@@ -51,6 +51,6 @@ Many bill-pay platforms offer both rails through Alviere.
 
 ## Related
 
-- [Bill Pay / Utility (Card)](/guides/payment-acceptance/use-cases/card-config-bill-pay)
+- [Bill Pay (Card)](/guides/payment-acceptance/use-cases/card-config-bill-pay)
 - [Payment Methods](/guides/resources/payment-methods)
 - [Which API version?](/guides/getting-started/api-versions)
