@@ -22,9 +22,9 @@ Weekends and federal holidays are not banking days. A Friday evening submission 
 
 ## Returns are part of the flow
 
-A return is not an error in your integration. It is the payer bank sending the transfer back after settlement. The most common reasons are `R01` insufficient funds, `R02` account closed, `R03` no account on file, `R04` invalid number, and `R08` stop payment. Administrative returns must stay below 3.0% and unauthorized returns below 0.5% over a rolling 60-day window. Do not rely on trace number alone to match a return to its original. Use your `external_id`, the `transaction_id` from the debit response, and the `return_reason_code` in the `WALLET_TRANSACTION` webhook.
+A return is not an error in your integration. It is the payer bank sending the transfer back after settlement. The most common reasons are `R01` insufficient funds, `R02` account closed, `R03` no account on file, `R04` invalid number, and `R08` stop payment. Administrative returns must stay below 3.0% and unauthorized returns below 0.5% over a rolling 60-day window. Do not rely on `type_details.ach_payment_details.trace_number` alone to match a return. Use your `external_id`, the `transaction_uuid` from the `201` response, and the `RETURN` transaction's `parent_transaction_uuid`, `type_details.ach_payment_details.return_code`, and `return_reason` from the `WALLET_TRANSACTION` webhook.
 
-For the full return handling story, including the `RETRY PYMT` rules and the 10-day proof-of-authorization window, see [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction).
+For the full return handling story, including retry limits and the 10-day proof-of-authorization window, see [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). The V3 request has no `company_entry_description` field. Retries are new `POST /v3/ach/debit` calls with a new `external_id`.
 
 ## API reference
 
