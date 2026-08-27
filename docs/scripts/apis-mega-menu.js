@@ -4,6 +4,9 @@
     v2: { label: 'V2', base: '/api-v2' },
   };
 
+  // Tags must match the non-internal tags declared in docs/swagger_3.yaml.
+  // Beneficiaries and Webhooks carry x-internal: true there, so they have no
+  // rendered tag page and are linked to their guides instead.
   var MENU_V3 = [
     {
       title: 'Payment Acceptance',
@@ -11,23 +14,23 @@
         { label: 'Overview', href: '/api-v3' },
         { label: 'Card Payments', tag: 'card-payments' },
         { label: 'Bank Payments', tag: 'bank-payments' },
+        { label: 'Legal Texts', tag: 'legal-texts' },
+      ],
+    },
+    {
+      title: 'Fees & Scheduling',
+      links: [
+        { label: 'Fee Rules', tag: 'fee-rules' },
+        { label: 'Scheduled Payments', tag: 'scheduled-payments' },
+        { label: 'Batches', tag: 'batches' },
       ],
     },
     {
       title: 'Platform & Operations',
       links: [
         { label: 'Authentication', tag: 'authentication' },
-        { label: 'Beneficiaries', tag: 'beneficiaries' },
         { label: 'Transactions', tag: 'transactions' },
-        { label: 'Webhooks', tag: 'webhooks' },
-      ],
-    },
-    {
-      title: 'Payouts & Adjacent',
-      links: [
-        { label: 'Payouts', soon: true, disabled: true },
-        { label: 'Fee Rules', soon: true, disabled: true },
-        { label: 'Scheduled Transactions', soon: true, disabled: true },
+        { label: 'Webhooks', href: '/guides/more/webhooks' },
       ],
     },
   ];
