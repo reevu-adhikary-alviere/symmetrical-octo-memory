@@ -102,6 +102,15 @@
     applyLayout();
   });
 
-  applyLayout();
-  observer.observe(document.body, { childList: true, subtree: true });
+  // Scalar injects this in <head>; document.body may not exist yet.
+  function boot() {
+    applyLayout();
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.body) {
+    boot();
+  } else {
+    document.addEventListener('DOMContentLoaded', boot);
+  }
 })();

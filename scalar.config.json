@@ -213,13 +213,16 @@
       ],
       "scripts": [
         {
-          "path": "docs/scripts/header-layout.js"
+          "path": "docs/scripts/header-layout.js",
+          "defer": true
         },
         {
-          "path": "docs/scripts/guides-mega-menu.js"
+          "path": "docs/scripts/guides-mega-menu.js",
+          "defer": true
         },
         {
-          "path": "docs/scripts/apis-mega-menu.js"
+          "path": "docs/scripts/apis-mega-menu.js",
+          "defer": true
         }
       ]
     },
