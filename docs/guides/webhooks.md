@@ -186,11 +186,95 @@ Retries are continuous and block subsequent messages, because Alviere maintains 
 
 ## Event payloads
 
-The `entity` object contains the full entity state at the moment of the event. On a status change, for example, you receive the entity with its new status.
+The `entity` object is the full entity, in the same shape the REST API returns it, at the moment the event fired. There is no separate webhook schema to learn and no delta format: if you can parse a `GET` response for a resource, you can parse its webhook.
 
-:::scalar-callout{type="info"}
-Per-event payload examples for each subscription type are being expanded here. See the [V2 API Reference](/api-v2) for the current schemas.
+That also means the payload tells you the **current** state, not what changed. Nothing in the event says which field moved. If you need the transition, diff against what you already stored.
+
+| Subscription | `entity` is | Key off | Watch |
+|---|---|---|---|
+| `ACCOUNT` | Account | `account_uuid` | `status`, `stage`, `status_reason` |
+| `WALLET_TRANSACTION` | Transaction | `transaction_uuid` | `status`, `transaction_type`, `amount`, `parent_transaction_uuid` |
+| `ISSUED_CARD` | Issued card | `card_uuid` | `status`, `status_reason` |
+| `BENEFICIARY` | Beneficiary | `beneficiary_uuid` | `status`, `status_reason` |
+| `BANK_PM` | Bank account payment method | `payment_method_uuid` | `status`, `status_reason` |
+| `CARD_PM` | Card payment method | `payment_method_uuid` | `status`, `status_reason` |
+| `CHECK` | Check | `check_uuid` | `status`, `status_reason`, `rejected_reasons` |
+| `DOSSIER` | Dossier | `dossier_uuid` | `status`, `documents[].fail_reasons` |
+| `PAYMENT_INSTRUMENT` | Payment instrument | `payment_instrument_uuid` | `status` |
+| `ACTIVITY` | Activity | `activity_uuid` | `type`, `type_details` |
+
+Every entity also carries your `external_id`, which is usually the better join key: it is the one value that already exists in your database before Alviere ever responded.
+
+### Worked example: an ACH debit and its return
+
+`WALLET_TRANSACTION` is the subscription most integrations live on. A single ACH debit produces at least two events, and the second can arrive days after the first.
+
+On settlement:
+
+```json
+{
+  "event_uuid": "082fd7f7-7e9e-4679-bd16-ed9f5a55d827",
+  "program_uuid": "04d3ac6e-82d3-4f52-b82f-6cc0320928af",
+  "event_date": "2025-08-14T11:02:08.143Z",
+  "event_retry": 0,
+  "event_type": "WALLET_TRANSACTION",
+  "event_version": "2021-11-18.1",
+  "entity": {
+    "transaction_uuid": "3a6bcbed-b7dc-4791-84fe-b20f12be4001",
+    "wallet_uuid": "6bff373e-f376-4af7-872a-8520756767e5",
+    "account_uuid": "ff898aa6-e922-4401-b734-077fee4838f7",
+    "external_id": "order_1000456",
+    "transaction_type": "PAYMENT",
+    "status": "COMPLETED",
+    "amount": 10800,
+    "currency": "USD",
+    "refunded": false,
+    "disputed": false,
+    "created_at": "2025-08-12T09:30:20.440433Z",
+    "updated_at": "2025-08-14T11:02:08.143Z"
+  }
+}
+```
+
+Three days later, the payer's bank returns it. This arrives as a **second, separate transaction**, not as an update to the first:
+
+```json
+{
+  "event_uuid": "b41c9a02-5d33-4f19-9a77-1c2e5b8d4410",
+  "event_date": "2025-08-17T06:14:55.201Z",
+  "event_retry": 0,
+  "event_type": "WALLET_TRANSACTION",
+  "event_version": "2021-11-18.1",
+  "entity": {
+    "transaction_uuid": "9c4e1f77-2b08-4a3e-bd51-77e0c2a91f34",
+    "parent_transaction_uuid": "3a6bcbed-b7dc-4791-84fe-b20f12be4001",
+    "external_id": "order_1000456",
+    "transaction_type": "RETURN",
+    "status": "COMPLETED",
+    "amount": -10800,
+    "currency": "USD",
+    "type_details": {
+      "ach_payment_details": {
+        "trace_number": "021000029876543",
+        "return_code": "R01",
+        "return_reason": "Insufficient Funds"
+      }
+    }
+  }
+}
+```
+
+Three things in that second payload trip people up:
+
+- `status` is `COMPLETED`. The **return** completed successfully. The payment did not. Never read `status` alone as "the money is good".
+- `amount` is negative. Sum amounts rather than branching on type to compute a balance.
+- The link to the original is `parent_transaction_uuid`, and `external_id` is unchanged. Both point back at the same order, so a naive upsert keyed on `external_id` will overwrite your settled record with the return.
+
+:::scalar-callout{type="warning"}
+Amounts on V2 wallet transactions are integers in the smallest currency unit. `10800` is $108.00. The V3 acceptance endpoints take `amount` as a decimal string (`"108.00"`) on the request. Do not move a number between the two without converting.
 :::
+
+See [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) for the full return-handling story, and [Transactions Overview](/guides/transactions/transactions-overview) for all 45 transaction types.
 
 ## How to subscribe
 
