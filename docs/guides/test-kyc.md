@@ -32,9 +32,16 @@ PO Box regex:
 
 ## Identity / Identity Optional SSN
 
-:::scalar-callout{type="info"}
-The full reference of identity verification scenarios is being expanded here. See the [V2 API Reference](/api-v2) for the current list.
-:::
+Every condition below requires **all** the listed fields to match. Miss one and the account clears the stage and goes `ACTIVE` instead.
+
+| Test conditions | Account status | Action required |
+|-----------------|---------------|-----------------|
+| `first_name` = `Ben`, `last_name` = `Wyatt`, `ssn` ends in `3333`, `date_of_birth` = `1974-01-01` | `PENDING_USER` (INVALID_NAME) | Update the account with any other combination of consumer information |
+| `first_name` = `Un`, `last_name` = `Born`, `date_of_birth` year = `1900` or `1974`, any `ssn` provided | `PENDING_USER` (INVALID_DOB) | Update the account with any other combination |
+| `first_name` = `Leslie`, `middle_name` = `Barbara`, `last_name` = `Knope`, `ssn` ends in `6788`, `date_of_birth` = `1975-01-18`, `phone_number` = `+11236547890` | `PENDING_USER` (INVALID_PHONE) | Update the account with any other combination |
+| `first_name` = `Ella`, `last_name` = `Phone`, `ssn` ends in `666` | `PENDING_USER` (INVALID_PHONE) | Update the account with any other combination |
+| `first_name` = `Jeremy`, `last_name` = `Clarkson` | `PENDING_USER` (INVALID_SSN) | Update the account with any other combination |
+| `ssn` ends in `9009`, `9010`, or `1906` | `PENDING_USER` (INVALID_SSN) | Update the account with any other combination |
 
 ## Identity Optional SSN: additional scenarios
 
@@ -47,9 +54,15 @@ These cover consumers providing a Mexican ID or passport without an SSN.
 
 ## Documents / Documents Optional Full SSN
 
-:::scalar-callout{type="info"}
-The full reference of document verification scenarios is being expanded here. See the [V2 API Reference](/api-v2) for the current list.
-:::
+These trigger on `last_name` alone, which makes them the quickest scenarios to wire into an automated test suite.
+
+| Test conditions | Account status | Action required |
+|-----------------|---------------|-----------------|
+| `last_name` = `Undocumented` | `PENDING_USER` (INVALID_DOSSIER) | Update the dossier with a generic driver's license front and back |
+| `last_name` = `invalidDOB` | `PENDING_USER` (INVALID_DOB) | Update the account with `date_of_birth` = `1980-01-29` |
+| `last_name` = `invalidName` | `PENDING_USER` (INVALID_NAME) | Update the account with a different last name |
+| `last_name` = `ExpiredDoc` | `PENDING_USER` (EXPIRED_DOCUMENT) | Update the account with a different last name |
+| `last_name` = `Verifications` | `MANUAL_REVIEW` (INVALID_DOSSIER) | Accept or reject the account in `MANUAL_REVIEW` |
 
 ### Documents Optional Full SSN: additional scenarios
 

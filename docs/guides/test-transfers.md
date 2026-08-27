@@ -35,14 +35,26 @@ The 15-second delay is for testing only. Production timing is different.
 
 ## Cancellation scenarios
 
+An international transfer can be canceled freely inside a 30-minute window. After that the payout provider decides, and it can refuse. Sandbox drives which answer you get off the **destination amount**, so you can test both branches without waiting.
+
+All amounts below are in MXN or COP minor units. USD equivalents assume the sandbox default exchange rate of `0.05`.
+
 ### Bank payouts
 
-:::scalar-callout{type="info"}
-The full reference of bank payout cancellation scenarios is being expanded. See the [V2 API Reference](/api-v2) for the current list.
-:::
+| Scenario | Requirements | Outcome |
+|---|---|---|
+| Cancel inside the 30-minute window | Default behavior, any amount | Canceled successfully |
+| Cancel after 30 minutes, provider accepts | Funding method `WALLET`, `BANK_PM`, or `CARD_PM` with destination amount `7600` or `13100` ($3.80 or $6.55). Funding method `CASH` accepts any amount | Canceled successfully despite the window having elapsed |
+| Cancel after 30 minutes, provider rejects | Destination amount `13140` ($6.57) | The payout provider rejects the cancellation |
 
 ### Cash pickups
 
-:::scalar-callout{type="info"}
-The full reference of cash pickup cancellation scenarios is being expanded. See the [V2 API Reference](/api-v2) for the current list.
+| Scenario | Requirements | Outcome |
+|---|---|---|
+| Cancellation accepted | Destination amount `7600` or `13100` ($3.80 or $6.55), any funding method | Canceled successfully |
+| Rejected, cash not yet collected | Destination amount `13140` ($6.57), any funding method | Cancellation rejected, API returns `400` |
+| Rejected, cash already collected | Any destination amount **outside** `7500`, `7600`, `11160`, `13000`, `13100`, `13140`, `10000`, `20000` | Cancellation rejected, API returns `400` |
+
+:::scalar-callout{type="warning"}
+The "already collected" case is the default for any amount you pick at random. If your test transfer refuses to cancel, check the destination amount against that list before assuming your integration is broken.
 :::

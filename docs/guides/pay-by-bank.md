@@ -125,11 +125,34 @@ If a webhook fails, Alviere retries with polynomial backoff starting at 20 ms an
 
 ## Sandbox testing
 
-The Sandbox at `https://mock.snd.alviere.com` runs disconnected from FedACH, so you can exercise your integration without touching a real bank.
+The Sandbox at `https://mock.snd.alviere.com` runs disconnected from FedACH, so you can exercise your integration without touching a real bank. You do not have to wait days for a return, and you do not have to fake one with fixtures: the mock service originates a real return through the same processing flow production uses.
 
-* Use [Payment Methods testing](/guides/sandbox-testing/test-payments) for bank account setup failures. Creating a bank account with an invalid routing number drives the payment method to `FAILED`, which is the path the sandbox currently scripts.
-* The API docs do not expose a sandbox endpoint that deterministically returns a given ACH `return_code`. For returns today, test your webhook and reconciliation logic with static fixtures shaped like the `RETURN` example in the [V3 API Reference](/api-v3) under **Transactions** (`return_code: R01`, `return_reason: Insufficient Funds`, `parent_transaction_uuid` linking to the original `PAYMENT`).
-* Cover the happy path (`PAYMENT` → `COMPLETED`) and at least one retry path (`PAYMENT` → `RETURN` with `R01`, then a new `PAYMENT` with a new `external_id` → `COMPLETED`) using those fixtures before you go live.
+Trigger a return against any originated transaction:
+
+```bash
+curl -X POST https://mock.snd.alviere.com/generateReturn \
+  -H 'Content-Type: application/json' \
+  -H "x-api-key: $MOCK_API_KEY" \
+  -d '{
+    "transaction_uuid": "f84a40dd-3fbc-4478-bf89-ca5b30a95272",
+    "return_code": "R01"
+  }'
+```
+
+The call returns `204 No Content` and processes asynchronously, so the return lands on the transaction and fires your webhook a moment later rather than in the response.
+
+Nine return codes are supported: `R01`, `R02`, `R03`, `R04`, `R06`, `R08`, `R16`, `R20`, and `R29`. That covers insufficient funds, the unrecoverable account errors, a stop payment, a frozen account, and one unauthorized claim, which is enough to exercise every branch of the retry logic in [Retries and reinitiating](#retries-and-reinitiating).
+
+Eligible transaction types are `LOAD_FUNDS`, `PAYMENT`, `WITHDRAW_FUNDS`, and `BANK_DEBIT`. Attempting a return on anything else returns `400`, an unknown transaction returns `404`, and a transaction that has already been returned returns `409`.
+
+Before you go live, cover at minimum:
+
+* The happy path, `PAYMENT` → `COMPLETED`.
+* A retryable return: originate, `generateReturn` with `R01`, then a new `POST /v3/ach/debit` with a new `external_id` that succeeds.
+* A terminal return: `generateReturn` with `R02`, and confirm your code does **not** retry it.
+* Bank account setup failure, via [Payment Methods testing](/guides/sandbox-testing/test-payments). An invalid routing number drives the payment method to `FAILED`.
+
+See [ACH returns and NOCs](/guides/sandbox-testing/test-payments#ach-returns-and-nocs) for Notification of Change simulation, which corrects account details for future entries without reversing funds.
 
 ## API endpoints
 
