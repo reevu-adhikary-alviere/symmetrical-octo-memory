@@ -1,10 +1,23 @@
 (function () {
+  var NAV_SELECTOR = 'nav.t-header__nav, nav.navigation';
+
+  // Scalar renders each header label twice (an invisible copy plus the active
+  // copy), so textContent comes back doubled, e.g. "GuidesGuides".
+  function headerLabel(link) {
+    var text = link.textContent.replace(/\s+/g, ' ').trim();
+    var half = text.length / 2;
+    if (text.length && text.length % 2 === 0 && text.slice(0, half) === text.slice(half)) {
+      return text.slice(0, half);
+    }
+    return text;
+  }
+
   function moveNavToLeft() {
     var header = document.querySelector('header.header');
     if (!header) return false;
 
-    var headerLeft = header.querySelector('.header-left');
-    var nav = header.querySelector('nav.navigation');
+    var headerLeft = header.querySelector('.t-header__start, .header-left');
+    var nav = header.querySelector(NAV_SELECTOR);
     if (!headerLeft || !nav) return false;
     if (nav.dataset.hiveNavLeft === 'true') return true;
 
@@ -24,14 +37,14 @@
     var header = document.querySelector('header.header');
     if (!header) return false;
 
-    var headerRight = header.querySelector('.header-right');
-    var nav = header.querySelector('nav.navigation');
+    var headerRight = header.querySelector('.t-header__end, .header-right');
+    var nav = header.querySelector(NAV_SELECTOR);
     if (!headerRight || !nav) return false;
 
     var changelog = null;
     var links = nav.querySelectorAll('a');
     for (var i = 0; i < links.length; i++) {
-      if (links[i].textContent.trim() === 'Changelog') {
+      if (headerLabel(links[i]) === 'Changelog') {
         changelog = links[i];
         break;
       }

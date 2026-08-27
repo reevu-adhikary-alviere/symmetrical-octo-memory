@@ -114,13 +114,26 @@
     return path === href || path.startsWith(href + '/');
   }
 
+  var NAV_SELECTOR = 'nav.t-header__nav, nav.navigation';
+
+  // Scalar renders each header label twice (an invisible copy plus the active
+  // copy), so textContent comes back doubled, e.g. "GuidesGuides".
+  function headerLabel(link) {
+    var text = link.textContent.replace(/\s+/g, ' ').trim();
+    var half = text.length / 2;
+    if (text.length && text.length % 2 === 0 && text.slice(0, half) === text.slice(half)) {
+      return text.slice(0, half);
+    }
+    return text;
+  }
+
   function findGuidesLink() {
-    var nav = document.querySelector('nav.navigation');
+    var nav = document.querySelector(NAV_SELECTOR);
     if (!nav) return null;
 
     var links = nav.querySelectorAll('a');
     for (var i = 0; i < links.length; i++) {
-      if (links[i].textContent.trim() === 'Guides') return links[i];
+      if (headerLabel(links[i]) === 'Guides') return links[i];
     }
     return null;
   }

@@ -5,12 +5,14 @@ header.header a[href="/"] img {
   object-fit: contain;
 }
 
+.hive-header-nav-left .t-header__start,
 .hive-header-nav-left .header-left {
   flex: 1 1 auto;
   min-width: 0;
   gap: 0;
 }
 
+.hive-header-nav-left .t-header__start nav.t-header__nav,
 .hive-header-nav-left .header-left nav.navigation {
   width: auto;
   margin-left: 20px;
@@ -18,6 +20,7 @@ header.header a[href="/"] img {
   gap: 28px;
 }
 
+.hive-header-nav-left .t-header__end,
 .hive-header-nav-left .header-right {
   flex: 0 0 auto;
   display: flex;
