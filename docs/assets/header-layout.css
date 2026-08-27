@@ -1,0 +1,34 @@
+header.header a[href="/"] img {
+  max-height: 52px;
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+}
+
+.hive-header-nav-left .header-left {
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0;
+}
+
+.hive-header-nav-left .header-left nav.navigation {
+  width: auto;
+  margin-left: 20px;
+  flex: 0 0 auto;
+  gap: 28px;
+}
+
+.hive-header-nav-left .header-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hive-header-nav-left .header-center {
+  margin-left: auto;
+}
+
+.hive-header-changelog {
+  white-space: nowrap;
+}

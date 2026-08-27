@@ -43,26 +43,26 @@ The HIVE APIs are available in two versions. Use the version that matches your i
 ::::scalar-row
 :::scalar-card{title="Accounts" icon="users"}
 Consumer and business account profiles.  
-[Explore API v1](/api-v1)
+[Explore API v2](/api-v2)
 :::
 :::scalar-card{title="Wallets" icon="wallet"}
 Multi-currency wallets and balances.  
-[Explore API v1](/api-v1)
+[Explore API v2](/api-v2)
 :::
 :::scalar-card{title="Cards" icon="credit-card"}
 Virtual and physical card issuance.  
-[Explore API v1](/api-v1)
+[Explore API v2](/api-v2)
 :::
 :::scalar-card{title="Transactions" icon="arrows-left-right"}
 Payments, transfers, and activity.  
-[Explore API v1](/api-v1)
+[Explore API v2](/api-v2)
 :::
 ::::
 
 ::::scalar-row
 :::scalar-card{title="Authentication" icon="key"}
 Access tokens, sessions, and client credentials.  
-[Explore API v1](/api-v1)
+[Explore API v2](/api-v2)
 :::
 :::scalar-card{title="Beneficiaries" icon="user-circle"}
 Payout recipients and verification.  
@@ -70,11 +70,11 @@ Payout recipients and verification.
 :::
 :::scalar-card{title="Webhooks" icon="bell"}
 Real-time event delivery.  
-[Explore API v2](/api-v2)
+[Explore API v3](/api-v3)
 :::
-:::scalar-card{title="Errors" icon="warning"}
-Error codes and troubleshooting patterns.  
-[Explore API v1](/api-v1)
+:::scalar-card{title="Payment Acceptance" icon="credit-card"}
+Card, bank, and wallet payment rails.  
+[Explore API v3](/api-v3)
 :::
 ::::
 
@@ -86,7 +86,7 @@ Use clean REST endpoints to create accounts, issue cards, and move money.
 :::scalar-tab{ title="cURL" }
 ```bash
 # Create a new wallet for a user
-curl -X POST https://api.alviere.com/v1/wallets \
+curl -X POST https://api.snd.alviere.com/wallets \
   -H "Authorization: Bearer {access_token}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -149,10 +149,5 @@ Published on Maven Central.
 OpenAPI 3.0 specs for tooling and codegen.
 :::
 ::::
-
-## Authoring docs
-
-Need to update or extend the docs? Scalar supports GitHub Flavored Markdown plus components like buttons and callouts.
-[Markdown support guide](https://guides.scalar.com/scalar/scalar-docs/components/markdown-support)
 
 ::scalar-fineprint[Need help fast? Contact support for onboarding, credentials, or troubleshooting.]{}

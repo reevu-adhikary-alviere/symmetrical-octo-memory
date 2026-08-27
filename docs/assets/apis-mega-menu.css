@@ -1,0 +1,182 @@
+.hive-api-mega {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+.hive-api-mega__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hive-api-mega__trigger.link-active-single {
+  border-bottom: none !important;
+  padding-top: 0 !important;
+}
+
+.hive-api-mega__chevron {
+  width: 14px;
+  height: 14px;
+  opacity: 0.55;
+  transition: transform 0.15s ease;
+}
+
+.hive-api-mega.is-open .hive-api-mega__chevron {
+  transform: rotate(180deg);
+}
+
+.hive-api-mega__panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translateY(-4px);
+  width: min(920px, calc(100vw - 32px));
+  padding: 20px 28px 28px;
+  border-radius: 16px;
+  border: 1px solid var(--scalar-border-color, #e5e5e5);
+  background: var(--scalar-background-2, var(--scalar-background-1, #fff));
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+  z-index: 1000;
+}
+
+.hive-api-mega__panel::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+
+.hive-api-mega.is-open .hive-api-mega__panel {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.hive-api-mega__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.hive-api-mega__version-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hive-api-mega__version-btn {
+  border: 0;
+  background: none;
+  color: var(--scalar-color-2, #666);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hive-api-mega__version-btn.is-active {
+  color: var(--scalar-color-1, #111);
+  font-weight: 600;
+}
+
+.hive-api-mega__help {
+  font-size: 13px;
+  color: var(--scalar-color-2, #666);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hive-api-mega__help:hover,
+.hive-api-mega__help:focus-visible {
+  color: var(--scalar-color-1, #111);
+  text-decoration: underline;
+}
+
+.hive-api-mega__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.hive-api-mega__heading {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--scalar-color-1, #111);
+}
+
+.hive-api-mega__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hive-api-mega__list-item--with-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hive-api-mega__link {
+  display: block;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--scalar-color-2, #444);
+  text-decoration: none;
+  transition: color 0.12s ease;
+}
+
+.hive-api-mega__link:hover,
+.hive-api-mega__link:focus-visible {
+  color: var(--scalar-color-1, #111);
+}
+
+.hive-api-mega__link--disabled {
+  color: color-mix(in srgb, var(--scalar-color-2, #666) 70%, transparent);
+  cursor: default;
+}
+
+.hive-api-mega__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scalar-color-2, #666);
+  background: color-mix(in srgb, var(--scalar-color-1) 6%, transparent);
+  border: 1px solid var(--scalar-border-color, #e5e5e5);
+}
+
+@media (max-width: 900px) {
+  .hive-api-mega__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .hive-api-mega__panel {
+    display: none;
+  }
+}

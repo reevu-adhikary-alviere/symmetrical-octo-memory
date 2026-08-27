@@ -48,7 +48,7 @@ Payments, transfers, history.
 ## Example
 
 ```bash
-curl -X POST https://api.alviere.com/v2/wallets \
+curl -X POST https://api.snd.alviere.com/wallets \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"account_id": "acc_123", "currency": "USD"}'
 ```

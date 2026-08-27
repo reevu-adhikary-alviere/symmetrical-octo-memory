@@ -1,0 +1,65 @@
+/* Extra breathing room for grouped guide sidebar links. */
+aside[class*='sidebar'] nav a,
+aside nav a,
+.sidebar-items a,
+[class*='Sidebar'] a[href*='/guides/'] {
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+
+aside[class*='sidebar'] nav [class*='group'] + [class*='group'],
+aside[class*='sidebar'] nav [class*='section'] + [class*='section'],
+aside[class*='sidebar'] nav h2,
+aside[class*='sidebar'] nav h3,
+aside[class*='sidebar'] nav [class*='heading'],
+aside[class*='sidebar'] nav [class*='label'] {
+  margin-top: 18px;
+}
+
+aside[class*='sidebar'] nav h2:first-child,
+aside[class*='sidebar'] nav h3:first-child,
+aside[class*='sidebar'] nav [class*='heading']:first-child {
+  margin-top: 0;
+}
+
+/* Landing page: hide the full doc-tree sidebar for a clean front door. */
+body.hive-landing aside[class*='sidebar'] {
+  display: none !important;
+}
+
+/* Landing page: keep the hero consistently left-aligned (matches Scalar's heading styles). */
+body.hive-landing h1 + p {
+  font-size: 1.15rem;
+  opacity: 0.7;
+  max-width: 640px;
+}
+
+body.hive-landing h2 {
+  margin-top: 3.5rem;
+}
+
+body.hive-landing h2 + p {
+  opacity: 0.65;
+}
+
+/* Landing page: softer, lifted cards instead of the default flat boxes. */
+body.hive-landing [class*='card' i] {
+  border-radius: 16px;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+body.hive-landing [class*='card' i]:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+}
+
+/* Nested sidebar: the back control is relabeled to "Guides • <section>" (see header-layout.js). */
+aside[class*='sidebar'] .hive-section-header {
+  font-weight: 600;
+  pointer-events: none;
+  cursor: default;
+}
+
+aside[class*='sidebar'] .hive-section-header svg {
+  display: none;
+}

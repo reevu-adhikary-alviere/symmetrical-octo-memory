@@ -6,7 +6,8 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "Bash(scalar project preview:*)",
-      "WebFetch(domain:fumanew23dec2025.vercel.app)"
+      "WebFetch(domain:fumanew23dec2025.vercel.app)",
+      "WebFetch(domain:scalar.com)"
     ],
     "deny": [],
     "ask": []

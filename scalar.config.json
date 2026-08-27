@@ -2,23 +2,231 @@
   "scalar": "2.0.0",
   "$schema": "https://cdn.scalar.com/schema/scalar-config-next.json",
   "publishOnMerge": true,
-  "insertPageTitles": true,
+  "insertPageTitles": false,
+  "assetsDir": "docs/assets",
   "siteConfig": {
     "subdomain": "my-awesome-documentation-reevu",
+    "routing": {
+      "redirects": [
+        {
+          "from": "/guides/welcome",
+          "to": "/guides/overview/welcome"
+        },
+        {
+          "from": "/guides/platform-overview",
+          "to": "/guides/overview/platform-overview"
+        },
+        {
+          "from": "/guides/quickstart",
+          "to": "/guides/getting-started/quickstart"
+        },
+        {
+          "from": "/guides/authentication",
+          "to": "/guides/getting-started/authentication"
+        },
+        {
+          "from": "/guides/environments",
+          "to": "/guides/getting-started/environments"
+        },
+        {
+          "from": "/guides/error-codes",
+          "to": "/guides/getting-started/error-codes"
+        },
+        {
+          "from": "/guides/idempotency",
+          "to": "/guides/getting-started/idempotency"
+        },
+        {
+          "from": "/guides/metadata",
+          "to": "/guides/getting-started/metadata"
+        },
+        {
+          "from": "/guides/api-versions",
+          "to": "/guides/getting-started/api-versions"
+        },
+        {
+          "from": "/guides/payment-acceptance",
+          "to": "/guides/payment-acceptance/payment-acceptance"
+        },
+        {
+          "from": "/guides/card-payments",
+          "to": "/guides/payment-acceptance/online-payments/card-payments/introduction"
+        },
+        {
+          "from": "/guides/card-payments-partner-context",
+          "to": "/guides/payment-acceptance/payment-acceptance"
+        },
+        {
+          "from": "/guides/card-payment-configurations",
+          "to": "/guides/payment-acceptance/online-payments/card-payments/introduction"
+        },
+        {
+          "from": "/guides/card-config-direct-merchant",
+          "to": "/guides/payment-acceptance/use-cases/card-config-direct-merchant"
+        },
+        {
+          "from": "/guides/card-config-marketplace",
+          "to": "/guides/payment-acceptance/use-cases/card-config-marketplace"
+        },
+        {
+          "from": "/guides/card-config-bill-pay",
+          "to": "/guides/payment-acceptance/use-cases/card-config-bill-pay"
+        },
+        {
+          "from": "/guides/pay-by-bank",
+          "to": "/guides/payment-acceptance/online-payments/pay-by-bank/introduction"
+        },
+        {
+          "from": "/guides/alviere-checkout",
+          "to": "/guides/payment-acceptance/online-payments/alviere-checkout/introduction"
+        },
+        {
+          "from": "/guides/accounts",
+          "to": "/guides/resources/accounts"
+        },
+        {
+          "from": "/guides/wallets",
+          "to": "/guides/resources/wallets"
+        },
+        {
+          "from": "/guides/treasury",
+          "to": "/guides/resources/treasury"
+        },
+        {
+          "from": "/guides/payment-methods",
+          "to": "/guides/resources/payment-methods"
+        },
+        {
+          "from": "/guides/beneficiaries",
+          "to": "/guides/resources/beneficiaries"
+        },
+        {
+          "from": "/guides/identity",
+          "to": "/guides/resources/identity"
+        },
+        {
+          "from": "/guides/activity",
+          "to": "/guides/resources/activity"
+        },
+        {
+          "from": "/guides/transactions-overview",
+          "to": "/guides/transactions/transactions-overview"
+        },
+        {
+          "from": "/guides/internal-transfers",
+          "to": "/guides/transactions/internal-transfers"
+        },
+        {
+          "from": "/guides/global-money-transfers",
+          "to": "/guides/transactions/global-money-transfers"
+        },
+        {
+          "from": "/guides/card-pull",
+          "to": "/guides/transactions/card-pull"
+        },
+        {
+          "from": "/guides/wire",
+          "to": "/guides/transactions/wire"
+        },
+        {
+          "from": "/guides/ach",
+          "to": "/guides/transactions/ach"
+        },
+        {
+          "from": "/guides/cash-loading",
+          "to": "/guides/transactions/cash-loading"
+        },
+        {
+          "from": "/guides/checks",
+          "to": "/guides/transactions/checks"
+        },
+        {
+          "from": "/guides/early-release",
+          "to": "/guides/transactions/early-release"
+        },
+        {
+          "from": "/guides/cards",
+          "to": "/guides/cards/cards"
+        },
+        {
+          "from": "/guides/incentives",
+          "to": "/guides/cards/incentives"
+        },
+        {
+          "from": "/guides/mock-services",
+          "to": "/guides/sandbox-testing/mock-services"
+        },
+        {
+          "from": "/guides/test-kyc",
+          "to": "/guides/sandbox-testing/test-kyc"
+        },
+        {
+          "from": "/guides/test-cards",
+          "to": "/guides/sandbox-testing/test-cards"
+        },
+        {
+          "from": "/guides/test-payments",
+          "to": "/guides/sandbox-testing/test-payments"
+        },
+        {
+          "from": "/guides/test-transfers",
+          "to": "/guides/sandbox-testing/test-transfers"
+        },
+        {
+          "from": "/guides/test-cash-loading",
+          "to": "/guides/sandbox-testing/test-cash-loading"
+        },
+        {
+          "from": "/guides/test-fraud-sanctions",
+          "to": "/guides/sandbox-testing/test-fraud-sanctions"
+        },
+        {
+          "from": "/guides/webhooks",
+          "to": "/guides/more/webhooks"
+        },
+        {
+          "from": "/guides/plaid",
+          "to": "/guides/more/plaid"
+        },
+        {
+          "from": "/guides/changelog",
+          "to": "/guides/more/changelog"
+        }
+      ]
+    },
     "head": {
       "links": [],
       "meta": [],
-      "styles": [],
+      "styles": [
+        {
+          "path": "docs/assets/header-layout.css"
+        },
+        {
+          "path": "docs/assets/guides-mega-menu.css"
+        },
+        {
+          "path": "docs/assets/guides-sidebar.css"
+        },
+        {
+          "path": "docs/assets/apis-mega-menu.css"
+        }
+      ],
       "scripts": [
         {
-          "path": "docs/scripts/version-switcher.js"
+          "path": "docs/scripts/header-layout.js"
+        },
+        {
+          "path": "docs/scripts/guides-mega-menu.js"
+        },
+        {
+          "path": "docs/scripts/apis-mega-menu.js"
         }
       ]
     },
     "theme": "purple",
     "logo": {
-      "darkMode": "https://alviere.com/imgs/alviere-signet.svg",
-      "lightMode": "https://alviere.com/imgs/alviere-signet.svg"
+      "darkMode": "docs/assets/logo.png",
+      "lightMode": "docs/assets/logo.png"
     }
   },
   "versions": {
@@ -26,47 +234,358 @@
       "header": [
         {
           "type": "link",
-          "title": "Getting Started",
-          "to": "/getting-started"
+          "title": "Guides",
+          "to": "/guides/overview/welcome"
         },
         {
           "type": "link",
-          "title": "API v1",
-          "to": "/api-v1"
+          "title": "API Reference",
+          "to": "/api-v3"
         },
         {
           "type": "link",
-          "title": "API v2",
-          "to": "/api-v2"
+          "title": "Changelog",
+          "to": "/guides/more/changelog"
         }
       ],
       "routes": {
-        "/getting-started": {
-          "title": "Getting Started",
+        "/guides": {
+          "title": "Guides",
           "type": "group",
           "children": {
-            "/platform-overview": {
-              "type": "page",
-              "filepath": "docs/overview.md",
-              "title": "Platform Overview"
+            "/overview": {
+              "type": "group",
+              "title": "Overview",
+              "mode": "nested",
+              "children": {
+                "/welcome": {
+                  "type": "page",
+                  "filepath": "docs/guides/welcome.md",
+                  "title": "Welcome"
+                },
+                "/platform-overview": {
+                  "type": "page",
+                  "filepath": "docs/guides/platform-overview.md",
+                  "title": "Platform Overview"
+                }
+              }
             },
-            "/introduction": {
-              "type": "page",
-              "filepath": "docs/introduction.md",
-              "title": "Introduction"
+            "/getting-started": {
+              "type": "group",
+              "title": "Getting Started",
+              "mode": "nested",
+              "children": {
+                "/quickstart": {
+                  "type": "page",
+                  "filepath": "docs/guides/quickstart.md",
+                  "title": "Quickstart"
+                },
+                "/authentication": {
+                  "type": "page",
+                  "filepath": "docs/guides/authentication.md",
+                  "title": "Authentication"
+                },
+                "/environments": {
+                  "type": "page",
+                  "filepath": "docs/guides/environments.md",
+                  "title": "Environments"
+                },
+                "/error-codes": {
+                  "type": "page",
+                  "filepath": "docs/guides/error-codes.md",
+                  "title": "Error Codes"
+                },
+                "/idempotency": {
+                  "type": "page",
+                  "filepath": "docs/guides/idempotency.md",
+                  "title": "Idempotency"
+                },
+                "/metadata": {
+                  "type": "page",
+                  "filepath": "docs/guides/metadata.md",
+                  "title": "Metadata"
+                },
+                "/api-versions": {
+                  "type": "page",
+                  "filepath": "docs/guides/api-versions.md",
+                  "title": "API Versions"
+                }
+              }
+            },
+            "/payment-acceptance": {
+              "type": "group",
+              "title": "Payment Acceptance",
+              "mode": "nested",
+              "children": {
+                "/payment-acceptance": {
+                  "type": "page",
+                  "filepath": "docs/guides/payment-acceptance.md",
+                  "title": "Overview"
+                },
+                "/online-payments": {
+                  "type": "group",
+                  "title": "Online payments",
+                  "mode": "folder",
+                  "children": {
+                    "/card-payments": {
+                      "type": "group",
+                      "title": "Card payments",
+                      "mode": "folder",
+                      "children": {
+                        "/introduction": {
+                          "type": "page",
+                          "filepath": "docs/guides/card-payments.md",
+                          "title": "Introduction"
+                        },
+                        "/integration": {
+                          "type": "page",
+                          "filepath": "docs/guides/card-payments-integration.md",
+                          "title": "Integration"
+                        }
+                      }
+                    },
+                    "/alviere-checkout": {
+                      "type": "group",
+                      "title": "Alviere Checkout",
+                      "mode": "folder",
+                      "children": {
+                        "/introduction": {
+                          "type": "page",
+                          "filepath": "docs/guides/alviere-checkout.md",
+                          "title": "Introduction"
+                        },
+                        "/web": {
+                          "type": "page",
+                          "filepath": "docs/guides/alviere-checkout-web.md",
+                          "title": "Web"
+                        }
+                      }
+                    },
+                    "/pay-by-bank": {
+                      "type": "group",
+                      "title": "Pay by Bank",
+                      "mode": "folder",
+                      "children": {
+                        "/introduction": {
+                          "type": "page",
+                          "filepath": "docs/guides/pay-by-bank.md",
+                          "title": "Introduction"
+                        }
+                      }
+                    }
+                  }
+                },
+                "/use-cases": {
+                  "type": "group",
+                  "title": "Use cases",
+                  "mode": "folder",
+                  "children": {
+                    "/card-config-direct-merchant": {
+                      "type": "page",
+                      "filepath": "docs/guides/card-config-direct-merchant.md",
+                      "title": "Direct merchant ecommerce"
+                    },
+                    "/card-config-marketplace": {
+                      "type": "page",
+                      "filepath": "docs/guides/card-config-marketplace.md",
+                      "title": "Marketplace"
+                    },
+                    "/card-config-bill-pay": {
+                      "type": "page",
+                      "filepath": "docs/guides/card-config-bill-pay.md",
+                      "title": "Bill pay & utility"
+                    }
+                  }
+                }
+              }
+            },
+            "/resources": {
+              "type": "group",
+              "title": "Resources",
+              "mode": "nested",
+              "children": {
+                "/accounts": {
+                  "type": "page",
+                  "filepath": "docs/guides/accounts.md",
+                  "title": "Accounts"
+                },
+                "/wallets": {
+                  "type": "page",
+                  "filepath": "docs/guides/wallets.md",
+                  "title": "Wallets"
+                },
+                "/treasury": {
+                  "type": "page",
+                  "filepath": "docs/guides/treasury.md",
+                  "title": "Treasury Vaults"
+                },
+                "/payment-methods": {
+                  "type": "page",
+                  "filepath": "docs/guides/payment-methods.md",
+                  "title": "Payment Methods"
+                },
+                "/beneficiaries": {
+                  "type": "page",
+                  "filepath": "docs/guides/beneficiaries.md",
+                  "title": "Beneficiaries & Payouts"
+                },
+                "/identity": {
+                  "type": "page",
+                  "filepath": "docs/guides/identity.md",
+                  "title": "Identity (Dossier)"
+                },
+                "/activity": {
+                  "type": "page",
+                  "filepath": "docs/guides/activity.md",
+                  "title": "Activity"
+                }
+              }
+            },
+            "/transactions": {
+              "type": "group",
+              "title": "Transactions",
+              "mode": "nested",
+              "children": {
+                "/transactions-overview": {
+                  "type": "page",
+                  "filepath": "docs/guides/transactions-overview.md",
+                  "title": "Overview"
+                },
+                "/internal-transfers": {
+                  "type": "page",
+                  "filepath": "docs/guides/internal-transfers.md",
+                  "title": "Internal Transfers"
+                },
+                "/global-money-transfers": {
+                  "type": "page",
+                  "filepath": "docs/guides/global-money-transfers.md",
+                  "title": "Global Money Transfers"
+                },
+                "/card-pull": {
+                  "type": "page",
+                  "filepath": "docs/guides/card-pull.md",
+                  "title": "Card Pull"
+                },
+                "/wire": {
+                  "type": "page",
+                  "filepath": "docs/guides/wire.md",
+                  "title": "Wire"
+                },
+                "/ach": {
+                  "type": "page",
+                  "filepath": "docs/guides/ach.md",
+                  "title": "ACH"
+                },
+                "/cash-loading": {
+                  "type": "page",
+                  "filepath": "docs/guides/cash-loading.md",
+                  "title": "Cash Loading"
+                },
+                "/checks": {
+                  "type": "page",
+                  "filepath": "docs/guides/checks.md",
+                  "title": "Checks"
+                },
+                "/early-release": {
+                  "type": "page",
+                  "filepath": "docs/guides/early-release.md",
+                  "title": "Early Release of Funds"
+                }
+              }
+            },
+            "/cards": {
+              "type": "group",
+              "title": "Card Issuing",
+              "mode": "nested",
+              "children": {
+                "/cards": {
+                  "type": "page",
+                  "filepath": "docs/guides/cards.md",
+                  "title": "Issued Cards"
+                },
+                "/incentives": {
+                  "type": "page",
+                  "filepath": "docs/guides/incentives.md",
+                  "title": "Incentives"
+                }
+              }
+            },
+            "/sandbox-testing": {
+              "type": "group",
+              "title": "Sandbox Testing",
+              "mode": "nested",
+              "children": {
+                "/mock-services": {
+                  "type": "page",
+                  "filepath": "docs/guides/mock-services.md",
+                  "title": "Overview"
+                },
+                "/test-kyc": {
+                  "type": "page",
+                  "filepath": "docs/guides/test-kyc.md",
+                  "title": "KYC Scenarios"
+                },
+                "/test-cards": {
+                  "type": "page",
+                  "filepath": "docs/guides/test-cards.md",
+                  "title": "Card Issuance Testing"
+                },
+                "/test-payments": {
+                  "type": "page",
+                  "filepath": "docs/guides/test-payments.md",
+                  "title": "Payment Method Testing"
+                },
+                "/test-transfers": {
+                  "type": "page",
+                  "filepath": "docs/guides/test-transfers.md",
+                  "title": "International Transfer Testing"
+                },
+                "/test-cash-loading": {
+                  "type": "page",
+                  "filepath": "docs/guides/test-cash-loading.md",
+                  "title": "Cash Loading Testing"
+                },
+                "/test-fraud-sanctions": {
+                  "type": "page",
+                  "filepath": "docs/guides/test-fraud-sanctions.md",
+                  "title": "Fraud & Sanctions Testing"
+                }
+              }
+            },
+            "/more": {
+              "type": "group",
+              "title": "More",
+              "mode": "nested",
+              "children": {
+                "/webhooks": {
+                  "type": "page",
+                  "filepath": "docs/guides/webhooks.md",
+                  "title": "Webhooks"
+                },
+                "/plaid": {
+                  "type": "page",
+                  "filepath": "docs/guides/plaid.md",
+                  "title": "Plaid Integration"
+                },
+                "/changelog": {
+                  "type": "page",
+                  "filepath": "docs/guides/changelog.md",
+                  "title": "Changelog"
+                }
+              }
             }
           }
-        },
-        "/api-v1": {
-          "title": "API v1",
-          "type": "openapi",
-          "filepath": "docs/swagger_2.yaml",
-          "config": {}
         },
         "/api-v2": {
           "title": "API v2",
           "type": "openapi",
           "filepath": "docs/swagger_1.yaml",
+          "config": {}
+        },
+        "/api-v3": {
+          "title": "API v3",
+          "type": "openapi",
+          "filepath": "docs/swagger_3.yaml",
           "config": {}
         }
       }
