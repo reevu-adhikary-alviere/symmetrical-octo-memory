@@ -21,7 +21,7 @@ Use it anywhere you want a lower-cost alternative to card and can live with a 1-
 ## What you'll build
 
 1. **Bank linking.** Hosted or SDK flow so payers can connect their bank account.
-2. **Scheduled payments.** One-time and recurring schedules via `/v3/scheduled-payments`. Fixed amount, client owns the schedule, platform owns execution.
+2. **Scheduled payments.** One-time and recurring schedules via `POST /v3/schedule/payments`. Fixed amount, client owns the schedule, platform owns execution.
 3. **Checkout.** Optional white-label payment page.
 4. **Reconciliation.** Files and APIs to post settled payments into your accounting system.
 5. **Returns.** NACHA return-window handling with webhook notifications.
@@ -109,7 +109,7 @@ Nacha limits how you may retry a returned debit. Those limits sit on top of the 
 * A debit returned as `R08` may be retried only after you have a new authorization and the payer has removed the stop payment block.
 * If the debit failed because the account or routing number was wrong (`R03`, `R04`), correcting the number and resubmitting is not counted as a reinitiated entry because it targets a different account.
 
-Pre-authorized scheduled debits are not retries. If the January occurrence of a recurring `POST /v3/scheduled-payments` with `schedule.type: RECURRING` fails with `R01`, the February occurrence under the same standing authorization is a new entry. The retry limits apply per occurrence, not per schedule. For a single debit you retry with a new `POST /v3/ach/debit` and a new `external_id`. For a schedule you create the schedule once via `/v3/scheduled-payments` and the platform creates one `PAYMENT` per occurrence tagged with `scheduled_payment_uuid`. Keep the same `amount` and `currency` on a retry. Use a new `external_id` so the original and the retry stay distinct in `GET /v3/transactions` and in webhooks.
+Pre-authorized scheduled debits are not retries. If the January occurrence of a `POST /v3/schedule/payments` schedule with `frequency: MONTHLY`, `day_of_month: "1"` fails with `R01`, the February occurrence under the same standing authorization is a new entry. The retry limits apply per occurrence, not per schedule. For a single debit you retry with a new `POST /v3/ach/debit` and a new `external_id`. For a schedule you create the schedule once via `POST /v3/schedule/payments` and the platform creates one `PAYMENT` per occurrence. Check `GET /v3/schedule/{schedule_uuid}/executions` for occurrence history. Keep the same `amount` and `currency` on a retry. Use a new `external_id` so the original and the retry stay distinct in `GET /v3/transactions` and in webhooks.
 
 ## Reconciliation and webhooks
 
