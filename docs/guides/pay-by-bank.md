@@ -45,23 +45,83 @@ Settlement is not instant. If you need confirmation before fulfilling an order, 
 
 ## Authorization and mandate
 
-You must have the payer's authorization before you debit. Store the authorization yourself. Alviere does not store the mandate text for you.
+You must have the payer's authorization before you debit, and on Alviere the mandate is part of the API rather than something you write yourself. Alviere serves the authorization text, versions it, and records which version the payer accepted.
 
-Keep these fields for every debit:
+`accepted_legal_texts` is **required on every ACH debit**. A debit without it is rejected.
 
-* Payer name and contact information on file
-* Authorized amount or a clear description of how the amount will vary
+### 1. Fetch the current authorization text
+
+```bash
+curl -G https://api.snd.alviere.com/v3/legal-texts \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d type=ACH_DEBIT_AUTHORIZATION
+```
+
+```json
+{
+  "legal_texts": [
+    {
+      "legal_text_uuid": "ee332079-3bf4-4f9d-8f2b-df980c459ee9",
+      "latest": true,
+      "type": "ACH_DEBIT_AUTHORIZATION",
+      "version": "2",
+      "title": "ACH Debit Authorization",
+      "document_text": "By selecting this box...",
+      "document_url": "https://example.com/legal/ach-debit-v2"
+    }
+  ]
+}
+```
+
+Omit `version` to get the latest. Pass it to pin a specific one.
+
+| Type | Use |
+|---|---|
+| `ACH_DEBIT_AUTHORIZATION` | The general ACH debit mandate |
+| `ACH_AUTHORIZATION_INDIVIDUAL_PAYER` | Consumer payer authorization |
+| `ACH_AUTHORIZATION_BUSINESS_PAYER` | Business payer authorization |
+| `TERMS_AND_CONDITIONS` | Program terms |
+| `PRIVACY_POLICY` | Program privacy policy |
+
+### 2. Show it to the payer and capture acceptance
+
+Render `document_text` (or link `document_url`) next to the checkbox or button the payer actually clicks. The text must be visible at the moment of consent, not buried behind a link nobody opens.
+
+### 3. Pass the accepted UUID on the debit
+
+```json
+POST /v3/ach/debit
+{
+  "external_id": "order_1000456",
+  "amount": "108.00",
+  "currency": "USD",
+  "source": { "payment_method_uuid": "550e8400-e29b-41d4-a716-446655440000" },
+  "destination": { "wallet_uuid": "223e4567-e89b-12d3-a456-426614174000" },
+  "accepted_legal_texts": ["ee332079-3bf4-4f9d-8f2b-df980c459ee9"]
+}
+```
+
+:::scalar-callout{type="warning"}
+Fetch the text at the time you display it rather than hardcoding a UUID. Legal texts are versioned, and a new version means the wording the payer agreed to has changed. A pinned UUID quietly keeps collecting consent against superseded language.
+:::
+
+### What you still own
+
+Alviere records the mandate acceptance. It does not know anything else about the payer's intent, so keep this alongside your own order record:
+
+* Payer name and contact information
+* Authorized amount, or how a variable amount is determined
 * Whether the debit is one-time or recurring, and the schedule if recurring
-* Date and time the payer gave authorization, and how you captured it
+* Date, time, and channel where the payer accepted
 * How you verified the payer controls the bank account (Plaid, micro-deposits, or SDK verification)
 
-If the payer's bank submits a late return that claims the debit was not authorized, you will need to produce proof of authorization within 10 banking days. The proof is the fields above plus any supporting document the payer signed. If you cannot produce it, the bank may return the debit as `R10` or `R11` and you absorb the loss.
+For recurring debits, you also owe the payer notice before each debit when the amount varies.
 
-Sample authorization language you can adapt. This is not legal advice, have your counsel review it.
+### Proof of authorization
 
-> I authorize [Your Company Name] to debit the bank account I have specified for the amount shown at checkout, or for the recurring amounts described in my service agreement. I understand I can revoke this authorization by contacting [support contact] and that revocation does not cancel amounts already owed. I confirm I am an authorized signer on this account.
+If the payer's bank submits a late return claiming the debit was not authorized, you have **10 banking days** to produce proof. That proof is the accepted legal text version plus the records above. If you cannot produce it, the bank may return the debit as `R10` or `R11` and you absorb the loss.
 
-For recurring debits, include the schedule and the way you will notify the payer before each debit when the amount varies.
+This is why the version matters. "The payer accepted `ACH_DEBIT_AUTHORIZATION` version 2 on this date" is a defensible answer; "we showed them some text" is not.
 
 ## Handling returns
 
@@ -162,7 +222,27 @@ See [ACH returns and NOCs](/guides/sandbox-testing/test-payments#ach-returns-and
 | `POST /v3/ach/credit` | In development | Push funds to an external bank account. Tracked separately from payment acceptance. |
 | Instant incoming rails | In development | Real-time settlement for eligible accounts. Timing and eligibility will be posted when the rail is live. |
 
-See **Bank Payments** in the [V3 API Reference](/api-v3) for the current schemas. The request has only `external_id`, `amount`, `currency`, `source.payment_method_uuid`, `destination.wallet_uuid`, `description`, and `metadata`. There is no `company_entry_description` or `company_name` field on the request. Those Nacha fields are handled by the platform. Responses carry `transaction_uuid`, `type` (`PAYMENT` or `RETURN`), `status`, `returned`, and `type_details.ach_payment_details.trace_number`, `service_type`, `return_code`, and `return_reason`.
+See **Bank Payments** in the [V3 API Reference](/api-v3) for the current schemas. The request takes `external_id`, `amount`, `currency`, `source.payment_method_uuid`, `destination.wallet_uuid`, `accepted_legal_texts` (required), and optionally `description`, `metadata`, and `execute_at`. There is no `company_entry_description` or `company_name` field on the request. Those Nacha fields are handled by the platform. Responses carry `transaction_uuid`, `type` (`PAYMENT` or `RETURN`), `status`, `returned`, and `type_details.ach_payment_details.trace_number`, `service_type`, `return_code`, and `return_reason`.
+
+## Future-dating a debit
+
+Pass `execute_at` as an RFC 3339 timestamp to hold a debit until a future moment:
+
+```json
+{
+  "external_id": "invoice_2201",
+  "amount": "480.00",
+  "currency": "USD",
+  "source": { "payment_method_uuid": "550e8400-e29b-41d4-a716-446655440000" },
+  "destination": { "wallet_uuid": "223e4567-e89b-12d3-a456-426614174000" },
+  "accepted_legal_texts": ["ee332079-3bf4-4f9d-8f2b-df980c459ee9"],
+  "execute_at": "2026-09-01T14:00:00Z"
+}
+```
+
+The transaction is created in `WAITING` and moves no money until its execution time, then releases through the ordinary payment lifecycle. You can cancel it while it is still `WAITING`.
+
+Use this for a single dated debit, such as an invoice due on a known date. For a standing arrangement that repeats, create a schedule with `POST /v3/schedule/payments` instead, which produces one `PAYMENT` per occurrence under the same authorization.
 
 ## Card vs. bank payments
 
