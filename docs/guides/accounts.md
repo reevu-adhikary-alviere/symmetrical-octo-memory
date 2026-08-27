@@ -52,16 +52,85 @@ The `stage` property tells you where the consumer is in the verification pipelin
 
 ### Status reasons
 
-The `status_reason` field gives you a descriptive reason for the current account status, useful for showing the customer why their verification is held up.
+`status_reason` tells you why an account is sitting where it is. It is the field you build your onboarding UI against: each value maps to one specific thing the customer has to do. `status_reason_description` carries additional free-text detail when there is any.
 
-:::scalar-callout{type="info"}
-A full reference of `status_reason` values is being expanded. See the [V2 API Reference](/api-v2) for the current list.
+The same enum applies to consumer and business accounts.
+
+**The customer has to fix something they submitted**
+
+| Value | What to ask for |
+|---|---|
+| `INVALID_NAME` | Re-collect first and last name |
+| `INVALID_DOB` | Re-collect date of birth |
+| `INVALID_ADDRESS` | Re-collect the address. A PO Box will always fail |
+| `INVALID_SSN` | Re-collect the full SSN |
+| `INVALID_LAST_4_SSN` | Re-collect the last 4 of the SSN |
+
+**The customer has to supply something they have not yet**
+
+| Value | What to ask for |
+|---|---|
+| `REQUIRES_FULL_SSN` | The full 9-digit SSN |
+| `REQUIRES_LAST_4_SSN` | The last 4 of the SSN |
+| `REQUIRES_PHOTO_ID` | A photo ID |
+| `REQUIRES_DOSSIER` | A dossier with documents. See [Identity](/guides/resources/identity) |
+
+**A specific document has to be resubmitted**
+
+These are the values that make it worth parsing `status_reason` instead of showing a generic error. Each one names exactly which document failed, so you can send the customer back to re-shoot one image rather than the whole set.
+
+| Value | Document to recapture |
+|---|---|
+| `REQUIRES_PASSPORT_RESUBMISSION` | Passport |
+| `REQUIRES_ID_DOCUMENT_FRONT_RESUBMISSION` | ID document, front |
+| `REQUIRES_ID_DOCUMENT_BACK_RESUBMISSION` | ID document, back |
+| `REQUIRES_DRIVERS_LICENSE_FRONT_RESUBMISSION` | Driver's license, front |
+| `REQUIRES_DRIVERS_LICENSE_BACK_RESUBMISSION` | Driver's license, back |
+| `REQUIRES_SELFIE_RESUBMISSION` | Selfie |
+| `REQUIRES_PROOF_OF_ADDRESS_RESUBMISSION` | Proof of address |
+| `REQUIRES_PROOF_OF_FUNDS_RESUBMISSION` | Proof of funds |
+| `REQUIRES_MC_DOCUMENT_FRONT_RESUBMISSION` | Mexican consular ID, front |
+| `REQUIRES_MC_DOCUMENT_BACK_RESUBMISSION` | Mexican consular ID, back |
+| `REQUIRES_CERTIFICATE_OF_INCORPORATION_RESUBMISSION` | Certificate of incorporation |
+| `EXPIRED_DOCUMENT` | Whichever document passed its expiry date |
+
+**Nothing for the customer to do**
+
+These are driven by platform activity rather than by onboarding, and there is no resubmission that clears them. Route them to your support or risk queue, not to the customer.
+
+| Value | Meaning |
+|---|---|
+| `TRANSACTION_MANUAL_REVIEW` | A transaction on the account went to manual review |
+| `TRANSACTION_RETURNED` | A transaction on the account was returned |
+| `TRANSACTION_DENY` | A transaction on the account was denied |
+| `CHECK_RETURNED` | A deposited check came back unpaid |
+| `STAGE_VALIDATION` | Validation failed at one of the processing stages |
+| `UNREJECT` | A previously rejected account was reinstated |
+
+:::scalar-callout{type="warning"}
+`status_reason` is only meaningful alongside `status`. The same value can appear under `PENDING_USER` (the customer can still fix it) or under `REJECTED` (they cannot). Always branch on `status` first.
 :::
 
-### Occupations
+### Occupation
+
+Consumer accounts carry an `occupation` object with two fields.
+
+`employment_status` is required, and is one of:
+
+| Value |
+|---|
+| `FULL_TIME` |
+| `PART_TIME` |
+| `SELF_EMPLOYED` |
+| `FREELANCER` |
+| `UNEMPLOYED` |
+| `STUDENT` |
+| `RETIRED` |
+
+`profession` is a string describing the consumer's core professional identity. It is required unless `employment_status` is `STUDENT` or `UNEMPLOYED`.
 
 :::scalar-callout{type="info"}
-Supported occupation values are being expanded here. See the [V2 API Reference](/api-v2) for the current list.
+Valid `profession` values are set per program. Ask your Alviere program manager for the list configured on yours before you build the picker, since submitting a value outside it will fail validation.
 :::
 
 ## Business accounts
@@ -93,9 +162,7 @@ A business account represents a business or organization. Like consumer accounts
 
 ### Status reasons
 
-:::scalar-callout{type="info"}
-The reference of business `status_reason` values is being expanded. See the [V2 API Reference](/api-v2) for the current list.
-:::
+Business accounts use the same `status_reason` enum as consumer accounts. See [Status reasons](#status-reasons) above. In practice the ones you will see on a `BUSINESS` account are `REQUIRES_CERTIFICATE_OF_INCORPORATION_RESUBMISSION`, `EXPIRED_DOCUMENT`, and `STAGE_VALIDATION`; the SSN and driver's-license values surface on the attached `STAKEHOLDER` accounts instead, since that is where individual identity is verified.
 
 ## Account profiles
 

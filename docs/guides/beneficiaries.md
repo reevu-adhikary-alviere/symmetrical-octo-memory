@@ -57,11 +57,35 @@ The same person can exist as both a `LOCAL` and `INTERNATIONAL` beneficiary. For
 
 ## Data quality
 
-Transactions go through validation checks. Incomplete or inaccurate beneficiary data leads to delays or outright rejections. Make sure the data you submit matches the receiving bank's records.
+Incomplete or inaccurate beneficiary data leads to delays or outright rejections, and the data has to match the receiving bank's records, not the customer's memory of them.
+
+There is no single static list of required fields, because requirements change per corridor. Sending USD from the US to MXN in Mexico requires different fields, in different formats, than sending to a bank account in the Philippines. Rather than hardcoding a form per corridor, fetch the requirements:
+
+```bash
+curl -G https://api.snd.alviere.com/fx/field-validations \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d origin_country=USA \
+  -d origin_currency=USD \
+  -d destination_country=MEX \
+  -d destination_currency=MXN
+```
+
+All four query parameters are required. The response returns four objects, each a JSON Schema fragment you can validate against directly or drive a form from:
+
+| Object | Covers |
+|---|---|
+| `beneficiary` | Fields needed to create the beneficiary |
+| `payout_method` | Fields needed to create their payout method |
+| `quote` | Fields needed to request a quote |
+| `transaction` | Fields needed to send |
+
+The schemas carry real constraints, not just field names. For a USA/USD → MEX/MXN individual beneficiary, for example, the response specifies `first_name` and `last_name` at 1-40 characters, `date_of_birth` matched against calendar-aware patterns that reject the 31st of a 30-day month, `phone_number` as E.164 (`^\+[1-9]\d{1,14}$`), and a `state` of 2-4 uppercase letters.
 
 :::scalar-callout{type="info"}
-A full reference of validation requirements is being expanded. See the [V2 API Reference](/api-v2) for current field constraints.
+Call this at build time for the corridors you support and generate your forms from it, rather than calling it on every page load. Re-check when you add a corridor, since requirements are set by the receiving market and can change without an Alviere release.
 :::
+
+Validating client-side against these schemas before you POST is the difference between a customer fixing a typo in the form and a remittance sitting in `MANUAL_REVIEW` for two days.
 
 ## Payout methods
 

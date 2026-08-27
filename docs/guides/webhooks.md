@@ -89,9 +89,92 @@ HMAC-authenticated webhooks include these headers:
 
 #### Verification examples
 
-:::scalar-callout{type="info"}
-Sample HMAC verification code (Node.js, Python, Go, etc.) is being expanded here. For now, follow the three steps above using your language's standard crypto library.
+Verify before you parse. The body you sign must be the **raw bytes off the wire**, not a re-serialized object: `JSON.parse` followed by `JSON.stringify` reorders keys and changes whitespace, and the signature will never match.
+
+**Node.js (Express)**
+
+```js
+const crypto = require('crypto');
+const express = require('express');
+
+const app = express();
+const SECRET = process.env.ALVIERE_WEBHOOK_SECRET;
+const TOLERANCE_SECONDS = 300;
+
+// express.raw, not express.json. You need the exact bytes Alviere signed.
+app.post('/webhooks/alviere', express.raw({ type: 'application/json' }), (req, res) => {
+  const id = req.get('Alviere-Webhook-Id');
+  const timestamp = req.get('Alviere-Webhook-Timestamp');
+  const signature = req.get('Alviere-Signature');
+
+  if (!id || !timestamp || !signature) return res.sendStatus(400);
+
+  // Reject stale deliveries so a captured payload can't be replayed later.
+  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > TOLERANCE_SECONDS) {
+    return res.sendStatus(400);
+  }
+
+  const expected = crypto
+    .createHmac('sha256', SECRET)
+    .update(`${id}.${timestamp}.${req.body.toString('utf8')}`)
+    .digest('hex');
+
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signature);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    return res.sendStatus(401);
+  }
+
+  const event = JSON.parse(req.body.toString('utf8'));
+
+  // Return 200 first, then process. The queue is FIFO and blocks behind you.
+  res.sendStatus(200);
+  enqueue(event);
+});
+```
+
+**Python (Flask)**
+
+```python
+import hmac, hashlib, os, time
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+SECRET = os.environ["ALVIERE_WEBHOOK_SECRET"].encode()
+TOLERANCE_SECONDS = 300
+
+@app.post("/webhooks/alviere")
+def alviere_webhook():
+    webhook_id = request.headers.get("Alviere-Webhook-Id")
+    timestamp = request.headers.get("Alviere-Webhook-Timestamp")
+    signature = request.headers.get("Alviere-Signature")
+
+    if not (webhook_id and timestamp and signature):
+        abort(400)
+
+    if abs(time.time() - int(timestamp)) > TOLERANCE_SECONDS:
+        abort(400)
+
+    # request.get_data() gives the raw body. request.get_json() does not.
+    raw = request.get_data()
+    signing_input = f"{webhook_id}.{timestamp}.".encode() + raw
+    expected = hmac.new(SECRET, signing_input, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(expected, signature):
+        abort(401)
+
+    enqueue(request.get_json())
+    return "", 200
+```
+
+:::scalar-callout{type="warning"}
+Compare signatures with a constant-time function (`crypto.timingSafeEqual`, `hmac.compare_digest`). A plain `==` leaks the correct signature one byte at a time to anyone who can measure your response latency.
 :::
+
+Two things worth building in from the start:
+
+- **Deduplicate on `event_uuid`.** A retried delivery carries the same `event_uuid` with `event_retry` incremented. Storing processed IDs is what keeps a retry from double-crediting a customer.
+- **Acknowledge, then process.** Alviere's queue is FIFO and retries block everything behind them. Return `200` as soon as the signature checks out and do the real work on a queue.
 
 ## Retry policy
 

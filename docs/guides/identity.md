@@ -37,9 +37,43 @@ stateDiagram-v2
 
 ## Document types
 
-:::scalar-callout{type="info"}
-The full reference of supported document types is being expanded. See the [V2 API Reference](/api-v2) for the current list and per-type requirements.
+Each document in a dossier carries a `type`. Which ones you need depends on the profile the account is applying for, so check your program configuration before building the upload UI.
+
+**Consumer identity**
+
+| Type | Notes |
+|---|---|
+| `PASSPORT` | Single image |
+| `ID_DOCUMENT_FRONT` / `ID_DOCUMENT_BACK` | Government ID, both sides required |
+| `DRIVER_LICENSE_FRONT` / `DRIVER_LICENSE_BACK` | Both sides required |
+| `INE_FRONT` / `INE_BACK` | Mexican national voter ID, both sides required |
+| `MC_DOCUMENT_FRONT` / `MC_DOCUMENT_BACK` | Mexican consular ID, both sides required |
+| `SELFIE` | Used for liveness and face match against the ID |
+
+**Supporting evidence**
+
+| Type | Notes |
+|---|---|
+| `PROOF_OF_ADDRESS` | Usually a utility bill or bank statement |
+| `PROOF_OF_FUNDS` | Source-of-funds evidence, typically requested at higher profiles |
+
+**Business (KYB)**
+
+| Type | Notes |
+|---|---|
+| `ARTICLES_OF_INCORPORATION` | Formation document |
+| `CERTIFICATE_OF_GOOD_STANDING` | Issued by the state of incorporation |
+| `ORG_CHART` | Ownership structure |
+| `UBO_FORM` | Ultimate beneficial ownership declaration |
+| `REG_GG_ATTESTATION` | Regulation GG attestation (unlawful internet gambling) |
+
+:::scalar-callout{type="warning"}
+The two-sided types are genuinely two documents. Uploading `ID_DOCUMENT_FRONT` without `ID_DOCUMENT_BACK` leaves the dossier incomplete and it will not move out of `PENDING`.
 :::
+
+Each document also carries `extracted_data`, populated by OCR: `given_name`, `last_name`, `date_of_birth`, and an `address` object. Compare it against what the customer typed to catch transcription errors before verification rejects them.
+
+Documents come back base64-encoded in `file`, but only from `GET /accounts/{account_uuid}/dossiers/{dossier_uuid}`. List responses omit it.
 
 ## Creating a dossier
 
@@ -81,6 +115,8 @@ Not every document type supports real-time verification. Check with your Alviere
 
 ## Document fail reasons
 
-:::scalar-callout{type="info"}
-The full reference of document `fail_reasons` values is being expanded. See the [V2 API Reference](/api-v2) for the current list.
-:::
+When a document fails verification, that document's `fail_reasons` array carries the reasons. It is a free-form list written by the verification provider, not a fixed enum, so do not switch on its contents or show it to the customer verbatim.
+
+Drive your UI off the **account's** `status_reason` instead. That field is enumerated and names exactly which document to recapture (`REQUIRES_DRIVERS_LICENSE_BACK_RESUBMISSION`, `REQUIRES_SELFIE_RESUBMISSION`, and so on). See [Status reasons](/guides/resources/accounts#status-reasons) for the full list and what to ask for on each.
+
+Use `fail_reasons` for your support tooling and logs, where a human reads it.

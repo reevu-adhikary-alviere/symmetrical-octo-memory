@@ -54,16 +54,42 @@ stateDiagram-v2
 
 ## Error reasons
 
-For checks in `ERROR` status, the `status_reason` field tells you what went wrong.
+For checks in `ERROR` status, `status_reason` tells you what an automated rule caught. The split that matters is whether the customer can fix it by recapturing, or whether the deposit is dead.
 
-:::scalar-callout{type="info"}
-The full reference of `status_reason` values for checks is being expanded. See the [V2 API Reference](/api-v2) for the current list.
+**Recapturable. Send the customer back to the camera.**
+
+| Value | What went wrong |
+|---|---|
+| `FRONT_IMAGE` | The front image failed verification |
+| `BACK_IMAGE` | The back image failed verification, most often a missing endorsement |
+| `FRONT_BACK_IMAGE` | Both images failed |
+| `AMOUNT` | The amount read off the check does not match what was submitted |
+
+**Not recapturable. Do not prompt for another photo.**
+
+| Value | What went wrong |
+|---|---|
+| `INTERNAL_DUPLICATE` | This check was already deposited on your program |
+| `EXTERNAL_DUPLICATE` | This check was already deposited somewhere else |
+| `INVALID_DOCUMENT` | The image is not a check |
+| `INVALID_DATA` | The submitted data failed validation |
+| `BLACKLIST` | The check or payor is blocked |
+| `SYSTEM` | An internal processing failure. Retry once, then escalate |
+| `OTHER` | Unclassified. Escalate to support |
+
+:::scalar-callout{type="warning"}
+Both duplicate reasons are a fraud signal, not a user error. Re-prompting for a photo on `INTERNAL_DUPLICATE` or `EXTERNAL_DUPLICATE` invites the customer to try again on a check that has already been paid.
 :::
 
 ## Rejection reasons
 
-For checks in `REJECTED` status, the `rejected_reasons` field tells you why a compliance agent declined the deposit.
+A check in `REJECTED` status was declined by a compliance agent rather than by an automated rule. Two fields carry the outcome:
 
-:::scalar-callout{type="info"}
-The full reference of `rejected_reasons` values is being expanded. See the [V2 API Reference](/api-v2) for the current list.
-:::
+| Field | Contents |
+|---|---|
+| `rejected_reasons` | An array of reason strings. Free-form, not a fixed enum |
+| `rejected_reasons_description` | An array of explanations written by the reviewing agent |
+
+Because neither field is enumerated, do not branch your application logic on their contents and do not surface them to the customer verbatim. Treat `REJECTED` as terminal for that deposit, tell the customer the deposit could not be accepted, and route the reason strings to your support queue where a person reads them.
+
+`ERROR` and `REJECTED` are not interchangeable. `ERROR` came from an automated rule and often means recapture; `REJECTED` came from a human and never does.
