@@ -219,7 +219,6 @@ See [ACH returns and NOCs](/guides/sandbox-testing/test-payments#ach-returns-and
 | Endpoint | Status | Use |
 |---|---|---|
 | `POST /v3/ach/debit` | Available | Debit a verified bank account. Requires `payment_method_uuid` and `wallet_uuid`, plus `amount`, `currency`, and a unique `external_id`. A duplicate `external_id` returns `409` with the existing `PAYMENT`. |
-| `POST /v3/ach/credit` | In development | Push funds to an external bank account. Tracked separately from payment acceptance. |
 | `POST /v3/instant/transfer` | Available | Send an instant payment. See [Instant Payments](/guides/transactions/instant-payments). |
 | `POST /v3/instant/request` | Available | Request a payment (RfP) from a payer. See [Instant Payments](/guides/transactions/instant-payments). |
 

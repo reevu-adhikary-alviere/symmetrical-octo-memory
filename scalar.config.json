@@ -506,10 +506,45 @@
               "title": "Card Issuing",
               "mode": "nested",
               "children": {
+                "/card-issuing-overview": {
+                  "type": "page",
+                  "filepath": "docs/guides/card-issuing-overview.md",
+                  "title": "Overview"
+                },
                 "/cards": {
                   "type": "page",
                   "filepath": "docs/guides/cards.md",
                   "title": "Issued Cards"
+                },
+                "/card-operations": {
+                  "type": "page",
+                  "filepath": "docs/guides/card-operations.md",
+                  "title": "Card Operations"
+                },
+                "/physical-cards": {
+                  "type": "page",
+                  "filepath": "docs/guides/physical-cards.md",
+                  "title": "Physical Cards"
+                },
+                "/merchant-controls": {
+                  "type": "page",
+                  "filepath": "docs/guides/merchant-controls.md",
+                  "title": "Merchant Controls"
+                },
+                "/digital-wallets": {
+                  "type": "page",
+                  "filepath": "docs/guides/digital-wallets.md",
+                  "title": "Digital Wallets"
+                },
+                "/card-security": {
+                  "type": "page",
+                  "filepath": "docs/guides/card-security.md",
+                  "title": "Card Data and PCI"
+                },
+                "/gift-cards": {
+                  "type": "page",
+                  "filepath": "docs/guides/gift-cards.md",
+                  "title": "Gift Cards"
                 },
                 "/incentives": {
                   "type": "page",

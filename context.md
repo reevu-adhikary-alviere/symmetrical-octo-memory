@@ -5,6 +5,16 @@ from git history, the standing feedback rules, and an audit of the current tree 
 2026-08-29. Everything in "Open work" was verified against the canonical specs, not
 recalled.
 
+## ACTIVE WORK — read before picking anything up
+
+An agent session is working through the remaining "Open work" list right now
+(2026-08-29, session `ses_fbaaaf732ffejTUDLdgKOf9NR8`), in the order this file's
+"Suggested order" gives: **6 → 4 → 5 → 7**. Items 1-3, 8, and 9 are done and
+uncommitted; do not redo them. The working tree has uncommitted changes from
+this and earlier sessions — do not revert or "clean up" them, and re-read
+`git status` / `git log` before trusting any part of this file, which may be
+stale relative to the tree.
+
 ## What this repo is
 
 A Scalar GitHub-sync docs site for the Alviere HIVE platform. **This is the new
@@ -33,7 +43,8 @@ of most of the defects found so far.
 
 ## Standing rules
 
-Four rules carried over from earlier sessions. They are also in the memory files.
+Seven rules carried over from earlier sessions. They are also in the memory files. Rules 6 and
+7 sit after the Architecture section because they depend on it.
 
 1. **Verify every API example against the canonical spec.** The ported guides
    contain fabricated endpoints, fields, and mechanisms. Grep before writing.
@@ -119,11 +130,29 @@ Searching them: `omad` matches HashiCorp **Nomad** in every `_ops_` directory an
    a real source exists, use it rather than inventing field names and payloads, and a
    forward-looking page still has to say something real.
 
-   The house pattern for this is already in `pay-by-bank.md` — an endpoint table with
-   a **Status** column (`Available` / `In development`). It lets unshipped endpoints
-   sit beside shipped ones without an integrator building against them by accident.
-   Default to that shape, and treat it as a suggestion to them rather than a
-   condition.
+   Correction (2026-08-29, Reevu): do NOT mark endpoints "In development" in the docs.
+   These readers are enterprise buyers, and an "In development" line reads as a roadmap
+   commitment they will hold us to. Document only what ships. Do not list an unshipped
+   endpoint, even to warn integrators off it — its absence is the warning. The
+   `pay-by-bank.md` Status-column pattern was wrong for the same reason and was corrected
+   the same day (the `/v3/ach/credit` "In development" row is gone). When a capability
+   genuinely does not ship, leave it out and,
+   where a reader would otherwise expect it, point them to their program manager without
+   naming a timeline.
+
+7. **The spec defines; internal repos only describe behaviour.** Take field names, enums,
+   request shapes, and paths from `alviere-openapi.yml`. Microservices sit behind a sierra
+   adapter, so their constants and validation are not the public contract — reading a value
+   set out of `pidgeot` and publishing it as documentation is how rule 1 gets violated while
+   feeling rigorous. Use them to understand what a feature *does*, then write it in public
+   terms.
+
+   **Never name providers.** Not the card processor, not the bank, not the embosser, and not
+   the internal service names in the map above. Which provider sits behind a product is a
+   business disclosure, and provider names date fast. Internal Confluence and service repos
+   name them freely — that is a source, never a phrasing to copy. Reevu, 2026-08-29.
+
+   Where a mechanism cannot be described without naming one, ask.
 
 ## Sources of truth
 
@@ -162,6 +191,7 @@ Content correctness:
 - ACH reframed as a rail rather than a transaction type (`99e008b`).
 - Mandates reframed as an Alviere API rather than the reader's problem (`ab4f6d4`).
 - `swagger_3` synced from canonical (`362748a`).
+- Card Issuing rebuilt, 2 pages to 9, 571 words to 8,573 (item 8, uncommitted).
 
 Verified clean right now: no placeholder callouts, no broken internal guide links
 (36 cross-links all resolve), every markdown file under `docs/guides/` is wired
@@ -178,29 +208,32 @@ Fixed on 2026-08-29, in the working tree, not yet committed.
   Webhooks. `payment-processing` had neither a tag nor a single guide equivalent
   and was dropped. All 13 remaining V2 tags and all 8 V3 tags verified against the
   specs the site actually renders.
-- **`ach.md`.** The push row now points at `POST /wallets/{wallet_uuid}/withdraw`,
+- **`ach.md`.** The push row points at `POST /wallets/{wallet_uuid}/withdraw`,
   which is the real push path and already what the page's own `WITHDRAW_FUNDS` row
-  said. Added a line marking `/v3/ach/credit` as in development, so the page agrees
-  with `pay-by-bank.md` instead of contradicting it.
+  said. The `/v3/ach/credit` "in development" line was removed on 2026-08-29 under
+  the enterprise-docs correction (see item 8 rule 6), along with the matching
+  "In development" row in `pay-by-bank.md`. Docs now describe only what ships.
 - **`wire.md`.** Rewritten, 85 to 591 words, inbound only. See item 6b.
 - **`transactions-overview.md` and `ach.md`.** Both claimed 47 transaction types,
   a count taken from a spec enum now known to be missing at least one. Softened
   rather than renumbered.
 
-### 4. Four pointer-only pages
+### 4. ~~Four pointer-only pages~~ DONE
 
-These pass the no-placeholder grep because they avoid the banned phrasing, but
-they are the same thing: a heading whose body is a link to the API reference.
+Rewritten 2026-08-29, uncommitted. All four are now spec-grounded rail pages with
+worked request bodies, field tables, and status/late-arrival behaviour:
 
-| Page | Words |
-|---|---|
-| `docs/guides/cash-loading.md` | 115 |
-| `docs/guides/internal-transfers.md` | 116 |
-| `docs/guides/card-pull.md` | 120 |
-| `docs/guides/global-money-transfers.md` | 123 |
+| Page | Was | Now |
+|---|---|---|
+| `cash-loading.md` | 115 | 435 words. Barcode generate + store search endpoints, barcode limits/expiry, statuses from the mock-services source |
+| `internal-transfers.md` | 116 | 379 words. `POST /wallets/{uuid}/send`, P2P program prerequisite, idempotency, when to use which rail |
+| `card-pull.md` | 120 | 411 words. `POST /wallets/{uuid}/load` with a card PM, transit-bucket settlement timing, `LOAD_PULLBACK` |
+| `global-money-transfers.md` | 123 | 592 words. Quote → remittance flow, quote expiry, compliance fields, cash pickup, `global_payments_details` |
 
-Each is a transaction rail with real mechanics to document: timing, limits,
-reversal and return behaviour, which statuses the rail can produce. Rule 4 applies.
+Every claim sourced from `docs/swagger_1.yaml` (now synced), the mock-services
+source, or the test guides. All internal links resolve against `scalar.config.json`.
+`transaction_purpose` documented as free-form/corridor-specific per rule 4 — the
+spec enumerates `source_of_funds` but not purposes, so no purpose list was invented.
 
 ### 5. `changelog.md` is a placeholder
 
@@ -210,32 +243,13 @@ That is the exact pattern rule 4 bans, and the page is in the header nav, so it 
 one of three top-level destinations. Either seed it from real release history or
 pull it out of the header.
 
-### 6. Sync `swagger_1` from canonical, straight copy
+### 6. ~~Sync `swagger_1` from canonical, straight copy~~ DONE
 
-`docs/swagger_1.yaml` is the V2 spec the site renders. It is behind canonical
-`6.6.16` by 8 paths: `/payment-methods/bank-accounts/{payment_method_uuid}`,
-`/transactions/limits`, `/v3/cards/capture`, `/v3/cards/debit`, `/v3/cards/push`,
-`/v3/cards/reverse`, `/v3/transactions`, `/v3/transactions/{transaction_uuid}`.
-Re-diff enums after syncing, they drift.
-
-A straight copy is correct. An earlier draft of this file said to merge and
-preserve ten "… in Wallet" card summaries from the local copy. That was wrong.
-Those summaries are not local improvements, they are the *old* canonical text.
-Reevu simplified them upstream in `c38e3f9` on 2026-08-29, deliberately. Re-applying
-them would revert that.
-
-Two consequences of syncing, both wanted:
-
-- `POST /accounts/{account_uuid}/issued-cards/non-reloadable` is marked
-  `x-internal: true` in `c38e3f9`, so it drops out of the rendered reference. It
-  must also drop out of any guide — see item 8.
-- Canonical carries card payment examples the repo copy has none of (AUTHCAP,
-  AUTH-only, 3DS challenge, issuer decline, partial capture, full and partial
-  reversal, push-to-card payouts) plus webhook payload examples for nine entity
-  types.
-
-`docs/swagger_2.yaml` is byte-identical to `swagger_1` and referenced by nothing.
-Delete it.
+Done 2026-08-29, uncommitted. `swagger_1.yaml` is a byte copy of canonical
+`6.6.16`; all 8 missing paths verified present; `non-reloadable` confirmed
+`x-internal: true` (line 5977) so it drops from the rendered reference as the
+card pages assume. `swagger_2.yaml` deleted; no references remain anywhere in
+the repo.
 
 ### 6b. Wire is receive-only, and the spec does not say so
 
@@ -292,109 +306,152 @@ own task, not a guess.
 - `image-removebg-preview.png` is untracked in the working tree. Either commit it
   somewhere deliberate or remove it.
 
-### 8. Card Issuing is two pages covering seventeen endpoints
+### 8. Card Issuing — done, uncommitted
 
-The thinnest section relative to its API surface. Canonical V2 exposes 17 paths
-tagged `Card issuance`. The section documents them with two pages, 571 words
-total, and **zero API examples** — `cards.md` has one code block (a mermaid
-diagram), `incentives.md` has none. Across all 46 guides, exactly one file
-(`activity.md`) references an issued-cards endpoint, and only in passing.
+Rewritten on 2026-08-29. Two pages, 571 words, zero API examples became nine pages,
+8,573 words, with worked request and response bodies on every public endpoint.
 
-Both pages are reference tables with no mechanism. `cards.md` lists `FROZEN` as a
-status and `PREPAID_NON_RELOADABLE` as a card type, but never says how to freeze a
-card or how to issue a non-reloadable one. The reader learns the vocabulary and
-cannot act on any of it.
-
-Verified absent from every guide in the repo:
-
-| Capability | Spec surface | Guide coverage |
+| Page | File | Words |
 |---|---|---|
-| Digital wallet provisioning | `PUT .../mobile-wallet` — Apple Pay, Google Pay, Samsung Pay | **None.** Zero mentions of any wallet provider anywhere |
-| Merchant allow-lists | `auth_rules.allowed_merchants` — `allowed_merchant_ids` / `allowed_merchant_names` | None. **Live**, see below |
-| Spend limits | `auth_rules.limits[]` — `ROLLING`/`DAILY`/`MONTHLY`/`ANNUAL`, MCC group, MCC list, or merchant ID | None. **Not live — do not document**, see below |
-| Freeze / unfreeze | `PUT .../freeze`, `PUT .../unfreeze` | Status table only |
-| PIN | `PUT /issued-cards/{card_uuid}/pin`, `auto_pin_generation` | None |
-| Reissue / replace | `POST /issued-cards/{card_uuid}/reissue_replace` | One line in `activity.md` |
-| Card data / PCI | `GET .../sensitive-data` — returns full PAN and CVV, restricted to the Alviere SDK or preauthorized clients | None. This one matters: nothing warns integrators off calling it from their own backend |
-| Physical fulfilment | `shipping_address`, `shipping_method` (`DEFAULT`/`EXPRESS_FEDEX`), `name_on_card`, `carrier_id`, `carrier_message`, `emboss_id` | Statuses only |
-| Gift cards | `initial_balance` (gift only, 400 otherwise) | Type table only |
-| Card service fees | `service_fees[]` — activation fee, always `DEDUCT` | None |
-| Attaching incentives at issue | `incentives` — `rule_uuids` or inline `incentive_rules` | `incentives.md` never mentions it |
+| Overview | `card-issuing-overview.md` | 1,010 |
+| Issued Cards | `cards.md` | 1,266 |
+| Card Operations | `card-operations.md` | 1,156 |
+| Physical Cards | `physical-cards.md` | 1,266 |
+| Merchant Controls | `merchant-controls.md` | 598 |
+| Digital Wallets | `digital-wallets.md` | 861 |
+| Card Data and PCI | `card-security.md` | 1,072 |
+| Gift Cards | `gift-cards.md` | 776 |
+| Incentives | `incentives.md` | 568 |
 
-**`pidgeot` settles what these features do**; sierra settles what customers call.
-Pidgeot's 16 routes independently confirm every capability the guides omit — PIN,
-replace, freeze, unfreeze, activate, sensitive-data, `/wallet` (push provisioning),
-non-reloadable, and incentive rules all ship. Read pidgeot for behaviour, then write
-every path and payload in the public shape. An earlier draft of this file said to
-write the pages against pidgeot directly. That was wrong and would have published
-internal paths — see Architecture above.
+All nine are wired into `scalar.config.json` and `guides-mega-menu.js`, and every
+internal link across all 46 guides still resolves. `activity.md` was corrected in the
+same pass: it pointed at `GET /issued-cards`, which is `x-internal`, and now points at
+the wallet-scoped path.
 
-Proposed shape, 2 pages to roughly 8:
+#### The public surface is 13 operations, not 17
 
-1. **Overview** — what issuing is, program setup, `product_id`, virtual vs physical.
-2. **Issued Cards** — keep the lifecycle diagram and status table, add the three
-   create paths, the `owner` oneOf (account vs wallet), `external_id` idempotency,
-   and list/get/update/cancel.
-3. **Card operations** — activate, freeze, unfreeze, PIN, reissue vs replace and
-   what happens to the PAN, cancel.
-4. **Physical cards** — shipping, emboss, carrier, and the
-   `SET_TO_EMBOSS` → `READY_TO_ACTIVATE` → `RETURNED_MAIL` path.
-5. **Merchant controls** — the `allowed_merchants` allow-list only. Not limits.
-6. **Digital wallets** — push provisioning, the `SUCCESS`/`FAILED` result, and
-   handing `provisioning_request_data` to the mobile SDK.
-7. **Card data and PCI** — the SDK boundary. What you may hold and what you may not.
-8. **Gift cards** — `initial_balance` and why the field 400s on other product
-   types. Do **not** document
-   `POST /accounts/{account_uuid}/issued-cards/non-reloadable`; it is
-   `x-internal: true` as of `c38e3f9`. `PREPAID_NON_RELOADABLE` stays a card type
-   in the table, but there is no public endpoint to create one that way.
+The earlier count in this file was wrong. Canonical V2 has 17 operations tagged
+`Card issuance` across 13 path keys, and **four are `x-internal: true`**:
 
-`incentives.md` stays, and gains the cross-link to attaching rules at issue time.
-
-**Spend limits are not live.** `auth_rules.limits[]` is in the spec for optics, not
-because it ships. Do not write it up, and do not let it back in on the strength of
-being in the spec — this is the case that produced standing rule 5.
-
-The live `ISSUED_CARD` webhook payload in
-`alviere-docs/scalar-docs/guides/webhook/issued-card-event.md` corroborates it. That
-payload is a real production event and dumps the entity in full: `auth_rules`,
-`incentive_rules`, `blocked`, `brand`, `card_expiration`, `custom_fields`,
-`emboss_id`, `external_id`, `initial_balance`, `last_4`, `metadata`, `pin_set`,
-`product_id`, `service_fees`, `shipping_address`, `status`, `status_reason`, `type`.
-Its `auth_rules` object contains exactly one key, `allowed_merchants`. There is no
-`limits` key anywhere in it.
-
-So the split is:
-
-| Piece | Verdict |
+| Internal operation | |
 |---|---|
-| `auth_rules.allowed_merchants` | Live. Present in the production webhook payload. Document it |
-| `auth_rules.limits[]` | Not live. Absent from the payload, confirmed as optics. Leave it alone |
-| Account-level rolling and daily limits | Live, but a different feature. Real error codes back it: `430106` daily, `430107` rolling period, `430110`, `430111`. These are Account limits, not card limits — do not merge the two |
+| `POST /issued-cards` | Create Card |
+| `GET /issued-cards` | List Cards |
+| `GET /issued-cards/{card_uuid}` | Get Card details |
+| `POST /accounts/{account_uuid}/issued-cards/non-reloadable` | Create non-reloadable |
 
-The same payload also settles part of the rest of the proposal. `blocked` and
-`pin_set` are real fields on a live card, so freeze/unfreeze and PIN are shipped
-and safe to document. `shipping_address`, `custom_fields.shipping_method`,
-`emboss_id`, `service_fees`, and `initial_balance` are all present too, which
-covers pages 4, 8, and the service-fee material.
+Two consequences for the old plan, both of which it got wrong:
 
-**Pages 6 and 7 are confirmed live.** Push provisioning
-(`PUT .../mobile-wallet`, Apple/Google/Samsung Pay) and `GET .../sensitive-data`
-both ship — confirmed by Reevu on 2026-08-29. They are absent from every live
-signal only because the live site never covered them, not because they don't
-exist. Write them up.
+- **There is one public create path**, `POST /wallets/{wallet_uuid}/issued-cards`. Not three.
+- **The `owner` oneOf is not public.** It lives on the `issued-card-request` schema, which
+  only the internal `POST /issued-cards` uses. The public create takes the wallet from the
+  path and has no `owner` field at all.
 
-Scope of the optics problem: **spend limits are the only known case.** The rest of
-the Card issuance surface is real. Rule 5 is a prompt to check when something looks
-aspirational, not a reason to doubt the spec by default.
+`GET .../image` is public, was absent from the old capability table, and is documented in
+`physical-cards.md`.
 
-One upstream bug still open in canonical V2, worth reporting to `alviere-openapi`:
-`PUT .../issued-cards/{card_uuid}/mobile-wallet` has `summary: Get Card image`,
-copy-pasted from the endpoint below it. The `operationId` and body are correct.
+#### Sources, and the rule that came out of this
 
-(The duplicate `Create Card` summaries flagged earlier are not a bug. `c38e3f9`
-made them deliberately, and marking non-reloadable internal leaves two public
-create operations that genuinely are near-duplicates.)
+**The spec defines; internal repos only describe behaviour.** Reevu stopped the first
+draft on 2026-08-29 because it was taking field semantics from `pidgeot`. Pidgeot sits
+behind a sierra adapter, so its constants are not the public contract. Everything sourced
+that way was stripped and re-grounded on `alviere-openapi.yml`:
+
+- `status_reason` value tables (`INVALID_SHIPPING_ADDRESS`, `DEPLETED_FUNDS`, and the rest)
+  came out. The spec has `status_reason` as a free-form string, so the pages now say so and
+  send readers to `status` for logic, per rule 4.
+- Per-genre wallet card caps, the prepaid one-card limit, and the replace-cancels-the-old-card
+  matrix all came out.
+
+That produced **standing rule 7** below. The other half of it — never name providers — is
+Reevu's, confirmed the same day.
+
+#### Facts that exist only in Reevu's Confluence
+
+Not in any spec, repo, or the live site. Recorded here because they are otherwise lost, and
+because five of them corrected drafts that would have shipped wrong.
+
+**Genres are tangibility, not delivery channel:**
+
+| Genre | Meaning |
+|---|---|
+| `PHYSICAL` | Plastic with the number printed on it |
+| `VIRTUAL` | Exists only as an image in an app, on a website, or in an email |
+| `DIGITAL` | Digital-first. Electronic representation of a physical card, **same PAN, CVV, expiry** |
+
+`DIGITAL` is not a mobile wallet. An early draft defined it as "issued for digital wallet
+use", which collides with push provisioning and is simply wrong. Virtual and digital cards
+are created `ACTIVE`; only physical goes through emboss and shipping.
+
+**`GIFT` vs `PREPAID_NON_RELOADABLE` is a funding-source difference**, not a reload count.
+Gift is loaded from program funds via the `CARD_FUNDING` treasury vault. Non-reloadable
+prepaid is loaded once with the consumer's own funds.
+
+**PIN requires `ACTIVE`.** The spec's `READY_TO_ACTIVATE` description says "Ready for
+activation and PIN setup", which is misleading — activation has to happen first.
+
+**`auto_pin_generation: true` is not sufficient.** It also needs `auto_pin_generation_length`
+configured on the card product. Without it no PIN is generated and **the create still
+succeeds**, leaving `pin_set: false` and no error. This silent failure is the most valuable
+line on the PCI page.
+
+**PINs are not stored or logged anywhere**, generated ones included. There is no read-back
+and no recovery, so "forgot my PIN" is a set-a-new-PIN flow. An earlier draft claimed the
+cardholder retrieves a generated PIN through the SDK. Invented, now removed.
+
+**Physical cards also activate by phone**, through the card program's activation line, and
+Alviere moves the card to `ACTIVE` on the callback. So a card reaches `ACTIVE` without the
+integrator calling anything. The pages tell readers to treat `ISSUED_CARD` as the source of
+truth rather than their own API call.
+
+**`shipped_at` is not a dispatch date.** It records when the card went to the embossing
+partner. There is no reliable shipment tracking. The spec's own description ("Date when
+physical card was shipped") is misleading and an early draft copied it.
+
+**Shipping coverage** is any valid US address plus AS, GU, MP, PR, VI, passed in `state`
+with `country: USA`.
+
+**Brands are Visa and Mastercard only.**
+
+#### Held to the standing rules
+
+- Spend limits (`auth_rules.limits[]`) appear nowhere. Rule 5 held.
+- The four `x-internal` operations are undocumented.
+- No placeholder callouts.
+- Account-level limits appear exactly once, in `merchant-controls.md`, explicitly flagged as
+  a different feature from card limits so the two do not get merged.
+- No provider or internal service names.
+
+#### The mobile-wallet summary bug is fixed
+
+`PUT .../mobile-wallet` now reads `summary: Add Card to digital wallet` in both canonical
+and `docs/swagger_1.yaml`. The item that said to report it upstream is closed.
+
+#### Open, needs Pedro and Reevu
+
+1. **`action: REISSUE` does not ship — resolved (2026-08-29).** Sierra rejects it at
+   validation (`internal/v20211118/entities/sierra_requests_cards_issued.go:738`, with a
+   TODO), though the spec enumerates it. Per Reevu's enterprise-docs correction, REISSUE is
+   now left out entirely rather than marked "In development": the operations table, the
+   `### Reissue` section, the `activity.md` reissue column, and the "reissue" operation
+   labels and Related links across `cards.md` and `card-issuing-overview.md` are gone.
+   `reissue` survives only inside the literal endpoint path `reissue_replace`. Nothing to
+   confirm; noted here as the record of what changed.
+2. **`PATCH` accepts `auth_rules` but the spec's PATCH body omits it.** Sierra's
+   `UpdateCardIssuedRequest` carries it and forwards it to the gateway, so changing a
+   merchant allow-list after issuance works. It is left out of `merchant-controls.md` rather
+   than documenting something the rendered API reference contradicts. Fix the spec, then add
+   the section.
+3. **`test-cards.md` AMEX/DISCOVERY note — stale, closed (2026-08-29).** Verified: the
+   current `test-cards.md` (Card Issuance Testing) already lists only Visa and Mastercard
+   (`firstName` = `Mestre`/`Vision`). No AMEX or DISCOVERY there. The AMEX and DISCOVER test
+   PANs are in `test-payments.md` (Payment Method / acquiring testing), where all four
+   networks are legitimately valid, and those stay untouched. The shared `brand` enum in
+   `alviere-openapi.yml` (VISA, MASTERCARD, AMEX, DINERS, DISCOVER, JCB, UNIONPAY, …) is a
+   card-network type used across acquiring, card-pull, and transactions; issuance narrows it
+   to Visa/Mastercard at the product level, so the broad enum is not a contradiction to fix.
+   Swagger enums and `alviere-docs` left untouched. No docs change needed.
+
 
 ### 9. Instant payments — done, uncommitted
 
@@ -415,12 +472,80 @@ it is the most expensive mistake available on this page.
 Cross-linked in from `pay-by-bank.md`, `transactions-overview.md`, `api-versions.md`,
 and `ach.md`, so it is reachable without the nav.
 
+## Notes from Pedro conversation
+
+The transcript is mostly personal conversation, company venting, and unverified product
+strategy. It is not a source of API truth. The applicable parts are:
+
+### Audience and content posture
+
+- Pedro explicitly sees the API reference and the guides as both a developer tool and a sales
+  / technical-evaluation surface. The evaluator may be an enterprise architecture team
+  or a CFO's technical staff, not a self-serve founder. Guides therefore need to make
+  the product's scope, capabilities, boundaries, and organization obvious on a first
+  pass; do not optimize only for “generate an API key and try curl.”
+- The product story is simplification: HIVE abstracts financial-services complexity for
+  non-financial institutions. Explain the stable public primitives and their observable
+  boundaries, without exposing provider/adapter internals or pretending an enterprise
+  integration is one click.
+- Do not turn this into a generic enterprise-architecture template. Avoid sections such
+  as “what HIVE handles / what you build”: they assume the customer's systems, teams,
+  and ownership model. Describe capabilities, prerequisites, inputs, outputs, and
+  integration choices neutrally; use conditional language where customer architecture
+  can vary.
+- For Payment Acceptance, lead with the buyer's job and the money flow—who pays, where
+  funds settle, fees, settlement/reconciliation, returns, and what happens next. This
+  supports rules 2–4. Pedro's mention of yield and fee revenue was a marketing/content
+  prompt, not verified API behavior; do not add either as a fact without a source.
+
+### API version strategy — unresolved
+
+Pedro's preference was to make V3 look complete to a new customer: preserve V2 for
+existing integrations while exposing V3 routes for unchanged capabilities, potentially
+through a Sierra mapper/transformer. He also questioned path parameters on POST/create
+and suggested body-owned identifiers for future V3, while retaining resource paths for
+GET/PATCH/PUT/DELETE.
+
+This is a product/architecture proposal, not current behavior. Do not add V3 paths,
+claim parity, or change `api-versions.md` until product and engineering approve it and
+Sierra/specs implement it. Current V2/V3 docs remain the truth. If a future surface is
+intentionally unshipped, use the status-table pattern in rule 6.
+
+### Enterprise embedded integrations — discovery only
+
+- The conversation positions HIVE as the payment/money-movement layer inside systems
+  such as Oracle HCM or NetSuite, not as the system that owns payroll calculation,
+  tax/labor rules, or the whole AP/AR workflow. The payroll claims were Pedro's read
+  and remain unverified. There is no Oracle/payroll guide here; verify with product and
+  the customer before publishing.
+- A web SDK/embedded UI and internal wallet-to-wallet settlement may be future product
+  packaging. The chat raised global beneficiaries, sender/receiver metadata,
+  parent-child transactions, and fee placement as design questions, not a settled
+  public contract. Do not document or alter schemas from this conversation alone.
+- The generic payment-processing checklist Pedro named—authorization, capture,
+  zero-dollar AVS, refunds, 3DS, and settlement-file processing—is a candidate content
+  checklist only. Verify each item against public endpoints and live status, and
+  describe it without provider names.
+
+### Safety and delivery
+
+- The service-fee example is a regulatory-risk prompt, not proof of an existing limit.
+  Verify whether program-configured fee caps are enforced and which public error supports
+  them before documenting guardrails.
+- AI can accelerate drafts and implementation; it does not lower the verification bar.
+  Keep TX/ledger and payment state changes expert-reviewed, and keep docs examples
+  spec/live-signal verified.
+
 ## Suggested order
 
 Ship 1, 2, and 3 first. They are wrong, not merely thin, and 1 is a five-minute
 fix. Then 6 (sync the spec, delete the duplicate) so later content work is checked
 against current truth.
 
-Then 8, now the largest remaining gap and the one a reader is most likely to hit, since card issuing is a headline product with a real
-API behind it and almost no prose. 4 and 5 are the same kind of work at smaller scale, so folding
-them into the same pass makes sense. 7 last.
+8 is done. 4 and 5 are the same kind of work at smaller scale — four pointer-only rail pages
+and the changelog — and are now the largest remaining content gap. 7 last.
+
+Item 6 is worth doing before 4, for the same reason it was worth doing before 8: the four
+rail pages should be checked against a current spec. Note that syncing `swagger_1` also
+drops the non-reloadable create endpoint out of the rendered reference, which the card pages
+already assume.

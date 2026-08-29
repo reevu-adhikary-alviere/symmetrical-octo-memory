@@ -31,8 +31,8 @@ There is no `ACH` transaction type, and looking for one is the most common recon
 | `REFUND` | Either | A refund routed back over ACH |
 | `RETURN` | Reversal | The payer's bank returning a pull |
 
-A dedicated `POST /v3/ach/credit` is in development. Until it ships, withdraw is
-the push path, and it is the one `WITHDRAW_FUNDS` above records.
+Push works through `POST /wallets/{wallet_uuid}/withdraw`, which is what
+`WITHDRAW_FUNDS` above records.
 
 Two consequences worth building around:
 

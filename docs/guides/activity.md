@@ -56,35 +56,26 @@ A denied authorization is a card transaction the network asked about and Alviere
 
 This is the feed behind "why was my card declined?" in your app, and behind the support screen your agents open when a customer calls about it. Polling it after a failed purchase is usually faster than waiting for the customer to describe what happened.
 
-## Card replacement and reissuing
+## Card replacement
 
-Both operations come through `POST /issued-cards/{card_uuid}/reissue_replace` and both land here as `CARD_REPLACEMENT` activities. The difference is what happens to the PAN.
+A replacement comes through `POST /issued-cards/{card_uuid}/reissue_replace` and lands here as a `CARD_REPLACEMENT` activity. See [Card Operations](/guides/cards/card-operations) for the request itself.
 
-| | Replacement | Reissue |
-|---|---|---|
-| New PAN | Yes | No, same PAN |
-| Expiry and CVV | New | New |
-| Recurring payments on the card | Break. The merchant has to be updated | Keep working |
-| Typical trigger | Loss, theft, confirmed or suspected fraud | Card nearing expiry, damaged, or a security refresh |
-
-Issuing a new PAN is the point of a replacement: it stops continued unauthorized use. That is also why it breaks every card-on-file at every merchant, which is worth telling the cardholder before you do it.
+A replacement issues a new PAN, with a new expiry and CVV. Because the number changes, prompt the cardholder to update anywhere they have saved the old card. Issuing a fresh PAN is the point of a replacement, and it is the right operation for a lost, stolen, or compromised card.
 
 `type_details.card_replacement_details` carries:
 
 | Field | Use |
 |---|---|
 | `card_uuid` | The card being replaced |
-| `replacement_card_uuid` | The new card. Present on replacement, absent on reissue |
+| `replacement_card_uuid` | The new card |
 | `reason` | Why the card was replaced |
 | `reason_description` | Free text, populated when `reason` is `OTHER` |
 | `waive_fees` | Whether the replacement fee was waived |
 | `waive_fees_reason`, `waive_fees_description` | Why it was waived |
 
-The presence or absence of `replacement_card_uuid` is the reliable way to tell a replacement from a reissue in your own processing.
-
 ## Card created
 
-A `CARD_CREATED` activity fires when a card is issued on the account. It is the cheapest way to keep your own card list in sync without polling `GET /issued-cards`.
+A `CARD_CREATED` activity fires when a card is issued on the account. It is the cheapest way to keep your own card list in sync without polling `GET /wallets/{wallet_uuid}/issued-cards`.
 
 `type_details.card_created_details` carries:
 

@@ -75,7 +75,14 @@
         {
           title: 'Card Issuing',
           links: [
+            { label: 'Overview', href: '/guides/cards/card-issuing-overview' },
             { label: 'Issued Cards', href: '/guides/cards/cards' },
+            { label: 'Card Operations', href: '/guides/cards/card-operations' },
+            { label: 'Physical Cards', href: '/guides/cards/physical-cards' },
+            { label: 'Merchant Controls', href: '/guides/cards/merchant-controls' },
+            { label: 'Digital Wallets', href: '/guides/cards/digital-wallets' },
+            { label: 'Card Data and PCI', href: '/guides/cards/card-security' },
+            { label: 'Gift Cards', href: '/guides/cards/gift-cards' },
             { label: 'Incentives', href: '/guides/cards/incentives' },
           ],
         },
