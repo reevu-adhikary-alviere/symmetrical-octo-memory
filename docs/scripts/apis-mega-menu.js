@@ -4,9 +4,12 @@
     v2: { label: 'V2', base: '/api-v2' },
   };
 
-  // Tags must match the non-internal tags declared in docs/swagger_3.yaml.
-  // Beneficiaries and Webhooks carry x-internal: true there, so they have no
-  // rendered tag page and are linked to their guides instead.
+  // Every `tag` below must match a non-internal tag declared in the spec that
+  // version renders: docs/swagger_3.yaml for V3, docs/swagger_1.yaml for V2.
+  // A tag that does not exist there renders a 404, so entries with no matching
+  // tag are linked to their guide with `href` instead. In V3 that is
+  // Beneficiaries and Webhooks, both x-internal: true. In V2 it is Activities
+  // and Cash Loading, which have guides but no tag of their own.
   var MENU_V3 = [
     {
       title: 'Payment Acceptance',
@@ -44,7 +47,7 @@
         { label: 'Accounts', tag: 'accounts' },
         { label: 'Wallets', tag: 'wallets' },
         { label: 'Dossiers', tag: 'dossiers' },
-        { label: 'Activities', tag: 'activities' },
+        { label: 'Activities', href: '/guides/resources/activity' },
       ],
     },
     {
@@ -52,7 +55,6 @@
       links: [
         { label: 'Transactions', tag: 'transactions' },
         { label: 'Payment Methods', tag: 'payment-methods' },
-        { label: 'Payment Processing', tag: 'payment-processing' },
         { label: 'Beneficiaries', tag: 'beneficiaries' },
         { label: 'Global Payments', tag: 'global-payments' },
         { label: 'Treasury Management', tag: 'treasury-management' },
@@ -63,7 +65,7 @@
       links: [
         { label: 'Card Issuance', tag: 'card-issuance' },
         { label: 'Check Deposits', tag: 'check-deposits' },
-        { label: 'Cash Loading', tag: 'cash-loading' },
+        { label: 'Cash Loading', href: '/guides/transactions/cash-loading' },
         { label: 'Service Fees', tag: 'service-fees' },
         { label: 'Rewards & Incentives', tag: 'rewards-and-incentives' },
       ],
