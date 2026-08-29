@@ -26,16 +26,18 @@ const config = {
         { path: 'docs/assets/guides-mega-menu.css' },
         { path: 'docs/assets/guides-sidebar.css' },
         { path: 'docs/assets/apis-mega-menu.css' },
+        { path: 'docs/assets/sdks-mega-menu.css' },
       ],
       scripts: [
         { path: 'docs/scripts/header-layout.js' },
         { path: 'docs/scripts/guides-mega-menu.js' },
         { path: 'docs/scripts/apis-mega-menu.js' },
+        { path: 'docs/scripts/sdks-mega-menu.js' },
       ],
     },
     theme: 'purple',
     logo: {
-      darkMode: 'docs/assets/logo.png',
+      darkMode: 'docs/assets/logo-dark.png',
       lightMode: 'docs/assets/logo.png',
     },
   },
@@ -44,6 +46,7 @@ const config = {
       header: [
         { type: 'link', title: 'Guides', to: '/guides/overview/welcome' },
         { type: 'link', title: 'API Reference', to: '/api-v3' },
+        { type: 'link', title: 'SDKs', to: '/guides/payment-acceptance/online-payments/alviere-checkout/introduction' },
         { type: 'link', title: 'Changelog', to: '/guides/more/changelog' },
       ],
       routes: {

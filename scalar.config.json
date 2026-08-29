@@ -209,6 +209,9 @@
         },
         {
           "path": "docs/assets/apis-mega-menu.css"
+        },
+        {
+          "path": "docs/assets/sdks-mega-menu.css"
         }
       ],
       "scripts": [
@@ -222,6 +225,10 @@
         },
         {
           "path": "docs/scripts/apis-mega-menu.js",
+          "defer": true
+        },
+        {
+          "path": "docs/scripts/sdks-mega-menu.js",
           "defer": true
         }
       ]
@@ -244,6 +251,11 @@
           "type": "link",
           "title": "API Reference",
           "to": "/api-v3"
+        },
+        {
+          "type": "link",
+          "title": "SDKs",
+          "to": "/guides/payment-acceptance/online-payments/alviere-checkout/introduction"
         },
         {
           "type": "link",
