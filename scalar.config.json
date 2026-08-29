@@ -228,7 +228,7 @@
     },
     "theme": "purple",
     "logo": {
-      "darkMode": "docs/assets/logo.png",
+      "darkMode": "docs/assets/logo-dark.png",
       "lightMode": "docs/assets/logo.png"
     }
   },
