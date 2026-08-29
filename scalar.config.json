@@ -479,6 +479,11 @@
                   "filepath": "docs/guides/ach.md",
                   "title": "ACH"
                 },
+                "/instant-payments": {
+                  "type": "page",
+                  "filepath": "docs/guides/instant-payments.md",
+                  "title": "Instant Payments"
+                },
                 "/cash-loading": {
                   "type": "page",
                   "filepath": "docs/guides/cash-loading.md",
