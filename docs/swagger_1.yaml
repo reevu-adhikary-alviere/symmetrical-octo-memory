@@ -1,6 +1,6 @@
 openapi: 3.0.2
 info:
-  version: '2.0'
+  version: '6.6.16'
   title: The HIVE APIs
   contact:
     email: support@alviere.com
@@ -27,6 +27,8 @@ tags:
   - name: Wallets
   - name: Transactions
   - name: Payment methods
+  - name: Card Payments
+  - name: Transactions v3
   - name: Dossiers
   - name: Beneficiaries
   - name: Card issuance
@@ -35,6 +37,43 @@ tags:
   - name: Treasury management
   - name: Service fees
   - name: Rewards and Incentives
+  - name: Webhooks
+    description: |
+      Alviere POSTs webhook events to your configured URL whenever something
+      meaningful happens on the account — KYC state changes, transactions settle,
+      cards are issued, and so on.
+
+      ### Delivery
+
+      Each event is delivered as a JSON `POST` to your configured URL. Return
+      any `2xx` within **10 seconds** to acknowledge receipt. Anything else —
+      a non-`2xx` response, a timeout, or a network error — triggers a retry
+      with the same `event_uuid` and an incremented `event_retry` counter.
+
+      ### Headers
+
+      | Header | Description |
+      | --- | --- |
+      | `Alviere-Webhook-id` | UUID for this delivery attempt. Stable across retries — use it as your idempotency key. |
+      | `Alviere-Webhook-Timestamp` | RFC 3339 timestamp of when the event was dispatched. |
+      | `Alviere-Signature` | Hex-encoded HMAC-SHA256 signature. Present when the subscription is configured with an HMAC secret. |
+      | `Alviere-Auth` | Static API key. Present when the subscription is configured with API key auth instead of HMAC. |
+
+      ### Signature verification
+
+      Build the signing string as `{webhook_id}.{webhook_timestamp}.{compact_body}`,
+      where `compact_body` is the raw request body with all insignificant JSON
+      whitespace removed. Compute `HMAC-SHA256(secret, signing_string)`,
+      hex-encode it, and compare against `Alviere-Signature` using a
+      constant-time comparison. Reject the request if the signatures don't
+      match or the timestamp is more than a few minutes old.
+
+      ### Envelope
+
+      Every event body shares the same envelope — `event_uuid`, `event_type`,
+      `event_version`, `event_date`, `event_retry`, `business_account_uuid`,
+      `program_uuid` — plus an `entity` field whose shape depends on the
+      event type. See each event below.
 paths:
   /auth/realms/customers/protocol/openid-connect/token:
     servers:
@@ -477,7 +516,7 @@ paths:
           required: false
           schema:
             type: string
-          description: Filter accounts by email address
+          description: Filter accounts by email address. Must be a valid RFC 5322 format email string
         - schema:
             type: string
             enum:
@@ -535,7 +574,7 @@ paths:
 
         This service will automatically trigger the KYC/KYB and Identity Management process relevant to the account type.  
 
-        Please note that an account cannot be duplicated within the same parent program account; an account is considered duplicated when the same `external_id` is provided.
+        Please note that an account cannot be duplicated within the same parent program account; an account is considered duplicated when the same `external_id` and `account_type` combination is provided. Using an `external_id` that already exists under a different `account_type` will result in a HTTP 400 error.
 
         **Note**: For consumer accounts, if you do not set the `primary_address` property, you have to add an address separately to initiate the KYC process.
       parameters:
@@ -554,7 +593,13 @@ paths:
                     The ID of this account in your own platform. This will be associated with this account and can
                     be used to identify the account as well as protect our API against duplicate accounts.
 
-                    NOTE: This field MUST be unique. Any subsequent Create Account with same `external_id` will fail with a HTTP 409.
+                    NOTE: This field MUST be unique per account type. Submitting the same `external_id` for the same
+                    `account_type` will fail with HTTP 409. Submitting the same `external_id` for a different
+                    `account_type` will fail with HTTP 400.
+                parent_account_uuid:
+                  type: string
+                  format: uuid
+                  description: UUID of the parent account
                 account_type:
                   type: string
                   enum:
@@ -766,6 +811,46 @@ paths:
             schema:
               type: object
               $ref: '#/components/schemas/card-pm-update'
+  /payment-methods/bank-accounts/{payment_method_uuid}:
+    patch:
+      summary: Update bank account
+      tags:
+        - Payment methods
+      responses:
+        '200':
+          description: Bank account was successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bank_account:
+                    $ref: '#/components/schemas/bank-account-pm-response'
+          headers:
+            Alv-Request-Id:
+              schema:
+                type: string
+              description: Alviere's internal unique identifier for the request. This ID is automatically generated by our API service and spans across our entire infrastructure allowing tech ops to trace a request. This id has no business use case and serves solely for the purpose of technical debugging and troubleshooting.
+        '400':
+          $ref: '#/components/responses/400-Error'
+        '401':
+          $ref: '#/components/responses/401-Error'
+        '403':
+          $ref: '#/components/responses/403-Error'
+        '404':
+          $ref: '#/components/responses/404-Error'
+      operationId: paymentmethods-bankaccount-patch
+      description: Updates a bank account payment method properties
+      parameters:
+        - $ref: '#/components/parameters/Version'
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/payment_method_uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/bank-account-pm-update'
   /accounts/{account_uuid}/deactivate:
     put:
       tags:
@@ -1037,7 +1122,17 @@ paths:
             type: string
         - $ref: '#/components/parameters/account_uuid'
         - $ref: '#/components/parameters/Version'
-        - $ref: '#/components/parameters/limit'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minLength: 1
+            default: 10
+            maxLength: 500
+            minimum: 1
+            maximum: 500
+          description: The number of items per page
         - $ref: '#/components/parameters/offset'
       responses:
         '200':
@@ -1201,7 +1296,10 @@ paths:
       tags:
         - Dossiers
       summary: Update dossier
-      description: Updates an existing dossier in the system.
+      description: |
+        Updates an existing dossier in the system.
+
+        For a complete list of document types and their descriptions, please refer to: https://apidocs.alviere.com/guides/hive-definitions/dossier#documents__document-types
       parameters:
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/account_uuid'
@@ -1248,7 +1346,10 @@ paths:
       tags:
         - Dossiers
       summary: Replace dossier
-      description: Replaces an existing dossier in the system.
+      description: |
+        Replaces an existing dossier in the system.
+
+        For a complete list of document types and their descriptions, please refer to: https://apidocs.alviere.com/guides/hive-definitions/dossier#documents__document-types
       parameters:
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/account_uuid'
@@ -1332,7 +1433,10 @@ paths:
       tags:
         - Dossiers
       summary: Create dossier
-      description: Upload Dossier documents to the account
+      description: |
+        Upload Dossier documents to the account.
+
+        For a complete list of document types and their descriptions, please refer to: https://apidocs.alviere.com/guides/hive-definitions/dossier#documents__document-types
       parameters:
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/account_uuid'
@@ -1992,7 +2096,7 @@ paths:
                     title: transactions
                     description: The transactions related to this account
                     items:
-                      $ref: '#/components/schemas/wallet-transaction'
+                      $ref: '#/components/schemas/wallet-transaction-list'
                 required:
                   - records
                   - transactions
@@ -2007,6 +2111,48 @@ paths:
       operationId: TRN-06
       tags:
         - Transactions
+  /transactions/limits:
+    get:
+      summary: Get transaction limits
+      description: |
+        Returns transaction limits based on program configuration for a given account, including current usage, remaining amounts, and total limits organized by transaction type.
+
+        Limits are defined at the program level (program configs) and apply to all accounts in the program. The `used` and `available` amounts are calculated per account/wallet based on transactions already performed against those program-level limits.
+      operationId: get-transaction-limits
+      tags:
+        - Transactions
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/Version'
+        - $ref: '#/components/parameters/transaction_limits_account_uuid'
+        - $ref: '#/components/parameters/transaction_limits_wallet_uuid'
+        - $ref: '#/components/parameters/transaction_limits_wallet_type'
+        - $ref: '#/components/parameters/transaction_limits_transaction_type'
+      responses:
+        '200':
+          description: |
+            The transaction limits for the account
+          headers:
+            Alv-Request-Id:
+              description: |
+                Alviere's internal unique identifier for the request. This ID is automatically generated by our API service and
+                spans across our entire infrastructure allowing tech ops to trace a request. This id has no business use case
+                and serves solely for the purpose of technical debugging and troubleshooting.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transaction-limits-response'
+        '400':
+          $ref: '#/components/responses/400-Error'
+        '401':
+          $ref: '#/components/responses/401-Error'
+        '403':
+          $ref: '#/components/responses/403-Error'
+        '404':
+          $ref: '#/components/responses/404-Error'
   /transactions/{transaction_uuid}/cancel:
 
     put:
@@ -2194,6 +2340,10 @@ paths:
                   type: string
                   minimum: 8
                   maximum: 64
+                description:
+                  type: string
+                  maxLength: 255
+                  description: A description to identify the transaction
                 transaction_options:
                   type: object
                   description: Options related to transaction handling
@@ -2208,6 +2358,11 @@ paths:
                             - SAME_DAY
                             - NEXT_DAY
                           description: Whether the ACH transfer should be done on the same day or next day window batches
+                        ach_reference:
+                          type: string
+                          minLength: 1
+                          maxLength: 80
+                          description: Optional reference to be included with the ACH transfer. Only applicable to ACH payment methods.
                         prefund:
                           type: boolean
                           description: Whether this transaction should be prefunded
@@ -2299,6 +2454,7 @@ paths:
       operationId: wallets-spend-management-set-post
       tags:
         - Wallets
+      x-internal: true
     parameters: []
   /bulk-operations/template:
     parameters: []
@@ -2350,6 +2506,7 @@ paths:
           name: operation
           description: The type of bulk operation
           required: true
+      x-internal: true
   /wallets/{wallet_uuid}/withdraw:
     post:
       summary: Withdraw funds
@@ -2403,6 +2560,9 @@ paths:
                   type: string
                   minimum: 8
                   maximum: 64
+                description:
+                  type: string
+                  description: A small description to identify the transaction
                 transaction_options:
                   type: object
                   description: Options related to transaction handling
@@ -2417,6 +2577,11 @@ paths:
                             - SAME_DAY
                             - NEXT_DAY
                           description: Whether the ACH transfer should be done on the same day or next day window batches
+                        ach_reference:
+                          type: string
+                          minLength: 1
+                          maxLength: 80
+                          description: Optional reference to be included with the ACH transfer
                 metadata:
                   type: object
                   description: Allows for any number of custom metadata keys and values to be stored with a given transaction
@@ -2642,6 +2807,10 @@ paths:
                         description: This field is Alviere's internal unique transaction identifier
                         type: string
                         format: uuid
+                      wallet_uuid:
+                        description: UUID of the wallet to which this transaction belongs
+                        type: string
+                        format: uuid
                       external_id:
                         type: string
                         description: The ID of this transaction in your own platform. This ID can be used to identify the transaction as well as protect our API against duplicate transactions.
@@ -2827,6 +2996,16 @@ paths:
                                 The description can be any descriptive text provided by the user to accompany the service fee transaction.
                               minimum: 1
                               maximum: 255
+                            calc_type:
+                              type: string
+                              description: |
+                                The calculation type in relation to the total transaction.
+
+                                * `UPCHARGE`: The service fee was applied as an upcharge to the transaction.
+                                * `DEDUCT`: The service fee was applied as a deduction to the transaction amount.
+                              enum:
+                                - DEDUCT
+                                - UPCHARGE
                       amount:
                         description: |
                           The amount is the value associated with the request, in cents.
@@ -3490,6 +3669,8 @@ paths:
         - If the account does not have a primary address on file, the request must include `billing_address` with all fields present (`line_1`, `city`, `state`, `country`, `postal_code`).
 
         Requests that do not meet these rules return 400 Bad Request with details about the missing fields.
+
+        Adding a duplicate card on the same account returns a 400 when the existing card is in `CREATED`, `ACTIVE`, or `PENDING` status.
       parameters:
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/Version'
@@ -3776,7 +3957,10 @@ paths:
       tags:
         - Payment methods
       summary: Create bank account
-      description: Adds a payment method of type bank account to an account.
+      description: |
+        Adds a payment method of type bank account to an account.
+
+        Adding a duplicate bank account on the same account returns a 400 when the existing bank account is in `CREATED`, `ACTIVE`, or `PROCESSING` status.
       parameters:
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/Version'
@@ -3837,7 +4021,7 @@ paths:
                     type: object
                     description: The bank account details.
                     required:
-                      - token
+                      - payment_method_uuid
                       - external_id
                       - type
                       - last_4
@@ -3850,7 +4034,7 @@ paths:
                       - created_at
                       - updated_at
                     properties:
-                      token:
+                      payment_method_uuid:
                         type: string
                         description: The unique ID of the bank account in the Alviere system
                         format: uuid
@@ -3988,6 +4172,9 @@ paths:
                       fail_reason:
                         type: string
                         description: Status fail reason
+                      verified:
+                        type: boolean
+                        description: Indicates whether the bank account has been successfully verified. Not present when verification has not been done or is not yet completed. `false` when verification was unsuccessful. `true` when verification was successful.
                       created_at:
                         type: string
                         description: The banks creation date
@@ -4249,6 +4436,9 @@ paths:
                   title: Plaid account id
                   description: Plaid account id
                   type: string
+                primary:
+                  type: boolean
+                  description: Mark this Plaid bank account as the primary payment method for the account
                 metadata:
                   type: object
                   description: Allows for any number of custom metadata keys and values to be stored with a given entity
@@ -4505,6 +4695,8 @@ paths:
   /payments/payment-instruments:
     post:
       summary: Create Payment Instrument
+      deprecated: true
+      x-internal: true
       description: |
         Creates a payment instrument
       parameters:
@@ -4624,6 +4816,8 @@ paths:
         - $ref: '#/components/parameters/Version'
         - $ref: '#/components/parameters/payment_instrument_uuid'
       summary: Get Payment Instrument
+      deprecated: true
+      x-internal: true
       description: Returns Payment Instrument details
       responses:
         '200':
@@ -4659,6 +4853,8 @@ paths:
         - Payment processing
     delete:
       summary: Delete Payment Instrument
+      deprecated: true
+      x-internal: true
       description: |
         Deletes a Payment Instrument from the system
       parameters:
@@ -4695,6 +4891,8 @@ paths:
   /payments/debit:
     post:
       summary: Debit funds
+      deprecated: true
+      x-internal: true
       description: Debit funds from a Payment Instrument
       parameters:
         - $ref: '#/components/parameters/Authorization'
@@ -4822,6 +5020,8 @@ paths:
   /payments/refund:
     post:
       summary: Refund payment transaction
+      deprecated: true
+      x-internal: true
       description: Refunds a payment transaction
       parameters:
         - $ref: '#/components/parameters/Authorization'
@@ -4925,6 +5125,663 @@ paths:
       tags:
         - Payment processing
     parameters: []
+  /v3/cards/debit:
+    post:
+      summary: Accept a card payment
+      description: |
+        Accept a payment from a customer's card. Funds settle into a wallet on your platform.
+
+        **Charge a saved card or charge a card directly:** In `source`, provide exactly one of:
+        - `payment_method_uuid` — charge a card the customer has previously saved on your platform.
+        - `card` — charge a card from inline details (typical for guest checkout or one-time payments). Sending raw card data requires PCI compliance on your side.
+
+        **Authorize and capture, or authorize now and capture later:**
+        - `auth_type: AUTHCAP` — authorize and capture in one step. The card is charged immediately and funds are captured. Use this for digital goods or any flow where you fulfill on the spot.
+        - `auth_type: AUTH` — authorize now, capture later. Funds are held on the card but not captured. The transaction returns `status: COMPLETED` with `captured_at` absent. Capture later via `POST /v3/cards/capture`.
+
+        **3-D Secure verification:**
+        If 3-D Secure verification is required — either because you requested it (`3ds_preference: ENABLED` on the card) or because the end consumer's bank requires it — the response returns `status: PENDING`, `status_reason: 3DS_AUTH_REQUIRED`, and a `3ds_challenge` object with the redirect URL.
+        Once the end consumer verifies with their bank, Alviere finalizes the transaction automatically. Fetch the transaction via `GET /v3/transactions/{transaction_uuid}` (or listen for the corresponding webhook) to see the final `status` and `status_reason`.
+
+        **Recurring and saved-card payments:**
+        For subscription rebills, scheduled charges, or any time you charge a saved card without the end consumer present, send a `recurring` block:
+        - On the first charge with a saved card, set `recurring.sequence: INITIAL`. Alviere records the credential so later charges work.
+        - On every subsequent charge, set `recurring.sequence: SUBSEQUENT`. Alviere handles the credential lookup for you.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/card-debit-request'
+            examples:
+              authcap-saved-card:
+                summary: AUTHCAP using a saved payment method
+                value:
+                  external_id: order_1000456
+                  amount: "25.99"
+                  currency: USD
+                  source:
+                    payment_method_uuid: 550e8400-e29b-41d4-a716-446655440000
+                  destination:
+                    wallet_uuid: 223e4567-e89b-12d3-a456-426614174000
+                  auth_type: AUTHCAP
+                  channel: ECOM
+                  merchant_details:
+                    name: Acme Coffee
+                    mcc: "5814"
+                    descriptor: ACME COFFEE
+                    descriptor_city: BROOKLYN
+                  description: Order #1000456
+                  metadata:
+                    order_id: "1000456"
+              authcap-inline-card:
+                summary: AUTHCAP using inline card details
+                value:
+                  external_id: order_1000457
+                  amount: "25.99"
+                  currency: USD
+                  source:
+                    card:
+                      pan: "4111111111111111"
+                      exp_month: "12"
+                      exp_year: "27"
+                      security_code: "123"
+                      name_on_card: Jane Doe
+                      billing_address:
+                        line_1: 123 Main St
+                        city: Brooklyn
+                        state: NY
+                        country: USA
+                        postal_code: "11201"
+                      3ds_options:
+                        3ds_preference: ENABLED
+                  destination:
+                    wallet_uuid: 223e4567-e89b-12d3-a456-426614174000
+                  auth_type: AUTHCAP
+                  channel: ECOM
+                  return_url: https://merchant.com/checkout/return?order=1000457
+                  ip_address: 203.0.113.42
+              auth-only:
+                summary: AUTH-only (capture later)
+                value:
+                  external_id: order_1000458
+                  amount: "150.00"
+                  currency: USD
+                  source:
+                    payment_method_uuid: 550e8400-e29b-41d4-a716-446655440000
+                  destination:
+                    wallet_uuid: 223e4567-e89b-12d3-a456-426614174000
+                  auth_type: AUTH
+                  channel: ECOM
+              recurring-subscription:
+                summary: Recurring subscription rebill (subsequent merchant-initiated)
+                value:
+                  external_id: sub_1000459
+                  amount: "9.99"
+                  currency: USD
+                  source:
+                    payment_method_uuid: 550e8400-e29b-41d4-a716-446655440000
+                  destination:
+                    wallet_uuid: 223e4567-e89b-12d3-a456-426614174000
+                  auth_type: AUTHCAP
+                  recurring:
+                    initiator: MERCHANT
+                    processing_model: SUBSCRIPTION
+                    sequence: SUBSEQUENT
+      responses:
+        '201':
+          description: The transaction was created. Inspect `status`, `status_reason`, and `type_details.card_payment_details.captured_at` to determine the outcome.
+          headers:
+            Alv-Request-Id:
+              description: Alviere's internal unique identifier for the request.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/card-transaction-response'
+              examples:
+                authcap-success:
+                  summary: AUTHCAP completed (captured)
+                  value:
+                    transaction:
+                      transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                      external_id: order_1000456
+                      type: PAYMENT
+                      status: COMPLETED
+                      description: Order #1000456
+                      amount: "25.99"
+                      currency: USD
+                      wallet_uuid: "223e4567-e89b-12d3-a456-426614174000"
+                      account_uuid: "323e4567-e89b-12d3-a456-426614174000"
+                      funds_source:
+                        payment_method_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                      type_details:
+                        card_payment_details:
+                          brand: VISA
+                          bin: "411111"
+                          last4: "1111"
+                          exp_month: 12
+                          exp_year: 2027
+                          auth_type: AUTHCAP
+                          authorization_code: TX4271
+                          captured_at: "2026-05-15T15:04:05.999999999Z"
+                          channel: ECOM
+                          avs_result: M
+                          cvv_result: M
+                          3ds_details:
+                            3ds_result: AUTHENTICATED
+                            3ds_preference: ENABLED
+                            eci: "05"
+                            version: "2.2"
+                      metadata:
+                        order_id: "1000456"
+                      created_at: "2026-05-15T15:04:05.999999999Z"
+                      updated_at: "2026-05-15T15:04:05.999999999Z"
+                auth-only-pending-capture:
+                  summary: AUTH-only succeeded; awaiting capture (captured_at absent)
+                  value:
+                    transaction:
+                      transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                      external_id: order_1000458
+                      type: PAYMENT
+                      status: COMPLETED
+                      amount: "150.00"
+                      currency: USD
+                      wallet_uuid: "223e4567-e89b-12d3-a456-426614174000"
+                      account_uuid: "323e4567-e89b-12d3-a456-426614174000"
+                      funds_source:
+                        payment_method_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                      type_details:
+                        card_payment_details:
+                          brand: VISA
+                          bin: "411111"
+                          last4: "1111"
+                          exp_month: 12
+                          exp_year: 2027
+                          auth_type: AUTH
+                          authorization_code: TX4271
+                          avs_result: M
+                          cvv_result: M
+                      created_at: "2026-05-15T15:04:05.999999999Z"
+                      updated_at: "2026-05-15T15:04:05.999999999Z"
+                challenge-pending:
+                  summary: 3DS challenge required
+                  value:
+                    transaction:
+                      transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                      external_id: order_1000456
+                      type: PAYMENT
+                      status: PENDING
+                      status_reason: "3DS_AUTH_REQUIRED"
+                      amount: "25.99"
+                      currency: USD
+                      wallet_uuid: "223e4567-e89b-12d3-a456-426614174000"
+                      account_uuid: "323e4567-e89b-12d3-a456-426614174000"
+                      funds_source:
+                        payment_method_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                      type_details:
+                        card_payment_details:
+                          brand: VISA
+                          bin: "411111"
+                          last4: "1111"
+                          3ds_challenge:
+                            redirect_url: https://3ds.alviere.com/challenge?session=abc123
+                            expires_at: "2026-05-15T15:14:05Z"
+                      created_at: "2026-05-15T15:04:05.999999999Z"
+                      updated_at: "2026-05-15T15:04:05.999999999Z"
+                declined:
+                  summary: Declined by issuer
+                  value:
+                    transaction:
+                      transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                      external_id: order_1000456
+                      type: PAYMENT
+                      status: FAILED
+                      status_reason: "NON_SUFFICIENT_FUNDS"
+                      amount: "25.99"
+                      currency: USD
+                      wallet_uuid: "223e4567-e89b-12d3-a456-426614174000"
+                      account_uuid: "323e4567-e89b-12d3-a456-426614174000"
+                      funds_source:
+                        payment_method_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                      type_details:
+                        card_payment_details:
+                          brand: VISA
+                          bin: "411111"
+                          last4: "1111"
+                          avs_result: N
+                          cvv_result: M
+                          processor_code: "51"
+                          processor_message: Insufficient funds
+                      created_at: "2026-05-15T15:04:05.999999999Z"
+                      updated_at: "2026-05-15T15:04:05.999999999Z"
+        '400':
+          $ref: '#/components/responses/400-Error'
+        '401':
+          $ref: '#/components/responses/401-Error'
+        '403':
+          $ref: '#/components/responses/403-Error'
+        '404':
+          $ref: '#/components/responses/404-Error'
+        '409':
+          description: Conflict on `external_id` — returns the existing transaction
+          headers:
+            Alv-Request-Id:
+              description: Alviere's internal unique identifier for the request.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/card-transaction-response'
+      operationId: cards-debit
+      tags:
+        - Card Payments
+  /v3/cards/capture:
+    post:
+      summary: Capture card transaction
+      description: |
+        Capture a previously authorized (AUTH-only) card transaction.
+
+        Only valid when the parent transaction's `type_details.card_payment_details.auth_type` is `AUTH` and `captured_at` is not yet set.
+        Omit `amount` to capture the full authorized amount; pass `amount` to capture a smaller amount (partial capture) — the unused authorization is released back to the cardholder.
+
+        On success, the transaction's `type_details.card_payment_details.captured_at` is populated.
+        The transaction's `status` remains `COMPLETED` — no new transaction is created.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/card-capture-request'
+            examples:
+              capture-full:
+                summary: Capture the full authorized amount
+                value:
+                  transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+              capture-partial:
+                summary: Partial capture (less than the authorized amount)
+                value:
+                  transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                  amount: "100.00"
+              capture-with-metadata:
+                summary: Capture with an annotation
+                value:
+                  transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                  description: Captured on fulfillment
+                  metadata:
+                    fulfillment_id: ful_88102
+      responses:
+        '201':
+          description: The transaction was captured successfully.
+          headers:
+            Alv-Request-Id:
+              description: Alviere's internal unique identifier for the request.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/card-transaction-response'
+              examples:
+                captured:
+                  summary: AUTH-only transaction now captured
+                  value:
+                    transaction:
+                      transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                      external_id: order_1000458
+                      type: PAYMENT
+                      status: COMPLETED
+                      amount: "150.00"
+                      currency: USD
+                      wallet_uuid: "223e4567-e89b-12d3-a456-426614174000"
+                      account_uuid: "323e4567-e89b-12d3-a456-426614174000"
+                      funds_source:
+                        payment_method_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                      type_details:
+                        card_payment_details:
+                          brand: VISA
+                          bin: "411111"
+                          last4: "1111"
+                          exp_month: 12
+                          exp_year: 2027
+                          auth_type: AUTH
+                          authorization_code: TX4271
+                          captured_at: "2026-05-15T16:10:22.000000000Z"
+                          avs_result: M
+                          cvv_result: M
+                      created_at: "2026-05-15T15:04:05.999999999Z"
+                      updated_at: "2026-05-15T16:10:22.000000000Z"
+        '400':
+          $ref: '#/components/responses/400-Error'
+        '401':
+          $ref: '#/components/responses/401-Error'
+        '403':
+          $ref: '#/components/responses/403-Error'
+        '404':
+          $ref: '#/components/responses/404-Error'
+        '409':
+          description: Transaction is not in a state that allows capture
+      operationId: cards-capture
+      tags:
+        - Card Payments
+  /v3/cards/reverse:
+    post:
+      summary: Reverse card transaction
+      description: |
+        Reverse a previously created card transaction. The endpoint dispatches based on whether the parent
+        transaction has been captured — surfaced via `type_details.card_payment_details.captured_at`.
+
+        **Dual response:**
+        - **HTTP 201** with a new REFUND transaction — when the parent's `captured_at` is set. The new transaction
+          has `type: REFUND`, negative `amount`, and `parent_transaction_uuid` linking back to the original.
+        - **HTTP 204** with no body — when the parent's `captured_at` is absent (AUTH-only, not yet captured).
+          The authorization is voided in place; no new transaction is created. Refetch the parent via
+          `GET /v3/transactions/{transaction_uuid}` to see status flipped to `VOIDED`.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/card-reverse-request'
+            examples:
+              reverse-full:
+                summary: Full reversal of a captured transaction
+                value:
+                  transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                  external_id: refund_order_1000456
+                  amount: "25.99"
+                  refund_reason: CUSTOMER_REQUEST
+                  description: Refund for cancelled order
+              reverse-partial:
+                summary: Partial reversal
+                value:
+                  transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                  external_id: refund_partial_1000456
+                  amount: "10.00"
+                  refund_reason: CUSTOMER_REQUEST
+              void-auth:
+                summary: Void an AUTH-only transaction (parent has no captured_at)
+                value:
+                  transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                  external_id: void_order_1000458
+                  amount: "150.00"
+                  refund_reason: CUSTOMER_REQUEST
+      responses:
+        '201':
+          description: |
+            A new REFUND transaction was created. Returned when the parent was already captured/settled.
+          headers:
+            Alv-Request-Id:
+              description: Alviere's internal unique identifier for the request.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/card-transaction-response'
+              examples:
+                refund-created:
+                  summary: Refund transaction created
+                  value:
+                    transaction:
+                      transaction_uuid: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+                      external_id: refund_order_1000456
+                      type: REFUND
+                      status: COMPLETED
+                      description: Refund for cancelled order
+                      amount: "-25.99"
+                      currency: USD
+                      parent_transaction_uuid: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+                      wallet_uuid: "223e4567-e89b-12d3-a456-426614174000"
+                      account_uuid: "323e4567-e89b-12d3-a456-426614174000"
+                      funds_source:
+                        payment_method_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                      type_details:
+                        card_payment_details:
+                          brand: VISA
+                          last4: "1111"
+                          authorization_code: RF8821
+                      refund_reason: CUSTOMER_REQUEST
+                      created_at: "2026-05-16T10:22:00.000000000Z"
+                      updated_at: "2026-05-16T10:22:00.000000000Z"
+        '204':
+          description: |
+            The parent transaction was AUTH-only with `captured_at` not yet set. The authorization was voided in place;
+            no new transaction was created. Refetch the parent to see `status: VOIDED`.
+        '400':
+          $ref: '#/components/responses/400-Error'
+        '401':
+          $ref: '#/components/responses/401-Error'
+        '403':
+          $ref: '#/components/responses/403-Error'
+        '404':
+          $ref: '#/components/responses/404-Error'
+        '409':
+          description: Transaction is not in a state that allows reversal
+      operationId: cards-reverse
+      tags:
+        - Card Payments
+  /v3/cards/push:
+    post:
+      summary: Push funds to a card
+      description: |
+        Push funds from a wallet to a card payment method — an Original Credit Transaction (OCT).
+        Use for marketplace payouts, disbursements, P2P transfers, and instant payouts.
+
+        The destination must be a previously saved card payment method. Raw card details are not accepted on this endpoint.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/card-push-request'
+            examples:
+              marketplace-payout:
+                summary: Marketplace payout (funds disbursement)
+                value:
+                  external_id: payout_1000600
+                  amount: "250.00"
+                  currency: USD
+                  source:
+                    wallet_uuid: 223e4567-e89b-12d3-a456-426614174000
+                  destination:
+                    payment_method_uuid: 550e8400-e29b-41d4-a716-446655440000
+                  purpose: FUNDS_DISBURSEMENT
+                  description: Weekly payout
+                  metadata:
+                    payee_id: driver_88102
+              p2p-transfer:
+                summary: Person-to-person transfer
+                value:
+                  external_id: p2p_1000601
+                  amount: "50.00"
+                  currency: USD
+                  source:
+                    wallet_uuid: 223e4567-e89b-12d3-a456-426614174000
+                  destination:
+                    payment_method_uuid: 550e8400-e29b-41d4-a716-446655440000
+                  purpose: P2P
+      responses:
+        '201':
+          description: The push transaction was created.
+          headers:
+            Alv-Request-Id:
+              description: Alviere's internal unique identifier for the request.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/card-transaction-response'
+              examples:
+                push-completed:
+                  summary: Push completed
+                  value:
+                    transaction:
+                      transaction_uuid: 7a1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+                      external_id: payout_1000600
+                      type: CARD_CREDIT
+                      status: COMPLETED
+                      description: Weekly payout
+                      amount: "250.00"
+                      currency: USD
+                      wallet_uuid: "223e4567-e89b-12d3-a456-426614174000"
+                      account_uuid: "323e4567-e89b-12d3-a456-426614174000"
+                      funds_source:
+                        payment_method_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                      type_details:
+                        card_payment_details:
+                          brand: VISA
+                          bin: "411111"
+                          last4: "1111"
+                          authorization_code: OCT9912
+                      metadata:
+                        payee_id: driver_88102
+                      created_at: "2026-05-18T10:00:00.000000000Z"
+                      updated_at: "2026-05-18T10:00:00.000000000Z"
+        '400':
+          $ref: '#/components/responses/400-Error'
+        '401':
+          $ref: '#/components/responses/401-Error'
+        '403':
+          $ref: '#/components/responses/403-Error'
+        '404':
+          $ref: '#/components/responses/404-Error'
+        '409':
+          description: Conflict on `external_id` — returns the existing transaction
+          headers:
+            Alv-Request-Id:
+              description: Alviere's internal unique identifier for the request.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/card-transaction-response'
+      operationId: cards-push
+      tags:
+        - Card Payments
+  /v3/transactions:
+    get:
+      summary: List transactions
+      description: |
+        List v3 transactions, with filters for account, wallet, payment method, beneficiary, date range, status, and type.
+        Each transaction includes additional details under `type_details` — for card transactions, see `type_details.card_payment_details`.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/wallet_transaction_type'
+        - $ref: '#/components/parameters/transaction-status'
+        - $ref: '#/components/parameters/start_date'
+        - $ref: '#/components/parameters/end_date'
+        - in: query
+          name: external_id
+          description: Filter by your external ID for the transaction
+          schema:
+            type: string
+        - in: query
+          name: account_uuid
+          description: Filter by account UUID
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: wallet_uuid
+          description: Filter by wallet UUID
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: payment_method_uuid
+          description: Filter by payment method UUID
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: beneficiary_uuid
+          description: Filter by beneficiary UUID
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: issued_card_uuid
+          description: Filter by issued card UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A list of v3 transactions
+          headers:
+            Alv-Request-Id:
+              description: Alviere's internal unique identifier for the request.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/v3-transaction-list-response'
+        '400':
+          $ref: '#/components/responses/400-Error'
+        '401':
+          $ref: '#/components/responses/401-Error'
+        '403':
+          $ref: '#/components/responses/403-Error'
+      operationId: v3-transactions-list
+      tags:
+        - Transactions v3
+  /v3/transactions/{transaction_uuid}:
+    get:
+      summary: Get transaction
+      description: |
+        Retrieve a transaction by its UUID. The response includes any additional details under `type_details` —
+        for card transactions, `type_details.card_payment_details` contains brand, BIN, last 4, authorization code,
+        capture state, AVS/CVV results, 3DS details, and recurring metadata.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/transaction_uuid'
+      responses:
+        '200':
+          description: The transaction
+          headers:
+            Alv-Request-Id:
+              description: Alviere's internal unique identifier for the request.
+              example: 8944355f-342d-42df-9ec9-5b12e619d504
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/card-transaction-response'
+        '400':
+          $ref: '#/components/responses/400-Error'
+        '401':
+          $ref: '#/components/responses/401-Error'
+        '403':
+          $ref: '#/components/responses/403-Error'
+        '404':
+          $ref: '#/components/responses/404-Error'
+      operationId: v3-transactions-get
+      tags:
+        - Transactions v3
   /accounts/{account_uuid}/issued-cards/non-reloadable:
     post:
       summary: Create non-reloadable prepaid Card
@@ -5117,12 +5974,13 @@ paths:
       operationId: CARD-XX
       tags:
         - Card issuance
+      x-internal: true
 
   /wallets/{wallet_uuid}/issued-cards:
     post:
       tags:
         - Card issuance
-      summary: Create Card in Wallet
+      summary: Create Card
       description: |
         Creates a new issued card for the designated wallet
       parameters:
@@ -5325,7 +6183,7 @@ paths:
     get:
       tags:
         - Card issuance
-      summary: List Cards from Wallet
+      summary: List Cards
       description: Gets all the issued cards that are associated to a wallet
       parameters:
         - $ref: '#/components/parameters/Authorization'
@@ -5563,7 +6421,7 @@ paths:
                   enum:
                     - DAMAGED
                     - ATM_MALFUNCTION
-                    - DATA_COMPROMISE
+                    - DATA_COMPROMISED
                     - ABOUT_TO_EXPIRE
                     - EXPIRED
                     - OTHER
@@ -5694,7 +6552,7 @@ paths:
     get:
       tags:
         - Card issuance
-      summary: Get Card in Wallet
+      summary: Get Card
       description: |
         Gets an existing card from the system.
       parameters:
@@ -5737,7 +6595,7 @@ paths:
     patch:
       tags:
         - Card issuance
-      summary: Update Card in Wallet
+      summary: Update Card
       description: |
         Updates the card data.
 
@@ -5935,7 +6793,7 @@ paths:
     delete:
       tags:
         - Card issuance
-      summary: Cancel Card in Wallet
+      summary: Cancel Card
       description: |
         Cancels a card and put the status of the card to `CANCELED`
       parameters:
@@ -5972,7 +6830,7 @@ paths:
     put:
       tags:
         - Card issuance
-      summary: Activate Card in Wallet
+      summary: Activate Card
       description: |
         Activates an issued card.
 
@@ -6033,7 +6891,7 @@ paths:
     put:
       tags:
         - Card issuance
-      summary: Unfreeze Card in Wallet
+      summary: Unfreeze Card
       description: |
         Unfreezes an issued card.
       parameters:
@@ -6069,7 +6927,7 @@ paths:
     put:
       tags:
         - Card issuance
-      summary: Freeze Card in Wallet
+      summary: Freeze Card
       description: |
         Freezes an issued card
 
@@ -6194,7 +7052,7 @@ paths:
     get:
       tags:
         - Card issuance
-      summary: Get Card image in Wallet
+      summary: Get Card image
       description: Gets a base64 encoded image representing a physical card.
       parameters:
         - $ref: '#/components/parameters/Authorization'
@@ -6237,7 +7095,7 @@ paths:
     get:
       tags:
         - Card issuance
-      summary: Get Card sensitive data in Wallet
+      summary: Get Card sensitive data
       description: |
         Gets sensitive data of an issued card. This endpoint is restricted to Alviere's SDK or preauthorized clients.
       parameters:
@@ -6358,7 +7216,35 @@ paths:
           in: query
           name: type
           description: The type of beneficiary
-        - $ref: '#/components/parameters/limit'
+        - schema:
+            type: boolean
+          in: query
+          name: with_transactions_only
+          description: Filter beneficiaries to only include those with transactions
+        - schema:
+            type: string
+            enum:
+              - INDIVIDUAL
+              - BUSINESS
+          in: query
+          name: legal_type
+          description: The legal type of beneficiary
+        - schema:
+            type: string
+          in: query
+          name: status
+          description: The status of beneficiary
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minLength: 1
+            default: 10
+            maxLength: 500
+            minimum: 1
+            maximum: 500
+          description: The number of items per page
         - $ref: '#/components/parameters/offset'
       responses:
         '200':
@@ -6558,6 +7444,7 @@ paths:
             enum:
               - DENIED_AUTHORIZATION
               - CARD_REPLACEMENT
+              - CARD_CREATED
           description: Filter activities by type
         - name: entity_uuid
           in: query
@@ -8819,6 +9706,590 @@ paths:
       tags:
         - Global payments
     parameters: []
+x-webhooks:
+  account:
+    post:
+      tags:
+        - Webhooks
+      summary: account
+      operationId: webhook-account
+      description: |
+        Fired when an account is created or its state changes (KYC review,
+        status update, information update). `event_type` is `ACCOUNT`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - ACCOUNT
+                    entity:
+                      $ref: '#/components/schemas/account-response'
+            examples:
+              consumer:
+                summary: Consumer account approved
+                value:
+                  event_uuid: 8944355f-342d-42df-9ec9-5b12e619d504
+                  event_type: ACCOUNT
+                  event_version: '2021-11-18.1'
+                  event_date: '2026-05-18T14:32:11Z'
+                  event_retry: 0
+                  business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+                  program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+                  entity:
+                    account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                    type: CONSUMER
+                    status: ACTIVE
+                    external_id: partner-user-12345
+                    information:
+                      consumer_information:
+                        first_name: Jane
+                        last_name: Doe
+                        email_address: jane.doe@example.com
+                    created_at: '2026-05-18T14:30:02Z'
+                    updated_at: '2026-05-18T14:32:11Z'
+              business:
+                summary: Business account in manual review
+                value:
+                  event_uuid: 1c8a9d70-4f3e-4f9b-8c2a-7b6e5d4f3a2c
+                  event_type: ACCOUNT
+                  event_version: '2021-11-18.1'
+                  event_date: '2026-05-18T14:32:11Z'
+                  event_retry: 0
+                  business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+                  program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+                  entity:
+                    account_uuid: b2c3d4e5-f6a7-8901-bcde-f23456789012
+                    type: BUSINESS
+                    status: MANUAL_REVIEW
+                    stage: DOCUMENTS
+                    status_reason: REQUIRES_CERTIFICATE_OF_INCORPORATION_RESUBMISSION
+                    external_id: partner-biz-98765
+                    information:
+                      business_information:
+                        business_type: LLC
+                        business_name: Acme Holdings LLC
+                        state_of_incorporation: CA
+                        country_of_incorporation: USA
+                        ein: '123456789'
+                    created_at: '2026-05-15T09:12:44Z'
+                    updated_at: '2026-05-18T14:32:11Z'
+              stakeholder:
+                summary: Stakeholder account approved
+                value:
+                  event_uuid: 9e8d7c6b-5a49-4321-8f0e-1d2c3b4a5968
+                  event_type: ACCOUNT
+                  event_version: '2021-11-18.1'
+                  event_date: '2026-05-18T14:32:11Z'
+                  event_retry: 0
+                  business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+                  program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+                  entity:
+                    account_uuid: c3d4e5f6-a7b8-9012-cdef-345678901234
+                    type: STAKEHOLDER
+                    status: ACTIVE
+                    parent_account_uuid: b2c3d4e5-f6a7-8901-bcde-f23456789012
+                    external_id: partner-biz-98765-stake-1
+                    information:
+                      business_account_uuid: b2c3d4e5-f6a7-8901-bcde-f23456789012
+                      stakeholder_information:
+                        stakeholder_types:
+                          - BENEFICIAL_OWNER
+                        percentage_ownership: 51
+                        first_name: John
+                        last_name: Smith
+                    created_at: '2026-05-15T09:13:02Z'
+                    updated_at: '2026-05-18T14:32:11Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
+  activity:
+    post:
+      tags:
+        - Webhooks
+      summary: activity
+      operationId: webhook-activity
+      description: |
+        Fired for cardholder activity events — card created, card replaced,
+        authorization denied, payroll deposit switch, and other notable
+        side-effects that don't fit a transaction. `event_type` is `ACTIVITY`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - ACTIVITY
+                    entity:
+                      $ref: '#/components/schemas/activity-response'
+            example:
+              event_uuid: 2d4e6f80-1a3b-5c7d-9e0f-2a4b6c8d0e1f
+              event_type: ACTIVITY
+              event_version: '2021-11-18.1'
+              event_date: '2026-05-18T16:04:55Z'
+              event_retry: 0
+              business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              entity:
+                activity_uuid: f1e2d3c4-b5a6-9788-7766-554433221100
+                account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                wallet_uuid: 13579024-6810-2468-1357-902468102468
+                entity_uuid: 24680ace-1357-9bdf-2468-0ace13579bdf
+                entity_type: ISSUED_CARD
+                type: DENIED_AUTHORIZATION
+                type_details:
+                  denied_authorization_details:
+                    card_uuid: 24680ace-1357-9bdf-2468-0ace13579bdf
+                    merchant_name: STARBUCKS
+                    merchant_id: '123456'
+                    amount: 540
+                    currency: USD
+                    network: VISA
+                    subnetwork: INTERLINK
+                    merchant_category_code: '5814'
+                    denied_reasons:
+                      - INSUFFICIENT_FUNDS
+                created_at: '2026-05-18T16:04:55Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
+  bank_pm:
+    post:
+      tags:
+        - Webhooks
+      summary: bank_pm
+      operationId: webhook-bank-pm
+      description: |
+        Fired when a bank account payment method's state changes (verification
+        completed, micro-deposits posted, account disabled). `event_type` is
+        `BANK_PM`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - BANK_PM
+                    entity:
+                      $ref: '#/components/schemas/bank-account-pm-response'
+            example:
+              event_uuid: 3e5f7081-2b4c-6d8e-0a1b-3c5d7e9f0a2b
+              event_type: BANK_PM
+              event_version: '2021-11-18.1'
+              event_date: '2026-05-18T11:20:18Z'
+              event_retry: 0
+              business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              entity:
+                payment_method_uuid: e1f2a3b4-c5d6-7890-abcd-ef0123456789
+                external_id: partner-bank-7
+                account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                status: ACTIVE
+                bank_name: Chase
+                type: CHECKING
+                last_4: '4321'
+                country: USA
+                currency: USD
+                is_plaid: false
+                flags:
+                  load_supported: true
+                  withdraw_supported: true
+                bank_account_details:
+                  ach_details:
+                    routing_number: '021000021'
+                    account_number_last_4: '4321'
+                    type: CHECKING
+                primary: true
+                created_at: '2026-05-18T11:18:00Z'
+                updated_at: '2026-05-18T11:20:18Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
+  beneficiary:
+    post:
+      tags:
+        - Webhooks
+      summary: beneficiary
+      operationId: webhook-beneficiary
+      description: |
+        Fired when a beneficiary is created, updated, or its status changes.
+        `event_type` is `BENEFICIARY`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - BENEFICIARY
+                    entity:
+                      $ref: '#/components/schemas/beneficiary-response'
+            example:
+              event_uuid: 4f6a8192-3c5d-7e9f-0a1b-4c6d8e0f1a3b
+              event_type: BENEFICIARY
+              event_version: '2021-11-18.1'
+              event_date: '2026-05-18T18:42:07Z'
+              event_retry: 0
+              business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              entity:
+                beneficiary_uuid: 9a8b7c6d-5e4f-3210-9876-543210fedcba
+                account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                external_id: partner-bene-7
+                type: INTERNATIONAL
+                legal_type: INDIVIDUAL
+                status: ACTIVE
+                first_name: Maria
+                last_name: Lopez
+                date_of_birth: '1985-04-12'
+                country: MEX
+                currency: MXN
+                created_at: '2026-05-18T18:40:00Z'
+                updated_at: '2026-05-18T18:42:07Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
+  card_pm:
+    post:
+      tags:
+        - Webhooks
+      summary: card_pm
+      operationId: webhook-card-pm
+      description: |
+        Fired when a saved card payment method changes state — added, updated,
+        or removed. `event_type` is `CARD_PM`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - CARD_PM
+                    entity:
+                      $ref: '#/components/schemas/card-pm-response'
+            example:
+              event_uuid: 5a7b92a3-4d6e-8f0a-1b2c-5d7e9f0a1b3c
+              event_type: CARD_PM
+              event_version: '2021-11-18.1'
+              event_date: '2026-05-18T13:11:09Z'
+              event_retry: 0
+              business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              entity:
+                payment_method_uuid: f1e2d3c4-b5a6-9788-7766-554433221100
+                external_id: partner-card-pm-7
+                account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                brand: VISA
+                type: DEBIT
+                country: USA
+                last_4: '4242'
+                status: ACTIVE
+                flags:
+                  load_supported: true
+                  withdraw_supported: false
+                primary: true
+                created_at: '2026-05-18T13:10:00Z'
+                updated_at: '2026-05-18T13:11:09Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
+  check:
+    post:
+      tags:
+        - Webhooks
+      summary: check
+      operationId: webhook-check
+      description: |
+        Fired when a check deposit changes state — submitted, accepted,
+        rejected, or returned. `event_type` is `CHECK`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - CHECK
+                    entity:
+                      $ref: '#/components/schemas/check'
+            example:
+              event_uuid: 6b8ca3b4-5e7f-90a1-2c3d-6e8f0a1b2c4d
+              event_type: CHECK
+              event_version: '2021-11-18.1'
+              event_date: '2026-05-18T20:55:33Z'
+              event_retry: 0
+              business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              entity:
+                check_uuid: 02468ace-1357-9bdf-0246-8ace13579bdf
+                transaction_uuid: 46802ace-1357-9bdf-4680-2ace13579bdf
+                wallet_uuid: 13579024-6810-2468-1357-902468102468
+                external_id: partner-check-7
+                account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                check_number: '123456789'
+                currency: USD
+                entered_amount: 25000
+                settled_amount: 25000
+                status: APPROVED
+                created_at: '2026-05-18T20:50:00Z'
+                updated_at: '2026-05-18T20:55:33Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
+  dossier:
+    post:
+      tags:
+        - Webhooks
+      summary: dossier
+      operationId: webhook-dossier
+      description: |
+        Fired when a KYC/KYB dossier changes status (created, pending,
+        manual review, verified, rejected, failed). `event_type` is `DOSSIER`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - DOSSIER
+                    entity:
+                      $ref: '#/components/schemas/dossier-response'
+            example:
+              event_uuid: 7c9db4c5-6f80-a1b2-3d4e-7f9a0b1c2d5e
+              event_type: DOSSIER
+              event_version: '2021-11-18.1'
+              event_date: '2026-05-18T09:30:00Z'
+              event_retry: 0
+              business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              entity:
+                dossier_uuid: 13579bdf-2468-ace0-1357-9bdf2468ace0
+                account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                primary: true
+                status: VERIFIED
+                external_id: partner-dossier-7
+                country_of_issuance: USA
+                documents:
+                  - type: PASSPORT
+                created_at: '2026-05-18T08:00:00Z'
+                updated_at: '2026-05-18T09:30:00Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
+  issued_card:
+    post:
+      tags:
+        - Webhooks
+      summary: issued_card
+      operationId: webhook-issued-card
+      description: |
+        Fired when an issued card changes state — created, activated, frozen,
+        replaced, closed. `event_type` is `ISSUED_CARD`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - ISSUED_CARD
+                    entity:
+                      $ref: '#/components/schemas/issued-card-response'
+            example:
+              event_uuid: 8d0ec5d6-7091-b2c3-4e5f-8a0b1c2d3e6f
+              event_type: ISSUED_CARD
+              event_version: '2021-11-18.1'
+              event_date: '2026-05-18T10:15:42Z'
+              event_retry: 0
+              business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              entity:
+                card_uuid: 24680ace-1357-9bdf-2468-0ace13579bdf
+                external_id: partner-card-7
+                account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                wallet_uuid: 13579024-6810-2468-1357-902468102468
+                product_id: '885'
+                type: DEBIT
+                genre: PHYSICAL
+                status: ACTIVE
+                brand: VISA
+                last_4: '1234'
+                card_expiration: '2029-12'
+                blocked: false
+                pin_set: true
+                shipping_address:
+                  line_1: 1 Market St
+                  postal_code: '94105'
+                  city: San Francisco
+                  state: CA
+                  country: USA
+                auth_rules: {}
+                custom_fields:
+                  shipping_method: DEFAULT
+                  name_on_card: Jane Doe
+                metadata: {}
+                created_at: '2026-05-18T10:00:00Z'
+                updated_at: '2026-05-18T10:15:42Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
+  wallet_transaction:
+    post:
+      tags:
+        - Webhooks
+      summary: wallet_transaction
+      operationId: webhook-wallet-transaction
+      description: |
+        Fired when a wallet transaction changes state — created, processing,
+        completed, failed, voided, rejected. `event_type` is `WALLET_TRANSACTION`.
+      parameters:
+        - $ref: '#/components/parameters/webhook-id-header'
+        - $ref: '#/components/parameters/webhook-timestamp-header'
+        - $ref: '#/components/parameters/webhook-signature-header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/webhook-envelope'
+                - type: object
+                  required:
+                    - entity
+                  properties:
+                    event_type:
+                      type: string
+                      enum:
+                        - WALLET_TRANSACTION
+                    entity:
+                      $ref: '#/components/schemas/transaction'
+            example:
+              event_uuid: af20e7f8-92b3-d4e5-6071-ac2d3e4f5081
+              event_type: WALLET_TRANSACTION
+              event_version: '2021-11-18.1'
+              event_date: '2026-05-18T12:01:33Z'
+              event_retry: 0
+              business_account_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              program_uuid: 4d7e1f60-3a2b-4c1d-9e8a-1f3b2c5d6e7f
+              entity:
+                transaction_uuid: 46802ace-1357-9bdf-4680-2ace13579bdf
+                wallet_uuid: 13579024-6810-2468-1357-902468102468
+                account_uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                external_id: partner-load-7
+                transaction_type: LOAD_FUNDS
+                status: COMPLETED
+                description: Funds loaded
+                amount: 12500
+                currency: USD
+                refunded: false
+                disputed: false
+                funds_source:
+                  payment_method_uuid: f1e2d3c4-b5a6-9788-7766-554433221100
+                type_details:
+                  payments_details:
+                    card_processing:
+                      auth_type: AUTHCAP
+                      3ds_details:
+                        3ds_preference: ENABLED
+                        3ds_challenge_indicator: CHALLENGE_REQUESTED
+                created_at: '2026-05-18T11:12:01Z'
+                updated_at: '2026-05-18T12:01:33Z'
+      responses:
+        '2XX':
+          description: Acknowledge receipt with any 2xx within 10 seconds.
 components:
   schemas:
     beneficiary_address:
@@ -9340,6 +10811,10 @@ components:
         external_id:
           type: string
           description: The external account id of your platform
+        parent_account_uuid:
+          type: string
+          format: uuid
+          description: UUID of the parent account
         information:
           $ref: '#/components/schemas/account-information-response'
         metadata:
@@ -9403,6 +10878,14 @@ components:
         payout_method_uuid:
           type: string
           description: If the transaction is related to the transfer of funds to a Beneficiary, this field will contain the UUID of applicable Payout Method
+        origin_wallet_uuid:
+          type: string
+          description: For WALLET_TRANSFER transactions, the UUID of the sending wallet. Only populated on the credit side of the transfer (when `wallet_uuid` is the receiving wallet).
+          format: uuid
+        destination_wallet_uuid:
+          type: string
+          description: For WALLET_TRANSFER transactions, the UUID of the receiving wallet. Only populated on the debit side of the transfer (when `wallet_uuid` is the sending wallet).
+          format: uuid
         receipt_uuid:
           description: Receipt identifier for a given transaction
           type: string
@@ -9422,7 +10905,7 @@ components:
         amount:
           title: Transaction amount
           description: |
-            The transaction amount in the currency of the transaction, defined in cents. 
+            The transaction amount in the currency of the transaction, defined in cents.
             e.g. 1 USD will be represented as `amount: 100`
           type: integer
           example: 10032
@@ -9432,10 +10915,36 @@ components:
           description: The currency code in ISO-4217 format.
           type: string
           example: USD
+        expires_at:
+          type: string
+          format: date-time
+          description: |
+            Expiration timestamp. Present on `INSTANT_PAYMENT_REQUEST` transactions — after this time the request
+            becomes invalid and moves to `EXPIRED`.
+          example: "2026-06-28T23:59:59.000Z"
         type_details:
           type: object
           description: Additional details applying to specific transaction types
           properties:
+            instant_transfer_details:
+              type: object
+              description: |
+                Details for instant payment transactions (FedNow / TCH RTP). Present on `INSTANT_BANK_TRANSFER`
+                and `INSTANT_PAYMENT_REQUEST` transactions.
+              properties:
+                network:
+                  type: string
+                  enum:
+                    - FEDNOW
+                    - TCH_RTP
+                  description: The instant rail used for the transfer
+                  example: FEDNOW
+                iso_reason_code:
+                  type: string
+                  description: |
+                    ISO 20022 reason code (e.g. `AC03`, `AG01`, `AM09`). Present only when the transaction was
+                    rejected and the rail returned a real ISO 20022 code; read `status_reason` otherwise.
+                  example: AC03
             global_payments_details:
               type: object
               description: If this transaction is related to an `INTERNATIONAL_TRANSFER`, this structure will show additional details
@@ -9523,6 +11032,9 @@ components:
                 is_international:
                   type: boolean
                   description: If ``TRUE`` the transaction is international
+                is_pin:
+                  type: boolean
+                  description: If ``TRUE`` the transaction was a PIN-based transaction
                 dispute_details:
                   type: object
                   description: Dispute information for card transactions
@@ -9531,7 +11043,6 @@ components:
                       type: string
                       enum:
                         - OPEN
-                        - PENDING
                         - WON
                         - LOST
                         - CLOSED
@@ -9540,25 +11051,19 @@ components:
                       type: string
                       enum:
                         - FILED
-                        - AWAITING_DOCUMENTATION
-                        - UNDER_REVIEW
-                        - MERCHANT_RESPONSE_PENDING
-                        - ESCALATED
-                        - FINAL_REVIEW
                         - RESOLVED_IN_FAVOR
                         - RESOLVED_AGAINST
                         - ADMINISTRATIVE_CLOSURE
                       description: Current lifecycle stage
-                    dispute_reason:
+                    reason_raw:
                       type: string
-                      enum:
-                        - FRAUD
-                        - AUTHORIZATION_ISSUE
-                        - MERCHANT_ERROR
-                        - SERVICE_ISSUE
-                        - PROCESSING_ERROR
-                        - OTHER
-                      description: Why the dispute was filed
+                      description: Raw dispute reason from the processor, if available
+                    recovered_amount:
+                      type: integer
+                      description: Amount recovered from the dispute, in cents
+                cashback_amount:
+                  type: integer
+                  description: The cashback amount for the transaction, in cents
             payments_details:
               type: object
               description: If this transaction is related to a payment processing transaction, this structure may show additional details
@@ -9647,54 +11152,47 @@ components:
             - WALLET
           description: Source of funds for transaction funded via a passthrough transaction
         funds_source:
-          oneOf:
-            - title: Bank account (DDA)
-              properties:
-                origin_bank:
-                  type: string
-                  description: The name of the origin bank for this bank credit.
-                  example: CHASE BANK
-                is_payroll:
-                  type: boolean
-                  description: If the bank account transaction relates to payroll, this propoerty will be true.
-                payroll_date:
-                  type: string
-                  format: date
-                  description: If transaction corresponds to a payroll, this is expected settlement date. If early pay is enabled for this wallet, the transaction could be generally settled up to two days in advance of this date
-                account_verification:
-                  type: boolean
-                  description: Whether the transaction purpose was to verify the validity of the account
-            - title: Payment method
-              properties:
-                payment_method_uuid:
-                  type: string
-                  description: When the transaction was performed using a payment method linked to this account, this property will hold the uuid of payment method token (eg. a debit card, a bank account, etc).
-                settled_at:
-                  type: string
-                  description: The date the child passthrough transaction settled
-                  format: date-time
-            - title: Check
-              properties:
-                check_uuid:
-                  type: string
-                  description: The uuid of the deposited check.
-                  format: uuid
-                check_released_amount:
-                  type: integer
-                  example: 10032
-                  minimum: -99999999
-                  maximum: 99999999
-                  description: |-
-                    For a `CHECK_DEPOSIT` transaction, the amount that has been released, defined in cents. 
-                    e.g. 1 USD will be represented as `amount: 100`
-                funding_instrument_details:
-                  $ref: '#/components/schemas/funding-instrument-response-check'
-            - title: Payment Instrument
-              properties:
-                payment_instrument_uuid:
-                  type: string
-                  description: Unique identifier of the payment instrument
           type: object
+          description: Where the transaction funds came from. Only the fields relevant to this transaction's source will be populated.
+          properties:
+            origin_bank:
+              type: string
+              description: For bank credits (e.g. payroll), the name of the origin bank.
+              example: CHASE BANK
+            is_payroll:
+              type: boolean
+              description: For bank credits, `true` if the transaction relates to payroll.
+            payroll_date:
+              type: string
+              format: date
+              description: For payroll bank credits, the expected settlement date. With early pay enabled, the transaction may settle up to two days in advance of this date.
+            account_verification:
+              type: boolean
+              description: Whether the transaction purpose was to verify the validity of the account.
+            payment_method_uuid:
+              type: string
+              description: When the transaction was performed using a payment method linked to this account, the uuid of the payment method token (e.g. a debit card, a bank account).
+            settled_at:
+              type: string
+              format: date-time
+              description: The date the child passthrough transaction settled.
+            check_uuid:
+              type: string
+              format: uuid
+              description: The uuid of the deposited check.
+            check_released_amount:
+              type: integer
+              example: 10032
+              minimum: -99999999
+              maximum: 99999999
+              description: |-
+                For a `CHECK_DEPOSIT` transaction, the amount that has been released, defined in cents.
+                e.g. 1 USD will be represented as `amount: 100`
+            funding_instrument_details:
+              $ref: '#/components/schemas/funding-instrument-response-check'
+            payment_instrument_uuid:
+              type: string
+              description: Unique identifier of the payment instrument.
         refunded:
           description: |
             This flag indicates if this transaction has been refunded.
@@ -9702,7 +11200,7 @@ components:
           default: false
         refund_reason:
           type: string
-          description: If `refunded` is `TRUE`, reason why the transaction was refunded
+          description: Reason why the transaction was refunded
         disputed:
           type: boolean
           description: For `PAYMENT` transactions, if `TRUE` a chargeback has been received for this transaction
@@ -9724,11 +11222,9 @@ components:
             payment_options:
               type: object
               properties:
-                ACH_type:
+                ach_reference:
                   type: string
-                  enum:
-                    - SAME_DAY
-                    - NEXT_DAY
+                  description: Reference included with the ACH transfer, when provided on the request
                 prefund:
                   type: string
                   description: If `FALSE`, prefunding has been disabled for this transaction. If `TRUE`, prefunding has been enabled for this transaction. If not returned, default program configuration applies.
@@ -9743,6 +11239,36 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/release'
+        child_transactions:
+          type: array
+          description: Child transactions associated with this transaction, such as service fees. Only present when applicable.
+          items:
+            type: object
+            required:
+              - transaction_uuid
+              - type
+              - status
+              - amount
+              - currency
+            properties:
+              transaction_uuid:
+                type: string
+                format: uuid
+                description: Alviere's unique identifier for the child transaction
+              type:
+                type: string
+                description: The type of child transaction
+                example: SERVICE_FEE
+              status:
+                $ref: '#/components/schemas/transaction-status'
+              amount:
+                type: integer
+                description: The transaction amount in cents
+                example: -300
+              currency:
+                type: string
+                description: The currency code in ISO-4217 format
+                example: USD
         metadata:
           type: object
           description: Allows for any number of custom metadata keys and values to be stored with a given transaction
@@ -9775,20 +11301,18 @@ components:
           enum:
             - DENIED_AUTHORIZATION
             - CARD_REPLACEMENT
+            - CARD_CREATED
           description: Type of activity event
         type_details:
           type: object
-          oneOf:
-            - title: Denied Authorization
-              type: object
-              properties:
-                denied_authorization_details:
-                  $ref: '#/components/schemas/denied-authorization-details'
-            - title: Card Replacement
-              type: object
-              properties:
-                card_replacement_details:
-                  $ref: '#/components/schemas/card-replacement-details'
+          description: Activity-specific details. Only the field matching this event's `type` will be populated.
+          properties:
+            denied_authorization_details:
+              $ref: '#/components/schemas/denied-authorization-details'
+            card_replacement_details:
+              $ref: '#/components/schemas/card-replacement-details'
+            card_created_details:
+              $ref: '#/components/schemas/card-created-details'
         created_at:
           type: string
           format: date-time
@@ -9834,6 +11358,9 @@ components:
         is_international:
           type: boolean
           description: Whether this was an international transaction
+        merchant_category_code:
+          type: string
+          description: Merchant category code (MCC) identifying the merchant's line of business
     card-replacement-details:
       type: object
       properties:
@@ -9860,6 +11387,36 @@ components:
         waive_fees_description:
           type: string
           description: Detailed description for fee waiver
+    card-created-details:
+      type: object
+      properties:
+        card_uuid:
+          type: string
+          format: uuid
+          description: UUID of the card that was created
+        type:
+          type: string
+          description: The type of card
+          enum:
+            - DEBIT
+            - PREPAID
+            - PREPAID_NON_RELOADABLE
+            - GIFT
+        brand:
+          type: string
+          description: Card brand
+          example: VISA
+        genre:
+          type: string
+          description: The genre of the card
+          enum:
+            - DIGITAL
+            - VIRTUAL
+            - PHYSICAL
+        product_id:
+          type: string
+          description: The product ID assigned by Alviere when the card issuance service was set up
+          example: virtual-debit-card
     service-fee-transaction:
       title: Service fee rule
       type: object
@@ -9993,13 +11550,13 @@ components:
           format: base64
           example: U3dhZ2dlciByb2Nrcw==...
           description: |
-            The image of the front of the check, captured with Alviere's Mobile SDK. This field is only returned on responses from the `Get check`endpoint
+            The image of the front of the check, captured with Alviere's Mobile SDK. This field is only returned on responses from the `Get check` endpoint, and only for checks deposited within the last 90 days. After 90 days the image is no longer returned.
         back_image:
           type: string
           format: base64
           example: U3dhZ2dlciByb2Nrcw==...
           description: |
-            The image of the back of the check, captured with Alviere's Mobile SDK. This field is only returned on responses from the `Get check`endpoint
+            The image of the back of the check, captured with Alviere's Mobile SDK. This field is only returned on responses from the `Get check` endpoint, and only for checks deposited within the last 90 days. After 90 days the image is no longer returned.
         status:
           type: string
           description: The status of the check entity
@@ -10167,11 +11724,11 @@ components:
         created_at:
           description: The date this dossier was created.
           type: string
-          format: date
+          format: date-time
         updated_at:
           description: The date this dossier was last updated.
           type: string
-          format: date
+          format: date-time
         documents:
           description: The actual documents uploaded as part of this dossier.
           type: array
@@ -10262,6 +11819,7 @@ components:
         - country
         - last_4
         - status
+        - primary
         - created_at
         - updated_at
       properties:
@@ -10362,6 +11920,9 @@ components:
             enrolled:
               type: boolean
               description: Whether the card is enrolled in 3-D secure in their issuer bank
+        primary:
+          type: boolean
+          description: Indicates whether this card is the primary payment method for the account
         metadata:
           type: object
           description: Allows for any number of custom metadata keys and values to be stored with a given entity
@@ -10387,6 +11948,7 @@ components:
         - is_plaid
         - flags
         - bank_account_details
+        - primary
         - created_at
         - updated_at
       properties:
@@ -10409,16 +11971,20 @@ components:
             - PROCESSING
             - FAILED
             - DELETED
+            - PENDING
             - REJECTED
         status_reason:
           type: string
           description: The reason why the payment method is in a particular status
+        bank_name:
+          type: string
+          description: The name of the bank that holds this account
         type:
           type: string
           description: The type of bank account
           enum:
             - CHECKING
-            - SAVING
+            - SAVINGS
             - GENERAL_LEDGER
             - LOAN
         last_4:
@@ -10458,6 +12024,12 @@ components:
             - INVALID_BANK_TYPE
             - INVALID_PUBLIC_TOKEN
             - BANK_FAILED
+        primary:
+          type: boolean
+          description: Indicates whether this bank account is the primary payment method for the account
+        verified:
+          type: boolean
+          description: Indicates whether the bank account has been successfully verified. Not present when verification has not been done or is not yet completed. `false` when verification was unsuccessful. `true` when verification was successful.
         metadata:
           type: object
           description: Allows for any number of custom metadata keys and values to be stored with a given entity
@@ -10499,6 +12071,7 @@ components:
           description: The type of wallet
           enum:
             - CHECKING
+            - SAVINGS
             - PREPAID
             - PREPAID_NON_RELOADABLE
             - PASSTHROUGH
@@ -10676,7 +12249,8 @@ components:
           description: The beneficiary's creation date
         updated_at:
           type: string
-          pattern: '2021-08-02T05:32:11.345Z'
+          format: date-time
+          example: '2021-08-02T05:32:11.345Z'
           description: The beneficiary's update date
     incentive-rule-response:
       title: Incentive rule
@@ -10864,6 +12438,10 @@ components:
           type: boolean
           description: Indicates if this card was originally virtual and converted to physical
           example: true
+        frozen:
+          type: boolean
+          description: Indicates if the card is currently frozen
+          example: false
         status:
           type: string
           description: The status of the card
@@ -11092,11 +12670,9 @@ components:
       oneOf:
         - title: US business account
           required:
-            - business_type
             - business_name
             - state_of_incorporation
             - country_of_incorporation
-            - ein
           properties:
             business_type:
               type: string
@@ -11105,8 +12681,11 @@ components:
                 - SOLE_PROPRIETORSHIP
                 - LLC
                 - LLP
+                - GENERAL_PARTNERSHIP
                 - CORPORATION_C
                 - CORPORATION_S
+                - NON_PROFIT_CORPORATION
+                - GOVERNMENT_ENTITY
             business_name:
               type: string
               description: The name of the company
@@ -11129,12 +12708,12 @@ components:
               example: USA
             incorporation_date:
               type: string
-              description: The date the company was started
+              description: The date the company was started. For new programs, this field is required. Please reach out to implementation support for assistance.
               format: date
             ein:
               type: string
               description: The EIN of the company
-              example: '1234556'
+              example: '123456789'
             phone_number:
               type: string
               description: The business' phone number in E.164 international standard
@@ -11189,7 +12768,6 @@ components:
               description: Number of employees in the organization
         - title: EU business account
           required:
-            - business_type
             - business_name
             - country_of_incorporation
             - company_id
@@ -11219,7 +12797,7 @@ components:
             company_id:
               type: string
               description: The ID number of the company
-              example: '1234556'
+              example: '123456789'
             vat_number:
               type: string
               description: The VAT number of the company
@@ -11279,21 +12857,28 @@ components:
         stakeholder_types:
           type: array
           description: The type of stakeholder
-          enum:
+          example:
             - BENEFICIAL_OWNER
             - OFFICER
           items:
             type: string
+            enum:
+              - BENEFICIAL_OWNER
+              - OFFICER
+              - CONTROL_PERSON
+              - DIRECTOR
+              - ADMINISTRATOR
         officer_titles:
           type: array
           description: The job title for type `OFFICER`
-          example: CEO
+          example:
+            - CEO
           items:
             type: string
         percentage_ownership:
           type: number
           description: The percentage ownership in the company for type `BENEFICIAL_OWNER`
-          example: '25'
+          example: 25
           minimum: 0
           maximum: 100
           format: float
@@ -11319,6 +12904,29 @@ components:
           type: string
           description: The date of birth. Not required for `ADMINISTRATOR`
           example: '1976-02-07'
+        email_address:
+          type: string
+          description: The stakeholder's email address
+          example: john.doe@example.com
+        phone_number:
+          type: string
+          description: The stakeholder's phone number in E.164 international standard
+          pattern: ^\+[1-9]\d{1,14}$
+          example: '+12125551234'
+        citizenship_country:
+          type: string
+          description: Country of citizenship (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        residency_country:
+          type: string
+          description: Country of residency (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        is_us_person:
+          type: boolean
+          description: Indicates whether the stakeholder is a U.S. person for tax reporting purposes (FATCA)
+          example: true
         id_information:
           type: object
           description: ID information for the stakeholder
@@ -11512,6 +13120,10 @@ components:
         external_id:
           type: string
           description: The external account id of your platform
+        parent_account_uuid:
+          type: string
+          format: uuid
+          description: UUID of the parent account
         information:
           $ref: '#/components/schemas/account-information-response-list'
         metadata:
@@ -11589,24 +13201,34 @@ components:
         stakeholder_types:
           type: array
           description: The different types that apply to this stakeholder
-          enum:
+          example:
             - BENEFICIAL_OWNER
             - OFFICER
           items:
             type: string
+            enum:
+              - BENEFICIAL_OWNER
+              - OFFICER
+              - CONTROL_PERSON
+              - DIRECTOR
+              - ADMINISTRATOR
         external_id:
           type: string
           description: The ID of this stakeholder in your own platform. This will be associated with this stakeholder and can be used to identify the stakeholder as well as protect our API against duplicate stakeholders.
         officer_titles:
           type: array
           description: The titles that apply for type `OFFICER`
-          example: CEO
+          example:
+            - CEO
           items:
             type: string
         percentage_ownership:
-          type: string
+          type: number
           description: The percentage ownership in the company for type `BENEFICIAL_OWNER`
-          example: '25'
+          example: 25
+          minimum: 0
+          maximum: 100
+          format: float
         first_name:
           type: string
           description: The first name
@@ -11627,8 +13249,31 @@ components:
           maxLength: 40
         date_of_birth:
           type: string
-          description: The date of birth.
+          description: The date of birth. Not required for `ADMINISTRATOR`
           example: '1976-02-07'
+        email_address:
+          type: string
+          description: The stakeholder's email address
+          example: john.doe@example.com
+        phone_number:
+          type: string
+          description: The stakeholder's phone number in E.164 international standard
+          pattern: ^\+[1-9]\d{1,14}$
+          example: '+12125551234'
+        citizenship_country:
+          type: string
+          description: Country of citizenship (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        residency_country:
+          type: string
+          description: Country of residency (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        is_us_person:
+          type: boolean
+          description: Indicates whether the stakeholder is a U.S. person for tax reporting purposes (FATCA)
+          example: true
         id_information:
           type: object
           description: ID information for the stakeholder
@@ -11709,21 +13354,28 @@ components:
         stakeholder_types:
           type: array
           description: The different types that apply to this stakeholder
-          enum:
+          example:
             - BENEFICIAL_OWNER
             - OFFICER
           items:
             type: string
+            enum:
+              - BENEFICIAL_OWNER
+              - OFFICER
+              - CONTROL_PERSON
+              - DIRECTOR
+              - ADMINISTRATOR
         officer_titles:
           type: array
           description: The titles that apply for type `OFFICER`
-          example: CEO
+          example:
+            - CEO
           items:
             type: string
         percentage_ownership:
           type: number
           description: The percentage ownership in the company for type `BENEFICIAL_OWNER`
-          example: '25'
+          example: 25
           format: float
           minimum: 0
           maximum: 100
@@ -11747,8 +13399,31 @@ components:
           maxLength: 40
         date_of_birth:
           type: string
-          description: The date of birth.
+          description: The date of birth. Not required for `ADMINISTRATOR`
           example: '1976-02-07'
+        email_address:
+          type: string
+          description: The stakeholder's email address
+          example: john.doe@example.com
+        phone_number:
+          type: string
+          description: The stakeholder's phone number in E.164 international standard
+          pattern: ^\+[1-9]\d{1,14}$
+          example: '+12125551234'
+        citizenship_country:
+          type: string
+          description: Country of citizenship (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        residency_country:
+          type: string
+          description: Country of residency (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        is_us_person:
+          type: boolean
+          description: Indicates whether the stakeholder is a U.S. person for tax reporting purposes (FATCA)
+          example: true
         id_information:
           type: object
           description: ID information for the stakeholder
@@ -11956,21 +13631,31 @@ components:
         stakeholder_types:
           type: array
           description: The type of stakeholder
-          enum:
+          example:
             - BENEFICIAL_OWNER
             - OFFICER
           items:
             type: string
+            enum:
+              - BENEFICIAL_OWNER
+              - OFFICER
+              - CONTROL_PERSON
+              - DIRECTOR
+              - ADMINISTRATOR
         officer_titles:
           type: array
           description: The job title for type `OFFICER`
-          example: CEO
+          example:
+            - CEO
           items:
             type: string
         percentage_ownership:
-          type: string
+          type: number
           description: The percentage ownership in the company for type `BENEFICIAL_OWNER`
-          example: '25'
+          example: 25
+          minimum: 0
+          maximum: 100
+          format: float
         first_name:
           type: string
           description: The first name
@@ -11993,6 +13678,29 @@ components:
           type: string
           description: The date of birth. Not required for `ADMINISTRATOR`
           example: '1976-02-07'
+        email_address:
+          type: string
+          description: The stakeholder's email address
+          example: john.doe@example.com
+        phone_number:
+          type: string
+          description: The stakeholder's phone number in E.164 international standard
+          pattern: ^\+[1-9]\d{1,14}$
+          example: '+12125551234'
+        citizenship_country:
+          type: string
+          description: Country of citizenship (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        residency_country:
+          type: string
+          description: Country of residency (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        is_us_person:
+          type: boolean
+          description: Indicates whether the stakeholder is a U.S. person for tax reporting purposes (FATCA)
+          example: true
         id_information:
           type: object
           description: ID information for the stakeholder
@@ -12082,8 +13790,11 @@ components:
                 - SOLE_PROPRIETORSHIP
                 - LLC
                 - LLP
+                - GENERAL_PARTNERSHIP
                 - CORPORATION_C
                 - CORPORATION_S
+                - NON_PROFIT_CORPORATION
+                - GOVERNMENT_ENTITY
             business_name:
               type: string
               description: The name of the company
@@ -12107,7 +13818,7 @@ components:
             ein:
               type: string
               description: The EIN of the company
-              example: '1234556'
+              example: '123456789'
             phone_number:
               type: string
               description: The business' phone number in E.164 international standard
@@ -12176,7 +13887,7 @@ components:
             company_id:
               type: string
               description: The ID number of the company
-              example: '1234556'
+              example: '123456789'
             vat_number:
               type: string
               description: The VAT number of the company
@@ -12254,6 +13965,112 @@ components:
         email_address:
           type: string
           example: john.doe@alviere.com
+    stakeholder-information-update:
+      title: Stakeholder
+      type: object
+      description: This structure contains the updatable information of a stakeholder account. Only the properties present in the request body will be updated.
+      properties:
+        stakeholder_types:
+          type: array
+          description: The different types that apply to this stakeholder
+          example:
+            - BENEFICIAL_OWNER
+            - OFFICER
+          items:
+            type: string
+            enum:
+              - BENEFICIAL_OWNER
+              - OFFICER
+              - CONTROL_PERSON
+              - DIRECTOR
+              - ADMINISTRATOR
+        officer_titles:
+          type: array
+          description: The titles that apply for type `OFFICER`
+          example:
+            - CEO
+          items:
+            type: string
+        percentage_ownership:
+          type: number
+          description: The percentage ownership in the company for type `BENEFICIAL_OWNER`
+          example: 25
+          format: float
+          minimum: 0
+          maximum: 100
+        first_name:
+          type: string
+          description: The first name
+          example: John
+          minLength: 1
+          maxLength: 40
+        middle_name:
+          type: string
+          description: The middle name
+          example: Smith
+          minLength: 1
+          maxLength: 40
+        last_name:
+          type: string
+          description: The last name
+          example: Doe
+          minLength: 1
+          maxLength: 40
+        date_of_birth:
+          type: string
+          description: The date of birth. Not required for `ADMINISTRATOR`
+          example: '1976-02-07'
+        email_address:
+          type: string
+          description: The stakeholder's email address
+          example: john.doe@example.com
+        phone_number:
+          type: string
+          description: The stakeholder's phone number in E.164 international standard
+          pattern: ^\+[1-9]\d{1,14}$
+          example: '+12125551234'
+        citizenship_country:
+          type: string
+          description: Country of citizenship (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        residency_country:
+          type: string
+          description: Country of residency (ISO 3166-1 alpha-3)
+          pattern: ^[A-Z]{3}$
+          example: USA
+        is_us_person:
+          type: boolean
+          description: Indicates whether the stakeholder is a U.S. person for tax reporting purposes (FATCA)
+          example: true
+        id_information:
+          type: object
+          description: ID information for the stakeholder
+          properties:
+            id_type:
+              type: string
+              enum:
+                - SSN
+                - EIN
+                - ITIN
+                - FOREIGN_TAX_ID
+                - PASSPORT
+                - ALIEN_ID_CARD
+                - NATIONAL_ID
+                - DRIVERS_LICENSE
+              description: The type of ID document
+            id_number:
+              type: string
+              description: The ID number
+              example: '123456789'
+            country_of_issuance:
+              type: string
+              description: Country that issued the ID (ISO 3166-1 alpha-3). Required for non-U.S. IDs (FOREIGN_TAX_ID, PASSPORT, ALIEN_ID_CARD, NATIONAL_ID, DRIVERS_LICENSE)
+              pattern: ^[A-Z]{3}$
+              example: USA
+          required:
+            - id_type
+            - id_number
     account-information-update:
       oneOf:
         - title: Consumer
@@ -12273,7 +14090,7 @@ components:
             - stakeholder_information
           properties:
             stakeholder_information:
-              $ref: '#/components/schemas/stakeholder-information-request-standalone'
+              $ref: '#/components/schemas/stakeholder-information-update'
         - title: Cardholder
           required:
             - cardholder_information
@@ -12286,6 +14103,12 @@ components:
       type: object
       description: A card that can be used as a payment method
       properties:
+        primary:
+          type: boolean
+          description: Update primary status of the card payment method
+        metadata:
+          type: object
+          description: Allows for any number of custom metadata keys and values to be stored with a given entity
         3ds_options:
           type: object
           properties:
@@ -12301,6 +14124,20 @@ components:
                 - CHALLENGE_REQUESTED_MANDATE
                 - NO_PREFERENCE
               description: Whether an indicator was sent to the provider about the 3DS challenge preference
+    bank-account-pm-update:
+      title: Bank account update
+      type: object
+      description: Properties that can be updated on a bank account payment method
+      properties:
+        primary:
+          type: boolean
+          description: Update primary status of the bank account payment method
+        external_id:
+          type: string
+          description: The unique identifier of the bank account in your own system
+        metadata:
+          type: object
+          description: Allows for any number of custom metadata keys and values to be stored with a given entity
     address-update:
       oneOf:
         - title: USA address
@@ -12399,7 +14236,7 @@ components:
       description: |
         This structure contains dossier information attached to an account in the system.
 
-        Dossiers are used to store documents that have been uploaded to an account.docume
+        Dossiers are used to store documents that have been uploaded to an account.
       x-internal: false
       required:
         - documents
@@ -12458,7 +14295,7 @@ components:
       description: |
         This structure contains dossier information attached to an account in the system.
 
-        Dossiers are used to store documents that have been uploaded to an account.docume
+        Dossiers are used to store documents that have been uploaded to an account.
       x-internal: false
       properties:
         external_id:
@@ -12518,7 +14355,7 @@ components:
       description: |
         This structure contains dossier information attached to an account in the system.
 
-        Dossiers are used to store documents that have been uploaded to an account.docume
+        Dossiers are used to store documents that have been uploaded to an account.
       x-internal: false
       required:
         - dossier_uuid
@@ -12565,11 +14402,11 @@ components:
         created_at:
           description: The date this dossier was created.
           type: string
-          format: date
+          format: date-time
         updated_at:
           description: The date this dossier was last updated.
           type: string
-          format: date
+          format: date-time
         documents:
           description: The actual documents uploaded as part of this dossier.
           type: array
@@ -12625,7 +14462,7 @@ components:
       description: |
         This structure contains dossier information attached to an account in the system.
 
-        Dossiers are used to store documents that have been uploaded to an account.docume
+        Dossiers are used to store documents that have been uploaded to an account.
       x-internal: false
       required:
         - primary
@@ -12732,6 +14569,7 @@ components:
         account_number:
           type: string
           description: The account number for this bank account
+          maxLength: 17
         type:
           enum:
             - CHECKING
@@ -12905,11 +14743,13 @@ components:
         - CHECK_DEPOSIT
         - CHECK_DEPOSIT_RETURN
         - CHECK_DISBURSEMENT
+        - INSTANT_BANK_TRANSFER
         - INTERNATIONAL_TRANSFER
         - LOAD_FUNDS
         - LOAD_PULLBACK
         - NEGATIVE_LOSS
         - PAYMENT
+        - INSTANT_PAYMENT_REQUEST
         - RECOVERY
         - REFUND
         - RETURN
@@ -13089,12 +14929,14 @@ components:
         - CHECK_DISBURSEMENT
         - EXTERNAL_CREDIT
         - EXTERNAL_DEBIT
+        - INSTANT_BANK_TRANSFER
         - INTERNATIONAL_TRANSFER
         - INTERNAL_CREDIT
         - LOAD_FUNDS
         - LOAD_PULLBACK
         - NEGATIVE_LOSS
         - PAYMENT
+        - INSTANT_PAYMENT_REQUEST
         - PREFUND
         - RECOVERY
         - REFUND
@@ -13292,6 +15134,14 @@ components:
         payout_method_uuid:
           type: string
           description: 'If the transaction is related to the transfer of funds to a Beneficiary, this field will contain the UUID of applicable Payout Method  '
+        origin_wallet_uuid:
+          type: string
+          description: For WALLET_TRANSFER transactions, the UUID of the sending wallet. Only populated on the credit side of the transfer (when `wallet_uuid` is the receiving wallet).
+          format: uuid
+        destination_wallet_uuid:
+          type: string
+          description: For WALLET_TRANSFER transactions, the UUID of the receiving wallet. Only populated on the debit side of the transfer (when `wallet_uuid` is the sending wallet).
+          format: uuid
         receipt_uuid:
           description: Receipt identifier for a given transaction
           type: string
@@ -13311,7 +15161,7 @@ components:
         amount:
           title: Transaction amount
           description: |
-            The transaction amount in the currency of the transaction, defined in cents. 
+            The transaction amount in the currency of the transaction, defined in cents.
             e.g. 1 USD will be represented as `amount: 100`
           type: integer
           example: 10032
@@ -13321,10 +15171,36 @@ components:
           description: The currency code in ISO-4217 format.
           type: string
           example: USD
+        expires_at:
+          type: string
+          format: date-time
+          description: |
+            Expiration timestamp. Present on `INSTANT_PAYMENT_REQUEST` transactions — after this time the request
+            becomes invalid and moves to `EXPIRED`.
+          example: "2026-06-28T23:59:59.000Z"
         type_details:
           type: object
           description: Additional details applying to specific transaction types
           properties:
+            instant_transfer_details:
+              type: object
+              description: |
+                Details for instant payment transactions (FedNow / TCH RTP). Present on `INSTANT_BANK_TRANSFER`
+                and `INSTANT_PAYMENT_REQUEST` transactions.
+              properties:
+                network:
+                  type: string
+                  enum:
+                    - FEDNOW
+                    - TCH_RTP
+                  description: The instant rail used for the transfer
+                  example: FEDNOW
+                iso_reason_code:
+                  type: string
+                  description: |
+                    ISO 20022 reason code (e.g. `AC03`, `AG01`, `AM09`). Present only when the transaction was
+                    rejected and the rail returned a real ISO 20022 code; read `status_reason` otherwise.
+                  example: AC03
             global_payments_details:
               type: object
               description: If this transaction is related to an `INTERNATIONAL_TRANSFER`, this structure will show additional details
@@ -13412,6 +15288,9 @@ components:
                 is_international:
                   type: boolean
                   description: If ``TRUE`` the transaction is international
+                is_pin:
+                  type: boolean
+                  description: If ``TRUE`` the transaction was a PIN-based transaction
                 dispute_details:
                   type: object
                   description: Dispute information for card transactions
@@ -13420,7 +15299,6 @@ components:
                       type: string
                       enum:
                         - OPEN
-                        - PENDING
                         - WON
                         - LOST
                         - CLOSED
@@ -13429,25 +15307,19 @@ components:
                       type: string
                       enum:
                         - FILED
-                        - AWAITING_DOCUMENTATION
-                        - UNDER_REVIEW
-                        - MERCHANT_RESPONSE_PENDING
-                        - ESCALATED
-                        - FINAL_REVIEW
                         - RESOLVED_IN_FAVOR
                         - RESOLVED_AGAINST
                         - ADMINISTRATIVE_CLOSURE
                       description: Current lifecycle stage
-                    dispute_reason:
+                    reason_raw:
                       type: string
-                      enum:
-                        - FRAUD
-                        - AUTHORIZATION_ISSUE
-                        - MERCHANT_ERROR
-                        - SERVICE_ISSUE
-                        - PROCESSING_ERROR
-                        - OTHER
-                      description: Why the dispute was filed
+                      description: Raw dispute reason from the processor, if available
+                    recovered_amount:
+                      type: integer
+                      description: Amount recovered from the dispute, in cents
+                cashback_amount:
+                  type: integer
+                  description: The cashback amount for the transaction, in cents
             payments_details:
               type: object
               description: If this transaction is related to a payment processing transaction, this structure may show additional details
@@ -13536,54 +15408,47 @@ components:
             - WALLET
           description: Source of funds for transaction funded via a passthrough transaction
         funds_source:
-          oneOf:
-            - title: Bank account (DDA)
-              properties:
-                origin_bank:
-                  type: string
-                  description: The name of the origin bank for this bank credit.
-                  example: CHASE BANK
-                is_payroll:
-                  type: boolean
-                  description: If the bank account transaction relates to payroll, this propoerty will be true.
-                payroll_date:
-                  type: string
-                  format: date
-                  description: If transaction corresponds to a payroll, this is expected settlement date. If early pay is enabled for this wallet, the transaction could be generally settled up to two days in advance of this date
-                account_verification:
-                  type: boolean
-                  description: Whether the transaction purpose was to verify the validity of the account
-            - title: Payment method
-              properties:
-                payment_method_uuid:
-                  type: string
-                  description: When the transaction was performed using a payment method linked to this account, this property will hold the uuid of payment method token (eg. a debit card, a bank account, etc).
-                settled_at:
-                  type: string
-                  format: date-time
-                  description: The date the child passthrough transaction settled
-            - title: Check
-              properties:
-                check_uuid:
-                  type: string
-                  description: The uuid of the deposited check.
-                  format: uuid
-                check_released_amount:
-                  type: integer
-                  example: 10032
-                  minimum: -99999999
-                  maximum: 99999999
-                  description: |-
-                    For a `CHECK_DEPOSIT` transaction, the amount that has been released, defined in cents. 
-                    e.g. 1 USD will be represented as `amount: 100`
-                funding_instrument_details:
-                  $ref: '#/components/schemas/funding-instrument-response-check'
-            - title: Payment Instrument
-              properties:
-                payment_instrument_uuid:
-                  type: string
-                  description: Unique identifier of the payment instrument
           type: object
+          description: Where the transaction funds came from. Only the fields relevant to this transaction's source will be populated.
+          properties:
+            origin_bank:
+              type: string
+              description: For bank credits (e.g. payroll), the name of the origin bank.
+              example: CHASE BANK
+            is_payroll:
+              type: boolean
+              description: For bank credits, `true` if the transaction relates to payroll.
+            payroll_date:
+              type: string
+              format: date
+              description: For payroll bank credits, the expected settlement date. With early pay enabled, the transaction may settle up to two days in advance of this date.
+            account_verification:
+              type: boolean
+              description: Whether the transaction purpose was to verify the validity of the account.
+            payment_method_uuid:
+              type: string
+              description: When the transaction was performed using a payment method linked to this account, the uuid of the payment method token (e.g. a debit card, a bank account).
+            settled_at:
+              type: string
+              format: date-time
+              description: The date the child passthrough transaction settled.
+            check_uuid:
+              type: string
+              format: uuid
+              description: The uuid of the deposited check.
+            check_released_amount:
+              type: integer
+              example: 10032
+              minimum: -99999999
+              maximum: 99999999
+              description: |-
+                For a `CHECK_DEPOSIT` transaction, the amount that has been released, defined in cents.
+                e.g. 1 USD will be represented as `amount: 100`
+            funding_instrument_details:
+              $ref: '#/components/schemas/funding-instrument-response-check'
+            payment_instrument_uuid:
+              type: string
+              description: Unique identifier of the payment instrument.
         refunded:
           description: |
             This flag indicates if this transaction has been refunded.
@@ -13591,7 +15456,7 @@ components:
           default: false
         refund_reason:
           type: string
-          description: If `refunded` is `TRUE`, reason why the transaction was refunded
+          description: Reason why the transaction was refunded
         disputed:
           type: boolean
           description: For `PAYMENT` transactions, if `TRUE` a chargeback has been received for this transaction
@@ -13613,11 +15478,9 @@ components:
             payment_options:
               type: object
               properties:
-                ACH_type:
+                ach_reference:
                   type: string
-                  enum:
-                    - SAME_DAY
-                    - NEXT_DAY
+                  description: Reference included with the ACH transfer, when provided on the request
                 prefund:
                   type: string
                   description: If `FALSE`, prefunding has been disabled for this transaction. If `TRUE`, prefunding has been enabled for this transaction. If not returned, default program configuration applies.
@@ -13683,6 +15546,14 @@ components:
         payout_method_uuid:
           type: string
           description: 'If the transaction is related to the transfer of funds to a Beneficiary, this field will contain the UUID of applicable Payout Method  '
+        origin_wallet_uuid:
+          type: string
+          description: For WALLET_TRANSFER transactions, the UUID of the sending wallet. Only populated on the credit side of the transfer (when `wallet_uuid` is the receiving wallet).
+          format: uuid
+        destination_wallet_uuid:
+          type: string
+          description: For WALLET_TRANSFER transactions, the UUID of the receiving wallet. Only populated on the debit side of the transfer (when `wallet_uuid` is the sending wallet).
+          format: uuid
         receipt_uuid:
           description: Receipt identifier for a given transaction
           type: string
@@ -13803,6 +15674,9 @@ components:
                 is_international:
                   type: boolean
                   description: If ``TRUE`` the transaction is international
+                is_pin:
+                  type: boolean
+                  description: If ``TRUE`` the transaction was a PIN-based transaction
                 dispute_details:
                   type: object
                   description: Dispute information for card transactions
@@ -13811,7 +15685,6 @@ components:
                       type: string
                       enum:
                         - OPEN
-                        - PENDING
                         - WON
                         - LOST
                         - CLOSED
@@ -13820,25 +15693,19 @@ components:
                       type: string
                       enum:
                         - FILED
-                        - AWAITING_DOCUMENTATION
-                        - UNDER_REVIEW
-                        - MERCHANT_RESPONSE_PENDING
-                        - ESCALATED
-                        - FINAL_REVIEW
                         - RESOLVED_IN_FAVOR
                         - RESOLVED_AGAINST
                         - ADMINISTRATIVE_CLOSURE
                       description: Current lifecycle stage
-                    dispute_reason:
+                    reason_raw:
                       type: string
-                      enum:
-                        - FRAUD
-                        - AUTHORIZATION_ISSUE
-                        - MERCHANT_ERROR
-                        - SERVICE_ISSUE
-                        - PROCESSING_ERROR
-                        - OTHER
-                      description: Why the dispute was filed
+                      description: Raw dispute reason from the processor, if available
+                    recovered_amount:
+                      type: integer
+                      description: Amount recovered from the dispute, in cents
+                cashback_amount:
+                  type: integer
+                  description: The cashback amount for the transaction, in cents
             payments_details:
               type: object
               description: If this transaction is related to a payment processing transaction, this structure may show additional details
@@ -13927,54 +15794,47 @@ components:
             - WALLET
           description: Source of funds for transaction funded via a passthrough transaction
         funds_source:
-          oneOf:
-            - title: Bank account (DDA)
-              properties:
-                origin_bank:
-                  type: string
-                  description: The name of the origin bank for this bank credit.
-                  example: CHASE BANK
-                is_payroll:
-                  type: boolean
-                  description: If the bank account transaction relates to payroll, this propoerty will be true.
-                payroll_date:
-                  type: string
-                  format: date
-                  description: If transaction corresponds to a payroll, this is expected settlement date. If early pay is enabled for this wallet, the transaction could be generally settled up to two days in advance of this date
-                account_verification:
-                  type: boolean
-                  description: Whether the transaction purpose was to verify the validity of the account
-            - title: Payment method
-              properties:
-                payment_method_uuid:
-                  type: string
-                  description: When the transaction was performed using a payment method linked to this account, this property will hold the uuid of payment method token (eg. a debit card, a bank account, etc).
-                settled_at:
-                  type: string
-                  format: date-time
-                  description: The date the child passthrough transaction settled
-            - title: Check
-              properties:
-                check_uuid:
-                  type: string
-                  description: The uuid of the deposited check.
-                  format: uuid
-                check_released_amount:
-                  type: integer
-                  example: 10032
-                  minimum: -99999999
-                  maximum: 99999999
-                  description: |-
-                    For a `CHECK_DEPOSIT` transaction, the amount that has been released, defined in cents. 
-                    e.g. 1 USD will be represented as `amount: 100`
-                funding_instrument_details:
-                  $ref: '#/components/schemas/funding-instrument-response-check'
-            - title: Payment Instrument
-              properties:
-                payment_instrument_uuid:
-                  type: string
-                  description: Unique identifier of the payment instrument
           type: object
+          description: Where the transaction funds came from. Only the fields relevant to this transaction's source will be populated.
+          properties:
+            origin_bank:
+              type: string
+              description: For bank credits (e.g. payroll), the name of the origin bank.
+              example: CHASE BANK
+            is_payroll:
+              type: boolean
+              description: For bank credits, `true` if the transaction relates to payroll.
+            payroll_date:
+              type: string
+              format: date
+              description: For payroll bank credits, the expected settlement date. With early pay enabled, the transaction may settle up to two days in advance of this date.
+            account_verification:
+              type: boolean
+              description: Whether the transaction purpose was to verify the validity of the account.
+            payment_method_uuid:
+              type: string
+              description: When the transaction was performed using a payment method linked to this account, the uuid of the payment method token (e.g. a debit card, a bank account).
+            settled_at:
+              type: string
+              format: date-time
+              description: The date the child passthrough transaction settled.
+            check_uuid:
+              type: string
+              format: uuid
+              description: The uuid of the deposited check.
+            check_released_amount:
+              type: integer
+              example: 10032
+              minimum: -99999999
+              maximum: 99999999
+              description: |-
+                For a `CHECK_DEPOSIT` transaction, the amount that has been released, defined in cents.
+                e.g. 1 USD will be represented as `amount: 100`
+            funding_instrument_details:
+              $ref: '#/components/schemas/funding-instrument-response-check'
+            payment_instrument_uuid:
+              type: string
+              description: Unique identifier of the payment instrument.
         refunded:
           description: |
             This flag indicates if this transaction has been refunded.
@@ -13982,7 +15842,7 @@ components:
           default: false
         refund_reason:
           type: string
-          description: If `refunded` is `TRUE`, reason why the transaction was refunded
+          description: Reason why the transaction was refunded
         disputed:
           type: boolean
           description: For `PAYMENT` transactions, if `TRUE` a chargeback has been received for this transaction
@@ -14004,11 +15864,9 @@ components:
             payment_options:
               type: object
               properties:
-                ACH_type:
+                ach_reference:
                   type: string
-                  enum:
-                    - SAME_DAY
-                    - NEXT_DAY
+                  description: Reference included with the ACH transfer, when provided on the request
                 prefund:
                   type: string
                   description: If `FALSE`, prefunding has been disabled for this transaction. If `TRUE`, prefunding has been enabled for this transaction. If not returned, default program configuration applies.
@@ -14023,6 +15881,36 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/release'
+        child_transactions:
+          type: array
+          description: Child transactions associated with this transaction, such as service fees. Only present when applicable.
+          items:
+            type: object
+            required:
+              - transaction_uuid
+              - type
+              - status
+              - amount
+              - currency
+            properties:
+              transaction_uuid:
+                type: string
+                format: uuid
+                description: Alviere's unique identifier for the child transaction
+              type:
+                type: string
+                description: The type of child transaction
+                example: SERVICE_FEE
+              status:
+                $ref: '#/components/schemas/transaction-status'
+              amount:
+                type: integer
+                description: The transaction amount in cents
+                example: -300
+              currency:
+                type: string
+                description: The currency code in ISO-4217 format
+                example: USD
         metadata:
           type: object
           description: Allows for any number of custom metadata keys and values to be stored with a given transaction
@@ -14184,30 +16072,20 @@ components:
           description: The IBAN number last 4 digits for this bank account
     bank-account-details-response:
       title: Bank account details
-      description: The bank account details need to be one of the structures, either `ach` or `eft` or `iban` or `swift` or `clabe`.
-      oneOf:
-        - title: ACH
-          properties:
-            ach_details:
-              $ref: '#/components/schemas/ach-details-response'
-        - title: EFT
-          properties:
-            eft_details:
-              $ref: '#/components/schemas/eft-details-response'
-        - title: SWIFT
-          properties:
-            swift_details:
-              $ref: '#/components/schemas/swift-details-response'
-        - title: CLABE
-          properties:
-            clabe_details:
-              $ref: '#/components/schemas/clabe-details-response'
-        - title: IBAN
-          properties:
-            iban_details:
-              $ref: '#/components/schemas/iban-details-response'
-      x-internal: false
+      description: Bank account routing details. Only the field corresponding to this account's format (ACH, EFT, IBAN, SWIFT, or CLABE) will be populated.
       type: object
+      x-internal: false
+      properties:
+        ach_details:
+          $ref: '#/components/schemas/ach-details-response'
+        eft_details:
+          $ref: '#/components/schemas/eft-details-response'
+        swift_details:
+          $ref: '#/components/schemas/swift-details-response'
+        clabe_details:
+          $ref: '#/components/schemas/clabe-details-response'
+        iban_details:
+          $ref: '#/components/schemas/iban-details-response'
     cash-details-response:
       title: Cash pickup location details
       type: object
@@ -14427,10 +16305,10 @@ components:
           title: Address Line Two
           description: Address line 2 (e.g., apartment, suite, unit, or building - NOTE that newline characters are not accepted)
           type: string
-          pattern: '^[ a-zA-Z0-9._-]{1,128}$ '
+          pattern: '^[ a-zA-Z0-9._-]{1,30}$ '
           example: Suite 936
           minLength: 1
-          maxLength: 128
+          maxLength: 30
         postal_code:
           title: Postal Code
           description: ZIP or postal code
@@ -14505,6 +16383,8 @@ components:
           type: string
           example: John Doe
           description: The name of the cardholder as it shows on the face of the card
+          minLength: 2
+          maxLength: 26
         security_code:
           type: string
           description: Card CVC or CVV code
@@ -14514,6 +16394,9 @@ components:
           type: object
           description: |
             Allows for any number of custom metadata keys and values to be stored with a given entity
+        primary:
+          type: boolean
+          description: Mark this card as the primary payment method for the account
         3ds_options:
           type: object
           properties:
@@ -14548,6 +16431,9 @@ components:
           description: The bank's currency code in ISO-4217 format
         bank_account_details:
           $ref: '#/components/schemas/bank-account-details-request'
+        primary:
+          type: boolean
+          description: Mark this bank account as the primary payment method for the account
         metadata:
           type: object
           description: Allows for any number of custom metadata keys and values to be stored with a given entity
@@ -16131,6 +18017,1014 @@ components:
         country:
           type: string
           description: The country of the Bank
+    limit-usage:
+      title: Limit Usage
+      type: object
+      description: Limit usage information for a daily period
+      required:
+        - used
+        - available
+      properties:
+        used:
+          type: integer
+          description: Sum of amounts for transactions already performed (in cents)
+          example: 50000
+        available:
+          type: integer
+          description: Remaining available amount - minimum of transaction_type_limits and aggregate_limits (in cents)
+          example: 250000
+    rolling-limit-usage:
+      title: Rolling Limit Usage
+      type: object
+      description: Limit usage information for a rolling period
+      required:
+        - period
+        - used
+        - available
+      properties:
+        period:
+          type: integer
+          description: Rolling period in seconds (e.g., 86400 for 24 hours)
+          example: 86400
+        used:
+          type: integer
+          description: Sum of amounts for transactions already performed (in cents)
+          example: 50000
+        available:
+          type: integer
+          description: Remaining available amount (in cents)
+          example: 250000
+    limit-periods:
+      title: Limit Periods
+      type: object
+      description: Container for daily and rolling limit periods
+      properties:
+        daily:
+          $ref: '#/components/schemas/limit-usage'
+        rolling:
+          $ref: '#/components/schemas/rolling-limit-usage'
+    account-wallet-limits:
+      title: Account and Wallet Limits
+      type: object
+      description: Limits at both account and wallet level
+      properties:
+        account_limits:
+          $ref: '#/components/schemas/limit-periods'
+        wallet_limits:
+          type: object
+          description: Limits per wallet, keyed by wallet_uuid
+          additionalProperties:
+            $ref: '#/components/schemas/limit-periods'
+            x-additionalPropertiesName: wallet_uuid
+          example:
+            "f47ac10b-58cc-4372-a567-0e02b2c3d479":
+              daily:
+                used: 50000
+                available: 250000
+              rolling:
+                used: 100000
+                available: 500000
+    funds-source-limits:
+      title: Funds Source Limits
+      type: object
+      description: Limits broken down by funds source (for LOAD_FUNDS transactions)
+      properties:
+        ach_bank:
+          $ref: '#/components/schemas/account-wallet-limits'
+        debit_card:
+          $ref: '#/components/schemas/account-wallet-limits'
+    load-funds-limits:
+      title: Load Funds Limits
+      type: object
+      description: Transaction limits specific to LOAD_FUNDS type with nested funds source structure
+      properties:
+        max_per_transaction:
+          type: integer
+          description: Maximum amount allowed per transaction (in cents)
+          example: 300000
+        min_per_transaction:
+          type: integer
+          description: Minimum amount required per transaction (in cents)
+          example: 500
+        limits:
+          type: object
+          properties:
+            funds_source:
+              $ref: '#/components/schemas/funds-source-limits'
+    transaction-type-limits:
+      title: Transaction Type Limits
+      type: object
+      description: Transaction limits for non-LOAD_FUNDS transaction types with flat structure
+      properties:
+        max_per_transaction:
+          type: integer
+          description: Maximum amount allowed per transaction (in cents)
+          example: 300000
+        min_per_transaction:
+          type: integer
+          description: Minimum amount required per transaction (in cents)
+          example: 500
+        account_limits:
+          $ref: '#/components/schemas/limit-periods'
+        wallet_limits:
+          type: object
+          description: Limits per wallet, keyed by wallet_uuid
+          additionalProperties:
+            $ref: '#/components/schemas/limit-periods'
+            x-additionalPropertiesName: wallet_uuid
+          example:
+            "f47ac10b-58cc-4372-a567-0e02b2c3d479":
+              daily:
+                used: 50000
+                available: 250000
+              rolling:
+                used: 100000
+                available: 500000
+    transaction-limits-response:
+      title: Transaction Limits Response
+      type: object
+      description: Transaction limits organized by transaction type. Limits are defined at the program level; usage is calculated per account/wallet.
+      properties:
+        LOAD_FUNDS:
+          $ref: '#/components/schemas/load-funds-limits'
+        WITHDRAW_FUNDS:
+          $ref: '#/components/schemas/transaction-type-limits'
+        BANK_DEBIT:
+          $ref: '#/components/schemas/transaction-type-limits'
+        INTERNATIONAL_TRANSFER:
+          $ref: '#/components/schemas/transaction-type-limits'
+        CHECK_DEPOSIT:
+          $ref: '#/components/schemas/transaction-type-limits'
+        CASH_LOADING:
+          $ref: '#/components/schemas/transaction-type-limits'
+        WALLET_TRANSFER:
+          $ref: '#/components/schemas/transaction-type-limits'
+
+    card-billing-address:
+      title: Card billing address
+      type: object
+      description: Billing address associated with a card. Used for AVS verification and risk scoring.
+      required:
+        - line_1
+        - city
+        - country
+        - postal_code
+      properties:
+        line_1:
+          title: Address Line One
+          type: string
+          description: Address line 1 (e.g., street, PO Box, or company name). Newline characters are not accepted.
+          example: 123 Main St
+        line_2:
+          title: Address Line Two
+          type: string
+          description: Address line 2 (e.g., apartment, suite, unit, or building). Newline characters are not accepted.
+        city:
+          title: City
+          type: string
+          example: Brooklyn
+        state:
+          title: State
+          type: string
+          description: State, county, province, or region
+          example: NY
+        postal_code:
+          title: Postal Code
+          type: string
+          description: ZIP or postal code
+          example: "11201"
+        country:
+          title: Country
+          type: string
+          pattern: ^[A-Z]{3}$
+          description: Three-letter country code (ISO 3166-1 alpha-3)
+          example: USA
+
+    card-3ds-options:
+      title: Card 3DS options
+      type: object
+      description: |
+        3-D Secure preferences attached to a card. For saved cards these are set on payment method creation
+        and inherited at debit time. For inline cards, specify here.
+      properties:
+        3ds_preference:
+          type: string
+          enum:
+            - ENABLED
+            - DISABLED
+            - DOWNGRADE_ALLOWED
+          description: The preferred 3-D Secure flow for the transaction
+        3ds_challenge_indicator:
+          type: string
+          enum:
+            - NO_CHALLENGE_REQUESTED
+            - CHALLENGE_REQUESTED
+            - CHALLENGE_REQUESTED_MANDATE
+            - NO_PREFERENCE
+          description: Hint to the issuer about challenge preference
+
+    card-inline-details:
+      title: Inline card details
+      type: object
+      description: |
+        Use inline card details for guest checkout or one-time payments.
+        Sending raw card data requires PCI compliance on your side — prefer `payment_method_uuid` referencing a saved card when possible.
+      required:
+        - pan
+        - exp_month
+        - exp_year
+        - security_code
+        - name_on_card
+      properties:
+        pan:
+          type: string
+          description: The card number
+          pattern: ^[0-9]{14,19}$
+          example: "4111111111111111"
+        exp_month:
+          type: string
+          description: Expiration month
+          pattern: ^(0?[1-9]|1[012])$
+          example: "12"
+        exp_year:
+          type: string
+          description: Expiration year (2-digit)
+          pattern: ^[0-9]{2}$
+          example: "27"
+        security_code:
+          type: string
+          description: Card security code (CVV/CVC/CID)
+          example: "123"
+        name_on_card:
+          type: string
+          description: The name as it appears on the card
+          example: Jane Doe
+        phone_number:
+          type: string
+          description: Optional phone number associated with the card
+          example: "+1-555-0100"
+        email_address:
+          type: string
+          description: Optional email associated with the card
+          example: jane@example.com
+        billing_address:
+          $ref: '#/components/schemas/card-billing-address'
+        3ds_options:
+          $ref: '#/components/schemas/card-3ds-options'
+
+    card-merchant-details:
+      title: Card merchant details
+      type: object
+      description: |
+        Information about the merchant accepting the card payment.
+        Used to control what appears on the end consumer's statement and to support chargeback handling.
+      properties:
+        name:
+          type: string
+          description: Merchant name
+          example: Acme Coffee
+        mcc:
+          type: string
+          description: The 4-digit Merchant Category Code (MCC) for your business
+          pattern: ^[0-9]{4}$
+          example: "5814"
+        descriptor:
+          type: string
+          description: What appears on the end consumer's statement. Subject to card-network length and format rules.
+          example: ACME COFFEE
+        descriptor_city:
+          type: string
+          description: City portion of the statement descriptor
+          example: BROOKLYN
+        url:
+          type: string
+          description: Merchant URL
+          example: https://acmecoffee.com
+        phone:
+          type: string
+          description: Optional merchant support phone number
+
+    recurring-card-options:
+      title: Recurring card options
+      type: object
+      description: |
+        Indicators for charging a saved card without the end consumer present — subscriptions, rebills, scheduled payments,
+        and any other off-session charges. Alviere manages the credential chain behind the scenes; you just tell us whether
+        this is the first charge in the sequence or a subsequent one.
+      required:
+        - initiator
+        - processing_model
+        - sequence
+      properties:
+        initiator:
+          type: string
+          enum:
+            - CARDHOLDER
+            - MERCHANT
+          description: |
+            Who initiated this transaction.
+            `CARDHOLDER` — cardholder-initiated. `MERCHANT` — merchant-initiated (e.g., subscription rebill).
+        processing_model:
+          type: string
+          enum:
+            - CARD_ON_FILE
+            - SUBSCRIPTION
+            - UNSCHEDULED
+            - INSTALLMENT
+            - DELAYED_CHARGE
+            - NO_SHOW
+            - RESUBMISSION
+          description: |
+            The recurring scenario:
+            - `CARD_ON_FILE`: Saved card, occasional cardholder-initiated reuse
+            - `SUBSCRIPTION`: Fixed amount/interval merchant-initiated rebill
+            - `UNSCHEDULED`: Variable amount merchant-initiated
+            - `INSTALLMENT`: Planned installment payment
+            - `DELAYED_CHARGE`: Additional charge after primary auth
+            - `NO_SHOW`: Cancellation fee
+            - `RESUBMISSION`: Retry after a prior decline
+        sequence:
+          type: string
+          enum:
+            - INITIAL
+            - SUBSEQUENT
+          description: |
+            `INITIAL` for the first transaction in a recurring sequence. `SUBSEQUENT` for any later use of the stored credentials.
+
+    browser-info:
+      title: Browser information
+      type: object
+      description: |
+        Browser fingerprint for 3-D Secure 2.0 frictionless authentication.
+        Provide when available to reduce challenge rates.
+      properties:
+        accept_header:
+          type: string
+        user_agent:
+          type: string
+        language:
+          type: string
+          example: en-US
+        color_depth:
+          type: integer
+          example: 24
+        screen_height:
+          type: integer
+          example: 1080
+        screen_width:
+          type: integer
+          example: 1920
+        timezone_offset:
+          type: integer
+          example: -480
+        java_enabled:
+          type: boolean
+
+    card-3ds-details:
+      title: 3DS authentication details
+      type: object
+      description: Results of the 3-D Secure authentication, populated when 3DS was attempted on this transaction.
+      properties:
+        3ds_result:
+          type: string
+          description: Result of the 3-D Secure process
+          example: AUTHENTICATED
+        3ds_preference:
+          type: string
+          enum:
+            - ENABLED
+            - DISABLED
+            - DOWNGRADE_ALLOWED
+        eci:
+          type: string
+          description: Electronic Commerce Indicator returned by the network
+          example: "05"
+        version:
+          type: string
+          description: 3-D Secure protocol version used
+          example: "2.2"
+
+    card-3ds-challenge:
+      title: 3DS challenge
+      type: object
+      description: |
+        Returned when a transaction enters `PENDING` status with `status_reason: 3DS_AUTH_REQUIRED` — either because
+        you requested 3-D Secure (`3ds_preference: ENABLED`) or because the end consumer's bank required it.
+        Redirect the end consumer to `redirect_url`. Once they verify with their bank, Alviere finalizes the transaction
+        automatically — fetch the transaction (or listen for the webhook) to see the final state.
+      required:
+        - redirect_url
+        - expires_at
+      properties:
+        redirect_url:
+          type: string
+          description: URL to redirect the end consumer to in order to complete the 3-D Secure challenge
+          example: https://3ds.alviere.com/challenge?session=abc123
+        expires_at:
+          type: string
+          format: date-time
+          description: Timestamp after which the challenge URL is no longer valid
+
+    card-payment-details:
+      title: Card payment details
+      type: object
+      description: |
+        Card-specific details for the transaction. Appears under `type_details.card_payment_details`
+        on card-funded PAYMENT and REFUND transactions.
+      properties:
+        brand:
+          type: string
+          description: Card network/brand
+          example: VISA
+        bin:
+          type: string
+          description: First 6 or 8 digits of the PAN
+          example: "411111"
+        last4:
+          type: string
+          example: "1111"
+        exp_month:
+          type: integer
+          example: 12
+        exp_year:
+          type: integer
+          description: 4-digit year
+          example: 2027
+        auth_type:
+          type: string
+          enum:
+            - AUTHCAP
+            - AUTH
+          description: |
+            The authorization mode used.
+            - `AUTHCAP` — authorize and capture in one message.
+            - `AUTH` — authorize only; capture later via `POST /v3/cards/capture`.
+        authorization_code:
+          type: string
+          description: Issuer authorization code
+          example: TX4271
+        captured_at:
+          type: string
+          format: date-time
+          description: |
+            Timestamp at which the authorization was captured. Set automatically for `AUTHCAP` transactions.
+            For `AUTH` transactions this field is absent until `POST /v3/cards/capture` is called.
+            Use the presence of this field to determine whether funds have been captured.
+          example: "2026-05-15T15:04:05.999999999Z"
+        channel:
+          type: string
+          enum:
+            - ECOM
+            - MOTO
+            - POS
+        avs_result:
+          type: string
+          example: M
+        cvv_result:
+          type: string
+          example: M
+        processor_code:
+          type: string
+          description: Raw response code from the upstream processor
+          example: "51"
+        processor_message:
+          type: string
+          example: Insufficient funds
+        3ds_details:
+          $ref: '#/components/schemas/card-3ds-details'
+        3ds_challenge:
+          $ref: '#/components/schemas/card-3ds-challenge'
+        recurring:
+          $ref: '#/components/schemas/recurring-card-options'
+
+    card-debit-request:
+      title: Card debit request
+      type: object
+      description: Request body for accepting a card payment.
+      required:
+        - external_id
+        - amount
+        - currency
+        - source
+        - destination
+        - auth_type
+      properties:
+        external_id:
+          type: string
+          description: Your unique identifier for this transaction. Used for idempotency.
+          example: order_1000456
+        amount:
+          type: string
+          pattern: ^\d+\.\d{2}$
+          description: The transaction amount as a decimal string
+          example: "25.99"
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+          example: USD
+        source:
+          type: object
+          description: |
+            The source of funds for the payment. Provide exactly one of:
+            - `payment_method_uuid` — charge a card the customer has previously saved on your platform.
+            - `card` — charge a card from inline details (typical for guest checkout or one-time payments). Sending raw card data requires PCI compliance on your side.
+          oneOf:
+            - title: Saved card
+              type: object
+              required:
+                - payment_method_uuid
+              properties:
+                payment_method_uuid:
+                  type: string
+                  format: uuid
+                  description: UUID of a previously saved card payment method.
+                  example: 550e8400-e29b-41d4-a716-446655440000
+            - title: Inline card details
+              type: object
+              required:
+                - card
+              properties:
+                card:
+                  $ref: '#/components/schemas/card-inline-details'
+        destination:
+          type: object
+          description: The destination for the payment funds
+          required:
+            - wallet_uuid
+          properties:
+            wallet_uuid:
+              type: string
+              format: uuid
+              description: The UUID of the wallet to receive the funds
+              example: 223e4567-e89b-12d3-a456-426614174000
+        auth_type:
+          type: string
+          enum:
+            - AUTHCAP
+            - AUTH
+          description: |
+            - `AUTHCAP` — authorize and capture in one message (default for digital fulfillment).
+            - `AUTH` — authorize only; returns `status: COMPLETED` with `captured_at` absent. Capture later.
+        channel:
+          type: string
+          enum:
+            - ECOM
+            - MOTO
+            - POS
+          default: ECOM
+        merchant_details:
+          $ref: '#/components/schemas/card-merchant-details'
+        recurring:
+          $ref: '#/components/schemas/recurring-card-options'
+        return_url:
+          type: string
+          description: Optional per-charge override of the program-configured return URL. Used only when a 3DS challenge fires.
+          example: https://merchant.com/checkout/return?order=1000456
+        ip_address:
+          type: string
+          example: 203.0.113.42
+          description: IP address of the end consumer's device — used for risk scoring and 3DS 2.0 data collection
+        browser_info:
+          $ref: '#/components/schemas/browser-info'
+        description:
+          type: string
+          maxLength: 255
+          example: Order #1000456
+        metadata:
+          type: object
+
+    v3-transaction-status:
+      type: string
+      enum:
+        - CREATED
+        - PROCESSING
+        - PROCESSING_PAYMENT
+        - COMPLETED
+        - FAILED
+        - ERROR
+        - VOIDED
+        - PENDING
+        - MANUAL_REVIEW
+        - REJECTED
+        - WAITING
+        - CANCELED_USER
+        - CANCELED_SYSTEM
+      description: The current state of a v3 transaction in its lifecycle.
+
+    card-transaction-response:
+      title: Card transaction response
+      type: object
+      description: |
+        Response containing a card transaction. Returned by `/v3/cards/debit`, `/v3/cards/capture`,
+        `/v3/cards/reverse`, `/v3/cards/push`, and `GET /v3/transactions/{transaction_uuid}`.
+      required:
+        - transaction
+      properties:
+        transaction:
+          type: object
+          required:
+            - transaction_uuid
+            - external_id
+            - type
+            - status
+            - amount
+            - currency
+            - created_at
+            - updated_at
+          properties:
+            transaction_uuid:
+              type: string
+              format: uuid
+              example: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+            external_id:
+              type: string
+              example: order_1000456
+            type:
+              type: string
+              enum:
+                - PAYMENT
+                - REFUND
+                - CARD_CREDIT
+              description: |
+                Transaction type.
+                - `PAYMENT` for card debits (including captures of prior auths).
+                - `REFUND` for reversals of a captured payment (always a child of a prior PAYMENT).
+                - `CARD_CREDIT` for push-to-card (OCT) transactions from `/v3/cards/push`.
+            status:
+              $ref: '#/components/schemas/v3-transaction-status'
+            status_reason:
+              type: string
+              description: |
+                Free-form reason for the current status. Common card values:
+                `3DS_AUTH_REQUIRED`, `NON_SUFFICIENT_FUNDS`, `AUTH_BACKOUT`, `DO_NOT_HONOR`, `FRAUD_FAIL`,
+                `BAD_CVV2`, `CARD_INACTIVE`, `INVALID_MERCHANT`, `TRANSACTION_NOT_PERMITTED`,
+                `3DS_AUTH_FAILED`, `3DS_AUTH_EXPIRED`, `3DS_AUTH_REJECTED`, `ISSUER_3DS_NO_RESPONSE`,
+                `EXCEEDS_PIN_RETRY_LIMIT`, `STOP_REOCCURING_PAYMENTS`, `HARD_CAPTURE_FRAUD`,
+                `RESPONSE_LATE`, `SUSPECTED_MALFUNCTION`.
+              example: "3DS_AUTH_REQUIRED"
+            description:
+              type: string
+              example: Order #1000456
+            amount:
+              type: string
+              description: |
+                Transaction amount as a decimal string.
+                Negative for REFUND/RETURN transactions.
+              example: "25.99"
+            currency:
+              type: string
+              example: USD
+            wallet_uuid:
+              type: string
+              format: uuid
+              example: "223e4567-e89b-12d3-a456-426614174000"
+            account_uuid:
+              type: string
+              format: uuid
+              example: "323e4567-e89b-12d3-a456-426614174000"
+            parent_transaction_uuid:
+              type: string
+              format: uuid
+              description: For child transactions (e.g., REFUND), the UUID of the parent transaction.
+              example: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+            refund_reason:
+              type: string
+              enum:
+                - DUPLICATE
+                - FRAUD
+                - CUSTOMER_REQUEST
+                - OTHER
+              description: Only set on REFUND transactions
+            funds_source:
+              type: object
+              properties:
+                payment_method_uuid:
+                  type: string
+                  format: uuid
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+            type_details:
+              type: object
+              properties:
+                card_payment_details:
+                  $ref: '#/components/schemas/card-payment-details'
+            metadata:
+              type: object
+            created_at:
+              type: string
+              format: date-time
+              example: "2026-05-15T15:04:05.999999999Z"
+            updated_at:
+              type: string
+              format: date-time
+              example: "2026-05-15T15:04:05.999999999Z"
+
+    v3-transaction:
+      title: V3 transaction
+      type: object
+      description: |
+        A single v3 transaction. Rail-specific details live under `type_details` (e.g., `type_details.card_payment_details` for card transactions).
+      required:
+        - transaction_uuid
+        - external_id
+        - type
+        - status
+        - amount
+        - currency
+        - created_at
+        - updated_at
+      properties:
+        transaction_uuid:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+        external_id:
+          type: string
+          example: order_1000456
+        type:
+          type: string
+          enum:
+            - PAYMENT
+            - REFUND
+        status:
+          $ref: '#/components/schemas/v3-transaction-status'
+        status_reason:
+          type: string
+          description: Free-form reason for the current status. See operation descriptions for common card values.
+          example: "3DS_AUTH_REQUIRED"
+        description:
+          type: string
+          example: Order #1000456
+        amount:
+          type: string
+          description: |
+            Transaction amount as a decimal string.
+            Negative for REFUND/RETURN transactions.
+          example: "25.99"
+        currency:
+          type: string
+          example: USD
+        wallet_uuid:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174000"
+        account_uuid:
+          type: string
+          format: uuid
+          example: "323e4567-e89b-12d3-a456-426614174000"
+        parent_transaction_uuid:
+          type: string
+          format: uuid
+          description: For child transactions (e.g., REFUND), the UUID of the parent transaction.
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+        refund_reason:
+          type: string
+          enum:
+            - DUPLICATE
+            - FRAUD
+            - CUSTOMER_REQUEST
+            - OTHER
+          description: Only set on REFUND transactions
+        funds_source:
+          type: object
+          properties:
+            payment_method_uuid:
+              type: string
+              format: uuid
+              example: "550e8400-e29b-41d4-a716-446655440000"
+        type_details:
+          type: object
+          properties:
+            card_payment_details:
+              $ref: '#/components/schemas/card-payment-details'
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-05-15T15:04:05.999999999Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-05-15T15:04:05.999999999Z"
+
+    v3-transaction-list-response:
+      title: V3 transaction list response
+      type: object
+      description: Paginated list of v3 transactions.
+      required:
+        - records
+        - transactions
+      properties:
+        records:
+          type: integer
+          description: The number of transactions returned in this page
+          example: 25
+        transactions:
+          type: array
+          description: The list of transactions
+          items:
+            $ref: '#/components/schemas/v3-transaction'
+
+    card-capture-request:
+      title: Card capture request
+      type: object
+      description: |
+        Capture a previously authorized card transaction.
+
+        Omit `amount` to capture the full authorized amount. Pass `amount` to capture less than the
+        authorized amount (partial capture); the unused authorization is released back to the cardholder.
+      required:
+        - transaction_uuid
+      properties:
+        transaction_uuid:
+          type: string
+          format: uuid
+          description: The UUID of the AUTH-only transaction to capture.
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+        amount:
+          type: string
+          pattern: ^\d+\.\d{2}$
+          description: |
+            Optional capture amount as a decimal string. If omitted, the full authorized amount is captured.
+            Cannot exceed the authorized amount.
+          example: "150.00"
+        description:
+          type: string
+          description: Optional note attached to the capture event
+          maxLength: 255
+        metadata:
+          type: object
+          description: Custom key/value pairs to attach to the capture event
+
+    card-reverse-request:
+      title: Card reverse request
+      type: object
+      description: |
+        Reverse a previously created card transaction. The endpoint returns:
+        - HTTP 201 with a new REFUND transaction when the parent was captured/settled.
+        - HTTP 204 with no body when the parent was AUTHORIZED only (the auth is voided; no new transaction is created).
+      required:
+        - transaction_uuid
+        - external_id
+        - amount
+        - refund_reason
+      properties:
+        transaction_uuid:
+          type: string
+          format: uuid
+          description: The UUID of the card transaction to reverse.
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa5
+        external_id:
+          type: string
+          description: Your unique identifier for the reversal operation. Used for idempotency.
+          example: refund_order_1000456
+        amount:
+          type: string
+          pattern: ^\d+\.\d{2}$
+          description: The reversal amount as a decimal string. Cannot exceed the remaining refundable amount.
+          example: "25.99"
+        refund_reason:
+          type: string
+          enum:
+            - DUPLICATE
+            - FRAUD
+            - CUSTOMER_REQUEST
+            - OTHER
+          description: The reason for the reversal
+        description:
+          type: string
+          description: Optional description for the reversal transaction
+          maxLength: 255
+        metadata:
+          type: object
+          description: Custom key/value pairs to associate with the reversal
+
+    card-push-request:
+      title: Card push request
+      type: object
+      description: |
+        Push funds from a wallet to a card payment method — an Original Credit Transaction (OCT).
+        Cardholder identity is taken from the saved payment method; sender identity is derived from
+        the partner's program configuration.
+      required:
+        - external_id
+        - amount
+        - currency
+        - source
+        - destination
+        - purpose
+      properties:
+        external_id:
+          type: string
+          description: |
+            Your unique identifier for this transaction. Used for idempotency —
+            duplicate requests with the same `external_id` return the existing transaction (409).
+          example: payout_1000600
+        amount:
+          type: string
+          pattern: ^\d+\.\d{2}$
+          description: The transaction amount as a decimal string
+          example: "250.00"
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+          description: The currency code in ISO-4217 format
+          example: USD
+        source:
+          type: object
+          description: The wallet to debit
+          required:
+            - wallet_uuid
+          properties:
+            wallet_uuid:
+              type: string
+              format: uuid
+              description: The UUID of the wallet funding the push
+              example: 223e4567-e89b-12d3-a456-426614174000
+        destination:
+          type: object
+          description: The saved card payment method to credit. Raw card details are not accepted on this endpoint.
+          required:
+            - payment_method_uuid
+          properties:
+            payment_method_uuid:
+              type: string
+              format: uuid
+              description: UUID of the destination card payment method
+              example: 550e8400-e29b-41d4-a716-446655440000
+        purpose:
+          type: string
+          enum:
+            - FUNDS_DISBURSEMENT
+            - P2P
+            - PAYROLL
+            - GOVERNMENT_DISBURSEMENT
+            - MERCHANT_DISBURSEMENT
+            - REFUND
+            - ACCOUNT_TO_ACCOUNT
+          description: |
+            Scheme-aligned funds transfer purpose. Required by Visa/Mastercard for OCT compliance.
+            - `FUNDS_DISBURSEMENT` — generic disbursement to an individual (gig payouts, claim payments).
+            - `P2P` — person-to-person money transfer.
+            - `PAYROLL` — wages or salary.
+            - `GOVERNMENT_DISBURSEMENT` — government-issued payments (tax refunds, benefits).
+            - `MERCHANT_DISBURSEMENT` — payouts to a business.
+            - `REFUND` — refund credited to a different card than the original payment.
+            - `ACCOUNT_TO_ACCOUNT` — same-owner account-to-account transfer.
+        description:
+          type: string
+          description: Optional description for the transaction
+          maxLength: 255
+          example: Weekly payout
+        metadata:
+          type: object
+          description: Custom key/value pairs to associate with the transaction
+          example:
+            payee_id: driver_88102
+
+    webhook-envelope:
+      type: object
+      description: Shared envelope present on every Alviere webhook delivery. Each event additionally carries an `entity` field whose shape depends on the `event_type`.
+      required:
+        - event_uuid
+        - event_type
+        - event_version
+        - event_date
+        - event_retry
+        - business_account_uuid
+        - program_uuid
+      properties:
+        event_uuid:
+          type: string
+          format: uuid
+          description: Unique identifier for this event. Stable across retries — use as your idempotency key.
+          example: 8944355f-342d-42df-9ec9-5b12e619d504
+        event_type:
+          type: string
+          description: The subscription type that produced this event. See each webhook below for the specific value.
+        event_version:
+          type: string
+          description: Version of the event payload contract.
+          example: '2021-11-18.1'
+        event_date:
+          type: string
+          format: date-time
+          description: When the event was generated, in UTC.
+          example: '2026-05-18T14:32:11Z'
+        event_retry:
+          type: integer
+          minimum: 0
+          description: Retry counter for this delivery attempt. `0` on the first attempt; increments on each subsequent retry.
+          example: 0
+        business_account_uuid:
+          type: string
+          format: uuid
+          description: Legacy alias for `program_uuid` — always carries the same value. Kept for backwards compatibility on the webhook envelope.
+        program_uuid:
+          type: string
+          format: uuid
+          description: The program associated with the event.
+
   parameters:
     Version:
       name: Version
@@ -16391,11 +19285,13 @@ components:
           - CHECK_DEPOSIT
           - CHECK_DEPOSIT_RETURN
           - CHECK_DISBURSEMENT
+          - INSTANT_BANK_TRANSFER
           - INTERNATIONAL_TRANSFER
           - LOAD_FUNDS
           - LOAD_PULLBACK
           - NEGATIVE_LOSS
           - PAYMENT
+          - INSTANT_PAYMENT_REQUEST
           - RECOVERY
           - REFUND
           - RETURN
@@ -16524,6 +19420,76 @@ components:
             - EXPIRED
             - FAILED
       description: The status of the card
+    transaction_limits_account_uuid:
+      name: account_uuid
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The account to get limits for
+    transaction_limits_wallet_uuid:
+      name: wallet_uuid
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Filter limits for a specific wallet
+    transaction_limits_wallet_type:
+      name: wallet_type
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - CHECKING
+          - SAVINGS
+          - PREPAID
+          - PREPAID_NON_RELOADABLE
+          - PASSTHROUGH
+      description: Filter limits by wallet type
+    transaction_limits_transaction_type:
+      name: transaction_type
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - LOAD_FUNDS
+          - WITHDRAW_FUNDS
+          - BANK_DEBIT
+          - INTERNATIONAL_TRANSFER
+          - CHECK_DEPOSIT
+          - CASH_LOADING
+          - WALLET_TRANSFER
+      description: Filter limits by transaction type
+    webhook-id-header:
+      name: Alviere-Webhook-id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique identifier for this delivery attempt. Stable across retries — use as your idempotency key.
+    webhook-timestamp-header:
+      name: Alviere-Webhook-Timestamp
+      in: header
+      required: true
+      schema:
+        type: string
+        format: date-time
+      description: RFC 3339 timestamp of when the event was dispatched, in UTC.
+    webhook-signature-header:
+      name: Alviere-Signature
+      in: header
+      required: false
+      schema:
+        type: string
+      description: |
+        Hex-encoded HMAC-SHA256 signature of `{webhook_id}.{webhook_timestamp}.{compact_body}`
+        computed with your subscription's HMAC secret. Present when the
+        subscription is configured with HMAC auth.
   responses:
     400-Error:
       description: 'Bad Request '
@@ -16749,6 +19715,86 @@ components:
                   disputed: false
                   created_at: '2025-03-18T11:54:40.990725Z'
                   updated_at: '2025-03-18T11:54:40.998051Z'
+                validation:
+                  result: ACCEPTED
+            Send to wallet:
+              value:
+                transaction:
+                  transaction_uuid: c1f4a3b2-7e25-4a1c-9b87-1d5e2f3a4b6c
+                  wallet_uuid: 15100419-77df-4478-a84e-f14ca3f4f3dc
+                  origin_wallet_uuid: 15100419-77df-4478-a84e-f14ca3f4f3dc
+                  destination_wallet_uuid: 7a2f8d6e-3b91-4c5d-8e0f-9a1b2c3d4e5f
+                  account_uuid: ddb3d090-c124-4bc8-80d0-1e5a53aecc3f
+                  external_id: 4f8c6b2a-1d3e-4a5b-9c7d-8e0f1a2b3c4d
+                  transaction_type: WALLET_TRANSFER
+                  status: CREATED
+                  description: Birthday gift
+                  amount: -2500
+                  currency: USD
+                  funds_source: {}
+                  refunded: false
+                  disputed: false
+                  created_at: '2025-04-10T09:22:18.331204Z'
+                  updated_at: '2025-04-10T09:22:18.342817Z'
+                validation:
+                  result: ACCEPTED
+            Transfer to beneficiary:
+              value:
+                transaction:
+                  transaction_uuid: 8b3d2e1c-5a47-4f6e-9c2b-3d4f5a6b7c8d
+                  wallet_uuid: 15100419-77df-4478-a84e-f14ca3f4f3dc
+                  account_uuid: ddb3d090-c124-4bc8-80d0-1e5a53aecc3f
+                  beneficiary_uuid: 6c7d8e9f-0a1b-4c2d-8e3f-4a5b6c7d8e9f
+                  payout_method_uuid: 2a3b4c5d-6e7f-4a8b-9c0d-1e2f3a4b5c6d
+                  external_id: e9f0a1b2-c3d4-4e5f-8a6b-7c8d9e0f1a2b
+                  transaction_type: BANK_DEBIT
+                  status: CREATED
+                  description: Rent payment
+                  amount: -120000
+                  currency: USD
+                  funds_source: {}
+                  refunded: false
+                  disputed: false
+                  created_at: '2025-04-12T14:08:55.402991Z'
+                  updated_at: '2025-04-12T14:08:55.415330Z'
+                validation:
+                  result: ACCEPTED
+            Credit funds:
+              value:
+                transaction:
+                  transaction_uuid: 5a7b8c9d-0e1f-4a2b-8c3d-4e5f6a7b8c9d
+                  wallet_uuid: 15100419-77df-4478-a84e-f14ca3f4f3dc
+                  account_uuid: ddb3d090-c124-4bc8-80d0-1e5a53aecc3f
+                  external_id: 1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  transaction_type: TRANSFER
+                  status: COMPLETED
+                  description: Promotional credit
+                  amount: 1500
+                  currency: USD
+                  funds_source: {}
+                  refunded: false
+                  disputed: false
+                  created_at: '2025-04-15T10:31:02.118764Z'
+                  updated_at: '2025-04-15T10:31:02.129430Z'
+                validation:
+                  result: ACCEPTED
+            Debit funds:
+              value:
+                transaction:
+                  transaction_uuid: 9e0f1a2b-3c4d-4e5f-8a6b-7c8d9e0f1a2b
+                  wallet_uuid: 15100419-77df-4478-a84e-f14ca3f4f3dc
+                  account_uuid: ddb3d090-c124-4bc8-80d0-1e5a53aecc3f
+                  external_id: 7b8c9d0e-1f2a-4b3c-8d4e-5f6a7b8c9d0e
+                  transaction_type: TRANSFER
+                  status: COMPLETED
+                  description: Service fee debit
+                  amount: -750
+                  currency: USD
+                  funds_source: {}
+                  refunded: false
+                  disputed: false
+                  created_at: '2025-04-15T10:32:14.554218Z'
+                  updated_at: '2025-04-15T10:32:14.566902Z'
                 validation:
                   result: ACCEPTED
     ledger-transaction-response-idempotency:

@@ -10,7 +10,7 @@ Alviere has two API versions live today. The short answer:
 | Version | Use it for |
 |---|---|
 | **V2** | Existing BAAS integrations: accounts, wallets, remittances, card issuance |
-| **V3** | Payment Acceptance, the new card endpoints, bank payments, webhooks |
+| **V3** | Payment Acceptance, card payments, bank payments, webhooks |
 
 New Payment Acceptance work happens in V3. V2 keeps running for the integrations already built on it, and picks up new optional fields over time.
 
@@ -32,6 +32,8 @@ V2 is stable. Existing endpoints can pick up new optional fields, but breaking c
 ## V3: Payment Acceptance and modernized platform operations
 
 V3 introduces payment acceptance and modernized platform operations:
+
+Card issuing is not in V3. See [Card Issuing Overview](/guides/cards/card-issuing-overview). The `/v3/cards/*` paths charge a customer's card. They do not issue one.
 
 **Payment Acceptance**
 - Card Payments: `/v3/cards/*`
@@ -64,5 +66,6 @@ Already on V2 and adding card payments?
 ## Related
 
 - [Payment Acceptance](/guides/payment-acceptance/payment-acceptance)
+- [Card Issuing Overview](/guides/cards/card-issuing-overview)
 - [Platform Overview](/guides/overview/platform-overview)
 - [Card Payments](/guides/payment-acceptance/online-payments/card-payments/introduction)

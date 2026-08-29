@@ -18,7 +18,7 @@ Take card and bank payments online: direct, marketplace, bill pay, and a drop-in
 :::
 :::scalar-card{title="Issue cards" icon="credit-card"}
 Issue debit, prepaid, and gift cards linked to a wallet, with rewards.
-[Card Issuing](/guides/cards/cards)
+[Card Issuing](/guides/cards/card-issuing-overview)
 :::
 :::scalar-card{title="Move money" icon="arrows-left-right"}
 Transfers, ACH, wires, checks, and global money movement.

@@ -50,14 +50,12 @@ You won't need this step in production.
 
 ## Card brands
 
-You can simulate different card brands at card creation by setting a specific first name:
+Alviere issues Visa and Mastercard. In Sandbox, set the account holder's first name at card creation to pick which brand the card comes back as:
 
 | Test conditions | Card brand |
 |-----------------|------------|
 | `firstName` = `Mestre` | MASTERCARD |
 | `firstName` = `Vision` | VISA |
-| `firstName` = `Baymax` | AMEX |
-| `firstName` = `DISCO` | DISCOVERY |
 
 ## Shipping address and returned mail
 

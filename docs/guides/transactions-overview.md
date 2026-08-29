@@ -88,7 +88,7 @@ ACH shows up under whichever type matches the operation:
 | Type | The ACH operation |
 |---|---|
 | `LOAD_FUNDS` | Pull. Debits a bank account to fund a wallet |
-| `BANK_DEBIT` | Pull. Debits a bank account |
+| `BANK_DEBIT` | Push. Pays a beneficiary's bank payout method |
 | `PAYMENT` | Pull. What `POST /v3/ach/debit` creates |
 | `WITHDRAW_FUNDS` | Push. Credits an external bank account |
 | `REFUND` | Sometimes, when the refund goes back over ACH |
@@ -107,11 +107,9 @@ The sandbox agrees with this grouping. `POST mock.snd.alviere.com/generateReturn
 | `LOAD_FUNDS` | `POST /wallets/{wallet_uuid}/load`. Pulls from a saved card or bank payment method. Over ACH this is a pull | Yes |
 | `CASH_LOADING` | A barcode redeemed at a retail location | Yes |
 | `CHECK_DEPOSIT` | `POST /wallets/{wallet_uuid}/check-deposits` | Yes |
-| `BANK_DEBIT` | A debit against a payer's bank account | Yes |
+| `BANK_CREDIT` | An incoming ACH credit from an external bank account | Yes |
+| `INSTANT_BANK_TRANSFER` | An incoming instant payment over FedNow or TCH RTP, paid against a request. See [Instant Payments](/guides/transactions/instant-payments) | Yes |
 | `PAYMENT` | A V3 acceptance charge. Both `POST /v3/cards/debit` and `POST /v3/ach/debit` create one | Yes |
-| `INTERNATIONAL_TRANSFER` | `POST /wallets/{wallet_uuid}/remittances` | Yes |
-| `INSTANT_BANK_TRANSFER` | An instant-rail bank transfer. See [Instant Payments](/guides/transactions/instant-payments) | Yes |
-| `INSTANT_PAYMENT_REQUEST` | A request for payment on an instant rail. See [Instant Payments](/guides/transactions/instant-payments) | Yes |
 | `PREFUND` | The prefunding vault advancing funds before settlement | No |
 
 ### Money out
@@ -119,16 +117,18 @@ The sandbox agrees with this grouping. `POST mock.snd.alviere.com/generateReturn
 | Type | What creates it | Wallet scope |
 |---|---|---|
 | `WITHDRAW_FUNDS` | `POST /wallets/{wallet_uuid}/withdraw` to an external card or bank. Over ACH this is a push | Yes |
-| `BANK_CREDIT` | A credit pushing funds to an external bank account | Yes |
+| `BANK_DEBIT` | `POST /wallets/{wallet_uuid}/transfer` to a beneficiary's bank payout method | Yes |
+| `INTERNATIONAL_TRANSFER` | `POST /wallets/{wallet_uuid}/remittances` to an international beneficiary | Yes |
 | `CHECK_DISBURSEMENT` | A check issued out of a wallet | Yes |
+| `INSTANT_BANK_TRANSFER` | `POST /v3/instant/transfer` over FedNow or TCH RTP. Pushes funds out of a wallet. See [Instant Payments](/guides/transactions/instant-payments) | Yes |
 | `EXTERNAL_CREDIT`, `EXTERNAL_DEBIT` | Movement between a treasury vault and the external bank behind it | No |
 
-### Transfers
+### Internal transfers
 
 | Type | What creates it | Wallet scope |
 |---|---|---|
 | `WALLET_TRANSFER` | Movement between two wallets on the same program | Yes |
-| `TRANSFER` | `POST /treasury/transfer` between treasury vaults | Yes |
+| `TRANSFER` | Internal vault movement: `POST /treasury/transfer` between treasury vaults, or `POST /wallets/{wallet_uuid}/credit` and `/debit` moving funds between a wallet and the Operations, Promo Funds, or Providers vault | Yes |
 
 ### Reversals and money coming back
 
@@ -197,4 +197,12 @@ Do not switch on `transaction_type` alone when deciding whether money moved in o
 
 Per-type fields live under `type_details`, a discriminated object keyed on the transaction type.
 
-Neither `GET /transactions` nor `GET /wallets/{wallet_uuid}/transactions` filters on `transaction_type` today. Both filter on `account_uuid`, `wallet_uuid`, `beneficiary_uuid`, `issued_card_uuid`, and `payment_method_uuid` only, so filtering by type means pulling the page and filtering client-side.
+Both list endpoints filter by transaction type server-side, through a query parameter named `type` — not `transaction_type`, which is the field name on the response object and an easy thing to grep past. `type` takes any of the 37 wallet-scope types, comma-separated for multiples:
+
+```
+GET /transactions?type=LOAD_FUNDS,WITHDRAW_FUNDS
+```
+
+Combine it with `status`, `start_date` and `end_date`, and the entity filters (`account_uuid`, `wallet_uuid`, `beneficiary_uuid`, `issued_card_uuid`, `payment_method_uuid`).
+
+One boundary: the `type` enum covers only the wallet-scope list. The vault- and passthrough-scope types from the tables above — `PREFUND`, `ACH_PRENOTE`, the passthrough family, the treasury movements — are not filterable this way. If you need those, read `GET /transactions` without a type filter and match on `transaction_type` in the response.
