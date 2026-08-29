@@ -16,7 +16,7 @@ For ACH **payment acceptance** (incoming debits as a checkout option for billers
 | Direction | What the API does | Typical timing | Return window |
 |---|---|---|---|
 | Pull (debit) | `POST /v3/ach/debit` debits the payer bank and credits your program account | Submitted same banking day if before cutoff, settled in 1-3 banking days | 2 banking days for business accounts, 60 calendar days for consumers |
-| Push (credit) | `POST /v3/ach/credit` debits your wallet and credits the external bank | Same timing, next-day funding after settlement | Rare, the receiving bank can still refuse the credit |
+| Push (credit) | `POST /wallets/{wallet_uuid}/withdraw` against a bank payment method debits your wallet and credits the external bank | Same timing. Funds sit in the wallet's `captive` bucket until the destination settles | Rare, the receiving bank can still refuse the credit |
 
 ### ACH is a rail, not a transaction type
 
@@ -31,12 +31,17 @@ There is no `ACH` transaction type, and looking for one is the most common recon
 | `REFUND` | Either | A refund routed back over ACH |
 | `RETURN` | Reversal | The payer's bank returning a pull |
 
+A dedicated `POST /v3/ach/credit` is in development. Until it ships, withdraw is
+the push path, and it is the one `WITHDRAW_FUNDS` above records.
+
 Two consequences worth building around:
 
 - An ACH debit created through `POST /v3/ach/debit` appears in your ledger as a `PAYMENT`. Filtering your ACH report on `BANK_DEBIT` alone will silently undercount it.
 - `LOAD_FUNDS` and `WITHDRAW_FUNDS` are not ACH-exclusive. Both carry card as well. Check `type_details` to confirm the rail before you classify a transaction as ACH.
 
-See [Transactions Overview](/guides/transactions/transactions-overview) for all 47 types.
+See [Transactions Overview](/guides/transactions/transactions-overview) for the full list of types.
+
+Need the money there in seconds rather than days? See [Instant Payments](/guides/transactions/instant-payments).
 
 Weekends and federal holidays are not banking days. A Friday evening submission settles the following week.
 

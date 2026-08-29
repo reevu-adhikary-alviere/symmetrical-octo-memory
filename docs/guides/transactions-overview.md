@@ -73,9 +73,9 @@ stateDiagram-v2
 
 ## Transaction types
 
-There are 47 transaction types. You will never handle all of them: your program's modules determine which ones you can actually produce. What matters when you build is knowing which types you originate yourself, which ones Alviere posts on your behalf, and which ones can show up unannounced days after the fact.
+The API reference enumerates 47 transaction types, and `WIRE_TRANSFER` is a real one it currently omits. You will never handle all of them: your program's modules determine which ones you can actually produce. What matters when you build is knowing which types you originate yourself, which ones Alviere posts on your behalf, and which ones can show up unannounced days after the fact.
 
-Nine of the 47 never appear on a wallet ledger. They exist at the vault or passthrough scope, so if you are reading `GET /wallets/{wallet_uuid}/transactions` you will not see them. Read `GET /transactions` instead.
+Nine of them never appear on a wallet ledger. They exist at the vault or passthrough scope, so if you are reading `GET /wallets/{wallet_uuid}/transactions` you will not see them. Read `GET /transactions` instead.
 
 ## Types are operations, not rails
 
@@ -110,8 +110,8 @@ The sandbox agrees with this grouping. `POST mock.snd.alviere.com/generateReturn
 | `BANK_DEBIT` | A debit against a payer's bank account | Yes |
 | `PAYMENT` | A V3 acceptance charge. Both `POST /v3/cards/debit` and `POST /v3/ach/debit` create one | Yes |
 | `INTERNATIONAL_TRANSFER` | `POST /wallets/{wallet_uuid}/remittances` | Yes |
-| `INSTANT_BANK_TRANSFER` | An instant-rail bank transfer | Yes |
-| `INSTANT_PAYMENT_REQUEST` | A request for payment on an instant rail | Yes |
+| `INSTANT_BANK_TRANSFER` | An instant-rail bank transfer. See [Instant Payments](/guides/transactions/instant-payments) | Yes |
+| `INSTANT_PAYMENT_REQUEST` | A request for payment on an instant rail. See [Instant Payments](/guides/transactions/instant-payments) | Yes |
 | `PREFUND` | The prefunding vault advancing funds before settlement | No |
 
 ### Money out
