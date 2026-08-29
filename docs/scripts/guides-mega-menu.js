@@ -68,10 +68,6 @@
             { label: 'Bill pay', href: '/guides/payment-acceptance/use-cases/card-config-bill-pay' },
           ],
         },
-      ],
-    },
-    {
-      sections: [
         {
           title: 'Card Issuing',
           links: [
@@ -86,6 +82,10 @@
             { label: 'Incentives', href: '/guides/cards/incentives' },
           ],
         },
+      ],
+    },
+    {
+      sections: [
         {
           title: 'Sandbox Testing',
           links: [
