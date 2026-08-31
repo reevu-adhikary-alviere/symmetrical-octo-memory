@@ -109,6 +109,10 @@
           ],
         },
         {
+          title: 'Data Reporting',
+          links: [{ label: 'Periodic Reports', href: '/guides/reporting/periodic-reports' }],
+        },
+        {
           title: 'More',
           links: [
             { label: 'Webhooks', href: '/guides/more/webhooks' },

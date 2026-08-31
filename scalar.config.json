@@ -646,6 +646,18 @@
                 }
               }
             },
+            "/reporting": {
+              "type": "group",
+              "title": "Data Reporting",
+              "mode": "nested",
+              "children": {
+                "/periodic-reports": {
+                  "type": "page",
+                  "filepath": "docs/guides/periodic-reports.md",
+                  "title": "Periodic Reports"
+                }
+              }
+            },
             "/more": {
               "type": "group",
               "title": "More",
