@@ -5,7 +5,7 @@ description: "A complete consumer banking app for iOS and Android, built on the 
 
 # Bootstrap App
 
-Ship a mobile banking product without building one from scratch. Bootstrap is a full native app for iOS and Android, written on top of the Alviere mobile SDKs, that already does the work: onboard a customer through KYC, open a wallet, fund it, issue a card, move money, and show the history. You fork it, restyle it, point it at your program, and submit to the stores.
+Ship a mobile banking product without building one from scratch. Bootstrap is a full native app for iOS and Android, written on top of the Alviere mobile SDKs. It onboards a customer through KYC, opens a wallet, funds it, issues a card, moves money, and shows the history. You fork it, restyle it, point it at your program, and submit to the stores.
 
 This is the mobile counterpart to [Alviere Checkout](/guides/payment-acceptance/online-payments/alviere-checkout/introduction). Checkout gives you a payment box in a few lines of HTML. Bootstrap gives you the whole app.
 
@@ -27,7 +27,7 @@ Both ship with in-repo developer documentation, a linter config, a test suite, a
 
 ## What you are starting from
 
-Bootstrap is not a demo with three screens and a mock backend. It calls the real platform, handles the states that actually occur, and includes the screens teams usually discover late: onboarding recovery when a customer abandons halfway, a maintenance mode, a forced-update screen, and a rejection path with an appeal.
+Bootstrap is not a demo with three screens and a mock backend. It calls the real platform, handles the states a real customer produces, and includes the screens teams tend to discover late: onboarding recovery for someone who abandons halfway, a maintenance mode, a forced-update screen, and a rejection path with an appeal.
 
 The four Alviere packages sit behind a single wrapper in the app, so the SDK calls are already grouped by what they do rather than scattered through views.
 

@@ -1,11 +1,11 @@
 ---
 title: "Configure and brand"
-description: "Colors, typography, spacing, assets, copy, and the switches that change behaviour, without touching a view"
+description: "Colors, typography, spacing, assets, copy, and the switches that change behavior, without touching a view"
 ---
 
 # Configure and brand
 
-Rebranding Bootstrap is deliberately the shallowest change you can make. Neither app hardcodes a color in a view. Both resolve everything through a theme, so restyling is an exercise in editing values rather than hunting through screens.
+Neither app hardcodes a color in a view. Both resolve styling through a theme, so a rebrand means editing values in a handful of files rather than hunting through screens.
 
 Work through it in this order.
 
@@ -13,7 +13,7 @@ Work through it in this order.
 
 Both apps use semantic color roles, not a palette of raw hex. You are changing what "primary button background" means, not finding every button.
 
-**iOS** keeps colors in the asset catalog under `Content/Assets.xcassets/Colors`, as roughly sixty color sets named for their role: `color.button.background.primary`, `color.foreground.secondary`, `color.background.bottomsheet`, `color.danger`, and so on. Each color set carries its own light and dark values, so dark mode follows automatically.
+**iOS** keeps colors in the asset catalog under `Content/Assets.xcassets/Colors`, as 58 color sets named for their role: `color.button.background.primary`, `color.foreground.secondary`, `color.background.bottomsheet`, `color.danger`, and so on. Each color set carries its own light and dark values, so dark mode needs no extra work.
 
 **Android** defines the same idea in Kotlin. `ui/theme/scheme/` holds one immutable data class per role group, with a light and a dark instance of each:
 
@@ -29,7 +29,7 @@ Both apps use semantic color roles, not a palette of raw hex. You are changing w
 
 `ui/theme/tokens/` holds the raw values those schemes draw on: neutrals, avatar colors, and sizes. `res/values/colors.xml` and `res/values-night/colors.xml` cover the parts Android resolves outside Compose.
 
-Start with `MainScheme` on Android and `color.main.primary` on iOS. Between them they move most of what a customer sees.
+Start with `MainScheme` on Android and `color.main.primary` on iOS. Those two hold the accent color, which is the change a customer notices first.
 
 ## 2. Typography and spacing
 
@@ -45,15 +45,15 @@ On Android the equivalent lives in the reusable composables under `ui/screens/co
 
 ## 4. SDK screens
 
-The Accounts SDK renders document capture itself, so it needs telling about your palette too. On Android the app passes its own colors into the SDK's capture tokens when it builds the theme, which is why the capture screen matches the app. Do the same for any SDK colors you override, in the same place, so there is one source of truth.
+The Accounts SDK renders document capture itself, so it needs your palette too. On Android the app passes its own colors into the SDK's capture tokens when it builds the theme, which is why the capture screen matches the app. Do the same for any SDK colors you override, in the same place, so every override sits in one file.
 
 ## 5. Assets and copy
 
 Swap the app icon, splash, and imagery in the asset catalog on iOS or the `res/mipmap` and `res/drawable` directories on Android.
 
-Copy lives in a string catalog on iOS and in `res/values/strings.xml` on Android, which runs to about a thousand lines. Nothing is inlined in a view, so translation is a normal localization job and rewording is a normal edit.
+Copy lives in a string catalog on iOS and in `res/values/strings.xml` on Android, which runs to about a thousand lines. Nothing is inlined in a view, so translation is an ordinary localization job and rewording is a one-line edit.
 
-## 6. Behaviour
+## 6. Behavior
 
 A small flags file on iOS and a constants file on Android hold the switches worth knowing about.
 
@@ -71,9 +71,9 @@ A small flags file on iOS and a constants file on Android hold the switches wort
 
 The send-money minimum and maximum in there are sample-app guardrails, not platform limits. Your real limits come from your program configuration, which your program manager sets and the API does not change. See [Environments](/guides/getting-started/environments).
 
-## What not to change first
+## Do not start in the views
 
-Resist starting in the views. Both apps route styling through the theme precisely so that a rebrand does not touch screen code, and a rebrand that edits screens directly is one you have to redo on every upgrade.
+Both apps route styling through the theme so a rebrand never touches screen code. Edit the screens directly and you inherit a merge conflict on every upgrade.
 
 ## Related
 

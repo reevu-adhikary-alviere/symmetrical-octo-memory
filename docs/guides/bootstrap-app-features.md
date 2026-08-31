@@ -11,7 +11,7 @@ Both apps ship the same flows. This page is the inventory, with the guide that e
 
 Email and phone entry, each verified with a one-time code. Then legal name and date of birth, address with autocomplete, SSN last four, full SSN where the program requires it, occupation, and terms acceptance. Document capture and a selfie close the flow.
 
-Document capture comes from the Accounts SDK rather than the app. On iOS the SDK returns a SwiftUI camera view that the app wraps in a thin component; on Android the SDK's capture screen reads its colors from the app's palette, so it matches the rest of your product instead of looking borrowed.
+Document capture comes from the Accounts SDK rather than the app. On iOS the SDK returns a SwiftUI camera view that the app wraps in a thin component; on Android the SDK's capture screen reads its colors from the app's palette, so it carries your brand rather than ours.
 
 The review screen polls for a decision, first after thirty seconds and then every ten. Approval, rejection, and the appeal path each have a screen. So do the recovery cases, where a customer abandons onboarding partway through and comes back to find themselves at the right step rather than the beginning.
 
@@ -29,7 +29,7 @@ See [Wallets](/guides/resources/wallets), [Payment Methods](/guides/resources/pa
 
 ## Recipients and sending money
 
-Create, edit, and browse recipients with paging, then send money with a confirmation step and a success screen. Bank details are validated on entry, including routing and account number lengths.
+Create, edit, and browse recipients with paging, then send money with a confirmation step and a success screen. The app validates bank details on entry, including routing and account number lengths.
 
 See [Beneficiaries and Payouts](/guides/resources/beneficiaries) and [Internal Transfers](/guides/transactions/internal-transfers).
 
@@ -53,7 +53,7 @@ The fullest part of the app, because card flows have the most states.
 
 Card artwork orientation and card type are configuration rather than code, so a program issuing virtual-only cards does not carry physical shipping screens it will never show. See [Configure and brand](/guides/sdks/bootstrap-app/configure).
 
-The card number and the PIN never pass through the app's own backend. Both flows call the SDK directly, which is a platform requirement and not a Bootstrap choice. [Card Data and PCI](/guides/cards/card-security) explains what that boundary buys you.
+The card number and the PIN never pass through the app's own backend. Both flows call the SDK directly, which is a platform requirement and not a Bootstrap choice. [Card Data and PCI](/guides/cards/card-security) explains what that keeps out of PCI scope.
 
 See also [Issued Cards](/guides/cards/cards), [Card Operations](/guides/cards/card-operations), [Physical Cards](/guides/cards/physical-cards), and [Digital Wallets](/guides/cards/digital-wallets).
 
@@ -67,13 +67,13 @@ Personal information editing, security settings, periodic statements, legal docu
 
 ## Operational screens
 
-The ones that matter in production and rarely appear in samples.
+These only matter once the app is live, which is why they are the easiest things to leave out.
 
 **Maintenance mode.** The app polls for platform availability and holds customers on a maintenance screen during a window, rather than failing requests one at a time.
 
-**Forced update.** When an old build has to stop working, it stops working, on a screen that tells the customer what to do.
+**Forced update.** When a build is too old to keep running, the app blocks it and tells the customer to update.
 
-**Notifications, analytics, and monitoring.** Push notifications, analytics, and crash and performance reporting are already wired to swappable vendors.
+**Notifications, analytics, and monitoring.** Push notifications, analytics, and crash and performance reporting are already wired up, and each one is isolated: a separate Core context on iOS, a service under `domain/services` on Android with per-vendor implementations behind an interface. Swapping in your own provider means writing one implementation, not editing screens.
 
 ## Testing the flows
 
