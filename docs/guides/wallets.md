@@ -40,7 +40,7 @@ graph LR
 
     Transit -->|settles| Balance
     Pending -->|settles| Balance
-    Captive -->|executes| Balance
+    Balance -->|held for payout| Captive
 
     Balance -->|included in| Available
     Transit -->|if prefunded| Available
@@ -69,4 +69,4 @@ Unsettled funds (in cents), similar to transit. **Not counted as available** sin
 
 ### Captive
 
-Funds held (in cents) for transactions that have been executed but not yet settled. An ACH debit holds funds here until the transaction settles, then moves them to the relevant treasury vault.
+Funds held (in cents) for outgoing transactions that have been executed but not yet settled.
