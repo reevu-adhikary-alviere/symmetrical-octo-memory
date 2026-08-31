@@ -2,18 +2,25 @@
 
 Working notes for the Alviere HIVE developer docs site in this repo. Reconstructed
 from git history, the standing feedback rules, and an audit of the current tree on
-2026-08-29. Everything in "Open work" was verified against the canonical specs, not
-recalled.
+2026-08-29, last brought current 2026-08-31. Everything in "Open work" was verified
+against the canonical specs, not recalled.
 
-## ACTIVE WORK — read before picking anything up
+## STATUS — read before picking anything up
 
-An agent session is working through the remaining "Open work" list right now
-(2026-08-29, session `ses_fbaaaf732ffejTUDLdgKOf9NR8`), in the order this file's
-"Suggested order" gives: **6 → 4 → 5 → 7**. Items 1-3, 8, and 9 are done and
-uncommitted; do not redo them. The working tree has uncommitted changes from
-this and earlier sessions — do not revert or "clean up" them, and re-read
-`git status` / `git log` before trusting any part of this file, which may be
-stale relative to the tree.
+**Working tree clean, everything through item 9 committed and pushed.** As of
+2026-08-31 the head of `main` is `f60cf5f`, and the items this file once listed as
+"done, uncommitted" all landed: items 1-4, 5, and 6 in `b3282f1`, item 6b in
+`3b6b281`, item 8 in `40c1ba6`, item 9 in `422837a`.
+
+Still open: **7** (repo hygiene) and the follow-ups in **10** below. Item 5 is done,
+contrary to what its heading used to say.
+
+`publishOnMerge` is `true` in `scalar.config.json`, so **a push to `main` republishes
+the live site.** There is no staging step. Treat a push as a publish, and expect the
+custom header and menus to be the first thing that breaks on the deployed site even
+when they are correct in source, because they run against Scalar's rendered DOM.
+
+Re-read `git status` and `git log` before trusting any part of this file.
 
 ## What this repo is
 
@@ -30,13 +37,28 @@ is close to a verbatim restatement of
 tables, no mechanism in either.
 
 - `scalar.config.json` is the whole site: nav routes, page-to-file mapping, and the
-  two API reference entries.
-- `docs/guides/*.md` — 46 guide pages, all wired into the nav.
+  two API reference entries. `publishOnMerge: true` lives here.
+- `docs/guides/*.md` — **59 guide pages**, all wired into the nav. Counted, not
+  estimated; an earlier revision of this file said 46 and a 2026-08-31 session
+  repeated that stale figure in a commit message. Recount rather than carry it
+  forward: `ls docs/guides/*.md | wc -l` against the page routes in the config.
 - `docs/swagger_1.yaml` (V2) and `docs/swagger_3.yaml` (V3) are the specs the site
   renders. They are copies pulled from `~/Documents/alviere-openapi`.
-- `docs/scripts/*.js` + `docs/assets/*.css` — the custom header, the Guides mega
-  menu, and the API mega menu. These run against Scalar's rendered DOM, so they
+- `docs/scripts/*.js` + `docs/assets/*.css` — the custom header and **three** mega
+  menus: Guides, APIs, and SDKs. These run against Scalar's rendered DOM, so they
   break when Scalar changes markup.
+
+  The Guides menu's own comment says it mirrors the full guide tree, so a new
+  top-level guide group has to be added there too or the menu contradicts itself.
+  The SDKs menu is four columns (web, iOS, Android, Bootstrap App) at a 940px panel
+  stepping 4 → 3 → 2 columns; its width is set in **both** the CSS and the inline
+  style `positionPanel` applies, so changing one without the other half-works.
+
+  **Nav placement is a mega-menu decision, not a sidebar one.** Reevu rejected a
+  placement proposal on 2026-08-31 that was framed as a sidebar hierarchy: "its in
+  the mega menu though.. why you showed me a side bar?" The sidebar is generated
+  from the config routes and is downstream. A page still needs a route, but the
+  route is plumbing and the menu column is the editorial choice. Draw the menu.
 
 The guides were mechanically AI-ported from internal specs. That port is the source
 of most of the defects found so far.
@@ -177,6 +199,12 @@ Navigation and chrome:
 - Two rounds of DOM fixes after the menus failed on the deployed site
   (`1a082b2`, `e483afb`).
 - V3 mega menu pointed at tags that actually exist (`302791b`).
+- SDKs mega menu added to the header (`c7e5c58`).
+- SDKs section built out: a standalone overview page, the header link moved off
+  the Payment Acceptance page it used to point at, the menu reordered to four
+  columns with Bootstrap App last, the panel widened to 940px, and a right-edge
+  clamp added to `positionPanel`, which previously could position the panel off
+  screen (`f60cf5f`).
 
 Content correctness:
 
@@ -191,17 +219,30 @@ Content correctness:
 - ACH reframed as a rail rather than a transaction type (`99e008b`).
 - Mandates reframed as an Alviere API rather than the reader's problem (`ab4f6d4`).
 - `swagger_3` synced from canonical (`362748a`).
-- Card Issuing rebuilt, 2 pages to 9, 571 words to 8,573 (item 8, uncommitted).
+- Card Issuing rebuilt, 2 pages to 9, 571 words to 8,573 (`40c1ba6`).
+- Instant payments published (`422837a`), wire rewritten as receive-only
+  (`3b6b281`), the four pointer-only rail pages filled and `swagger_1` synced
+  (`b3282f1`).
+- SDKs overview and the Bootstrap App guide set, 5 pages, 3,451 words (`f60cf5f`).
+  See item 11 for what those pages are sourced from, since the Bootstrap repos are
+  not in this tree.
 
-Verified clean right now: no placeholder callouts, no broken internal guide links
-(36 cross-links all resolve), every markdown file under `docs/guides/` is wired
-into the nav, and the V3 mega menu tags all match real V3 tags.
+Verified clean right now (2026-08-31): all 59 markdown files under `docs/guides/`
+are wired into the nav, no broken internal guide links, all 66 in-repo mega-menu
+hrefs resolve, all four header links resolve, no placeholder callouts, and both
+menu scripts pass `node --check`. The V3 mega menu tags all match real V3 tags.
+
+Re-running that check is worth it before any commit. The script that does it walks
+`scalar.config.json` for page routes, globs `docs/guides/*.md` for orphans, regexes
+`](/guides/...)` out of every page, and pulls `href:` out of the three menu scripts.
+Note that mega-menu labels can be double-quoted when they contain an apostrophe
+(`label: "What's included"`), so a naive single-quote regex silently undercounts.
 
 ## Open work
 
-### 1-3. Done, uncommitted
+### 1-3. ~~Done, uncommitted~~ DONE
 
-Fixed on 2026-08-29, in the working tree, not yet committed.
+Fixed on 2026-08-29, committed in `b3282f1`.
 
 - **V2 mega menu.** `activities` and `cash-loading` had guides but no V2 tag, so
   they now use `href` to those guides, matching what `MENU_V3` already does for
@@ -220,7 +261,7 @@ Fixed on 2026-08-29, in the working tree, not yet committed.
 
 ### 4. ~~Four pointer-only pages~~ DONE
 
-Rewritten 2026-08-29, uncommitted. All four are now spec-grounded rail pages with
+Rewritten 2026-08-29, committed in `b3282f1`. All four are now spec-grounded rail pages with
 worked request bodies, field tables, and status/late-arrival behaviour:
 
 | Page | Was | Now |
@@ -235,17 +276,18 @@ source, or the test guides. All internal links resolve against `scalar.config.js
 `transaction_purpose` documented as free-form/corridor-specific per rule 4 — the
 spec enumerates `source_of_funds` but not purposes, so no purpose list was invented.
 
-### 5. `changelog.md` is a placeholder
+### 5. ~~`changelog.md` is a placeholder~~ DONE
 
-`docs/guides/changelog.md:11` — "This page will be updated with versioned entries
-as new releases roll out. In the meantime, check the V2 and V3 API references."
-That is the exact pattern rule 4 bans, and the page is in the header nav, so it is
-one of three top-level destinations. Either seed it from real release history or
-pull it out of the header.
+Seeded in `b3282f1`. The page now carries real versioned entries, newest first,
+keyed to the version each API reference reports (V2 `6.6.16`, V3 `1.1.5`), with
+breaking changes flagged. The banned placeholder line is gone.
+
+Keep it current when a spec sync lands, since it is one of four top-level header
+destinations and a stale changelog on a sales surface is worse than none.
 
 ### 6. ~~Sync `swagger_1` from canonical, straight copy~~ DONE
 
-Done 2026-08-29, uncommitted. `swagger_1.yaml` is a byte copy of canonical
+Done 2026-08-29, committed in `b3282f1`. `swagger_1.yaml` is a byte copy of canonical
 `6.6.16`; all 8 missing paths verified present; `non-reloadable` confirmed
 `x-internal: true` (line 5977) so it drops from the rendered reference as the
 card pages assume. `swagger_2.yaml` deleted; no references remain anywhere in
@@ -302,13 +344,12 @@ own task, not a guess.
 - `index.html` at the repo root is a 1,108-line standalone landing page, committed,
   referenced by nothing, and not part of the Scalar build.
 - `docs/overview.md` and `docs/introduction.md` are the only markdown files not
-  wired into the nav. Orphans.
-- `image-removebg-preview.png` is untracked in the working tree. Either commit it
-  somewhere deliberate or remove it.
+  wired into the nav. Orphans. Still true on 2026-08-31.
+- ~~`image-removebg-preview.png` untracked~~ resolved. The working tree is clean.
 
-### 8. Card Issuing — done, uncommitted
+### 8. Card Issuing — DONE
 
-Rewritten on 2026-08-29. Two pages, 571 words, zero API examples became nine pages,
+Rewritten on 2026-08-29, committed in `40c1ba6`. Two pages, 571 words, zero API examples became nine pages,
 8,573 words, with worked request and response bodies on every public endpoint.
 
 | Page | File | Words |
@@ -324,7 +365,7 @@ Rewritten on 2026-08-29. Two pages, 571 words, zero API examples became nine pag
 | Incentives | `incentives.md` | 568 |
 
 All nine are wired into `scalar.config.json` and `guides-mega-menu.js`, and every
-internal link across all 46 guides still resolves. `activity.md` was corrected in the
+internal link across the guides still resolved at the time. `activity.md` was corrected in the
 same pass: it pointed at `GET /issued-cards`, which is `x-internal`, and now points at
 the wallet-scoped path.
 
@@ -453,7 +494,9 @@ and `docs/swagger_1.yaml`. The item that said to report it upstream is closed.
    Swagger enums and `alviere-docs` left untouched. No docs change needed.
 
 
-### 9. Instant payments — done, uncommitted
+### 9. Instant payments — DONE
+
+Committed in `422837a`.
 
 `docs/guides/instant-payments.md`, 869 words, wired into Transactions between ACH
 and Cash Loading. Sourced entirely from the shipped V3 spec.
@@ -471,6 +514,79 @@ it is the most expensive mistake available on this page.
 
 Cross-linked in from `pay-by-bank.md`, `transactions-overview.md`, `api-versions.md`,
 and `ach.md`, so it is reachable without the nav.
+
+### 10. SDKs section — open follow-ups
+
+The section shipped in `f60cf5f`. Four things were left deliberately, three of them
+Reevu's call.
+
+1. **Vendor names in the Bootstrap pages.** The apps pre-wire push notifications,
+   analytics, crash and performance reporting, in-app support, bank linking, and
+   direct-deposit switching. The pages describe these by function and name none of
+   them. Reevu deferred the question on 2026-08-31 ("need to ignore those for now"),
+   so do not add names without asking again. Note that rule 7's provider ban is
+   about financial providers; these are the customer's own swappable vendors, which
+   is why it is a question rather than a settled no.
+
+2. **Committed credentials in the Bootstrap repos.** Push and support keys sit in
+   `Constants.kt` and `build.gradle.kts` on the Android side. Kept out of the docs
+   entirely. The build page tells readers to replace the shipped development
+   configuration and rotate anything they find committed, without naming files or
+   products. Raising it with the mobile team was also deferred, and is not a docs
+   task.
+
+3. **The four-column menu has not been checked on the deployed site.** Correct in
+   source and validated, but the last two menu breakages in this repo's history were
+   both DOM-behaviour surprises after deploy, not source errors. Hover it at a normal
+   desktop width and at one narrow window to confirm the 4 → 3 → 2 steps.
+
+4. **iOS and Android SDK reference pages are still off-site.** Those two menu
+   columns point at `developer.alviere.com`, and the Web SDK column at
+   `websdk.alviere.com`. Only the Bootstrap App column and the overview are in-repo.
+   Bringing the platform SDK docs in-house is a real piece of work and nobody has
+   asked for it.
+
+### 11. Where the Bootstrap pages come from
+
+The Bootstrap repos are **not in this tree**, so nothing in those five pages can be
+re-verified from this repo alone. Sources, as of 2026-08-31:
+
+| Source | Holds |
+|---|---|
+| `~/Documents/bootstrap-app-ios` | Swift 6 / SwiftUI app, iOS 17.5+, `com.alviere.ios.bootstrap`. Good DocC articles under `Bootstrap/Documentation.docc` |
+| `~/Documents/bootstrap-app-android` | Kotlin / Compose app, minSdk 24, `com.alviere.android.bootstrap`. `documentation/Bootstrap.md` |
+
+Both were renamed on 2026-08-31; an earlier session found the iOS one at
+`~/Documents/bootstrap-app`. They are internal repos, not public GitHub like the
+four SDK packages, which is why the pages route access through the program manager
+and never name the host.
+
+Facts worth not re-deriving:
+
+- The four SDK packages map to app areas as the imports actually use them, not as
+  the names suggest: Accounts covers auth, the KYC dossier, document capture, legal,
+  address, and occupation. Payments covers wallets, bank and card payment methods,
+  and transactions. Cards covers issuance, status, PIN, card data, and wallet
+  provisioning. Remittances covers recipients and sending money.
+- **Both apps default to sandbox**, iOS in its app entry point, Android via a single
+  environment constant.
+- **The theme layers are the branding story.** iOS has ~58 semantically named
+  colorsets (`color.button.background.primary`) each carrying its own light and dark
+  value, a font scale routed through `UIFontMetrics`, and a per-component theme
+  extension for each control. Android has one immutable scheme class per role group
+  over a token layer, with `values-night` for dark. Neither hardcodes a color in a
+  view, which is what makes a rebrand a values edit.
+- **Android also themes the SDK's own screens**, passing the app palette into the
+  Accounts SDK's document-capture tokens so the KYC camera screen matches the host
+  app. iOS instead receives a SwiftUI view from the SDK and wraps it thinly. That
+  asymmetry is real; do not flatten it into claimed parity.
+- The Android repo's own security doc claims AES-256-GCM at rest signed with a
+  post-quantum algorithm, falling back to ECDSA P-256 / SHA-256 below API 37, keys
+  in StrongBox or the TEE. **Sourced from the repo, not a spec.** It is a strong
+  enterprise selling point and is on the introduction page, and it deserves a second
+  pair of eyes before anyone leans on it in a sales conversation.
+- Send-money bounds in the Android constants are sample-app guardrails, not platform
+  limits. The pages say so, because a reader would otherwise take them for real.
 
 ## Notes from Pedro conversation
 
@@ -538,14 +654,21 @@ intentionally unshipped, use the status-table pattern in rule 6.
 
 ## Suggested order
 
-Ship 1, 2, and 3 first. They are wrong, not merely thin, and 1 is a five-minute
-fix. Then 6 (sync the spec, delete the duplicate) so later content work is checked
-against current truth.
+Items 1 through 6b, 8, and 9 are all done and pushed. What is left, in the order I
+would take it:
 
-8 is done. 4 and 5 are the same kind of work at smaller scale — four pointer-only rail pages
-and the changelog — and are now the largest remaining content gap. 7 last.
+1. **Item 10.3**, the deployed-site check on the four-column SDKs menu. Cheapest
+   thing here and it guards work that is already live.
+2. **Item 7**, repo hygiene. `README.md` is still the stock Scalar template, the
+   1,108-line root `index.html` is referenced by nothing, and `docs/overview.md`
+   and `docs/introduction.md` are orphans. None of it is wrong on the site, which is
+   why it keeps losing to content work, but the README is the first thing a new
+   engineer opens.
+3. **Item 10.1**, the vendor-naming question, whenever Reevu wants to reopen it.
+4. **Item 10.4**, bringing the platform SDK reference in-house. Large, unrequested,
+   and not obviously the right call.
 
-Item 6 is worth doing before 4, for the same reason it was worth doing before 8: the four
-rail pages should be checked against a current spec. Note that syncing `swagger_1` also
-drops the non-reloadable create endpoint out of the rendered reference, which the card pages
-already assume.
+The two spec gaps in item 6b are still open on the `alviere-openapi` side, not here:
+`WIRE_TRANSFER` missing from the `transaction-type` enum, and `wire_transfer_details`
+missing from the transaction response schema. Until the enum is fixed, do not restore
+a hard transaction-type count to `transactions-overview.md`.
