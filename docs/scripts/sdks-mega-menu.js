@@ -1,11 +1,18 @@
 (function () {
-  // A platform-first SDK menu, mirroring the Guides mega menu. Each column is a
-  // titled section of links. Links whose href starts with http open off-site
-  // (the mobile SDK reference lives on developer.alviere.com); the rest are
-  // in-repo guide routes. Keep every href pointed at a page that exists.
+  // The SDK menu, mirroring the Guides mega menu. Four columns, each a stack of
+  // titled sections: web first, then the two mobile platforms, then the
+  // prebuilt app. Links whose href starts with http open off-site (the mobile
+  // SDK reference lives on developer.alviere.com); the rest are in-repo guide
+  // routes. Keep every href pointed at a page that exists.
   var MENU = [
     {
       sections: [
+        {
+          title: 'Start here',
+          links: [
+            { label: 'SDK overview', href: '/guides/sdks/overview' },
+          ],
+        },
         {
           title: 'Web SDK',
           links: [
@@ -47,6 +54,19 @@
           title: 'Legacy',
           links: [
             { label: 'JavaScript SDK', href: 'https://apidocs.alviere.com/javascript-sdk/overview' },
+          ],
+        },
+      ],
+    },
+    {
+      sections: [
+        {
+          title: 'Bootstrap App',
+          links: [
+            { label: 'Introduction', href: '/guides/sdks/bootstrap-app/introduction' },
+            { label: "What's included", href: '/guides/sdks/bootstrap-app/features' },
+            { label: 'Configure & brand', href: '/guides/sdks/bootstrap-app/configure' },
+            { label: 'Build & run', href: '/guides/sdks/bootstrap-app/build' },
           ],
         },
       ],
@@ -166,8 +186,8 @@
     if (!panel) return;
 
     var rect = wrapper.getBoundingClientRect();
-    var left = Math.max(16, rect.left);
-    var width = Math.min(760, window.innerWidth - 32);
+    var width = Math.min(940, window.innerWidth - 32);
+    var left = Math.max(16, Math.min(rect.left, window.innerWidth - width - 16));
 
     panel.style.left = left + 'px';
     panel.style.top = rect.bottom + 8 + 'px';

@@ -87,6 +87,16 @@
     {
       sections: [
         {
+          title: 'SDKs',
+          links: [
+            { label: 'Overview', href: '/guides/sdks/overview' },
+            { label: 'Bootstrap App', href: '/guides/sdks/bootstrap-app/introduction' },
+            { label: "What's included", href: '/guides/sdks/bootstrap-app/features' },
+            { label: 'Configure & brand', href: '/guides/sdks/bootstrap-app/configure' },
+            { label: 'Build & run', href: '/guides/sdks/bootstrap-app/build' },
+          ],
+        },
+        {
           title: 'Sandbox Testing',
           links: [
             { label: 'Overview', href: '/guides/sandbox-testing/mock-services' },

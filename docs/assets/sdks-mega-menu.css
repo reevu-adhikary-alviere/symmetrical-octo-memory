@@ -32,7 +32,7 @@
   top: 0;
   left: 0;
   transform: translateY(-4px);
-  width: min(760px, calc(100vw - 2rem));
+  width: min(940px, calc(100vw - 2rem));
   padding: 24px;
   border-radius: 12px;
   border: 1px solid var(--scalar-border-color, #e5e5e5);
@@ -65,7 +65,7 @@
 
 .hive-sdks-mega__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 32px;
 }
 
@@ -134,6 +134,12 @@
 .hive-sdks-mega__link--external:hover .hive-sdks-mega__external-icon,
 .hive-sdks-mega__link--external:focus-visible .hive-sdks-mega__external-icon {
   opacity: 0.55;
+}
+
+@media (max-width: 1200px) {
+  .hive-sdks-mega__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1024px) {

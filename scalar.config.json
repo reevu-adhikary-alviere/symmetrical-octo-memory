@@ -255,7 +255,7 @@
         {
           "type": "link",
           "title": "SDKs",
-          "to": "/guides/payment-acceptance/online-payments/alviere-checkout/introduction"
+          "to": "/guides/sdks/overview"
         },
         {
           "type": "link",
@@ -562,6 +562,45 @@
                   "type": "page",
                   "filepath": "docs/guides/incentives.md",
                   "title": "Incentives"
+                }
+              }
+            },
+            "/sdks": {
+              "type": "group",
+              "title": "SDKs",
+              "mode": "nested",
+              "children": {
+                "/overview": {
+                  "type": "page",
+                  "filepath": "docs/guides/sdks-overview.md",
+                  "title": "Overview"
+                },
+                "/bootstrap-app": {
+                  "type": "group",
+                  "title": "Bootstrap App",
+                  "mode": "folder",
+                  "children": {
+                    "/introduction": {
+                      "type": "page",
+                      "filepath": "docs/guides/bootstrap-app.md",
+                      "title": "Introduction"
+                    },
+                    "/features": {
+                      "type": "page",
+                      "filepath": "docs/guides/bootstrap-app-features.md",
+                      "title": "What's included"
+                    },
+                    "/configure": {
+                      "type": "page",
+                      "filepath": "docs/guides/bootstrap-app-configure.md",
+                      "title": "Configure and brand"
+                    },
+                    "/build": {
+                      "type": "page",
+                      "filepath": "docs/guides/bootstrap-app-build.md",
+                      "title": "Build and run"
+                    }
+                  }
                 }
               }
             },
