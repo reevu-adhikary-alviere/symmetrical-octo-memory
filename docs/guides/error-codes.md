@@ -72,7 +72,7 @@ Codes are six digits, and the digits are not arbitrary. The first digit identifi
 
 | Prefix | Service |
 |--------|--------|
-| `1xxxxx` | Authentication and session |
+| `1xxxxx` | Sierra — generic gateway validation (any API) |
 | `2xxxxx` | Payment instruments |
 | `3xxxxx` | Accounts and onboarding |
 | `4xxxxx` | Money movement |
@@ -119,9 +119,9 @@ All of the codes below are returned with an HTTP `400`.
 Codes labelled a **configuration error** mean your program settings do not permit the action you attempted. There is no request change that fixes them. Contact your program manager.
 :::
 
-### Authentication and session
+### Sierra — generic gateway validation
 
-32 codes, prefix `1`.
+32 codes, prefix `1`. Returned by Sierra itself when gateway validation fails — can appear on any API, not just authentication.
 
 | Code | Description |
 |------|-------------|
