@@ -62,12 +62,6 @@ Net to seller: **$93**. Net to platform: **$10**.
 
 Sellers withdraw to their external bank through the standard payout flow once funds have matured past the chargeback window. See [Beneficiaries & Payouts](/guides/resources/beneficiaries).
 
-## Division of responsibilities
-
-**You build:** listings, discovery, seller onboarding, order management, fulfillment, CRM, support.
-
-**Alviere handles:** card processing, seller accounts, commission via fee rules, settlement, disputes.
-
 ## Related
 
 - [Accept card payments](/guides/payment-acceptance/online-payments/card-payments/introduction)

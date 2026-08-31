@@ -19,21 +19,6 @@ Accept payments from your customers on two rails, cards and bank accounts, throu
 
 Many partners use more than one. A marketplace can run card acceptance for buyers and ACH for high-ticket B2B sellers on the same setup.
 
-## What Alviere handles, what you own
-
-Alviere handles the **payment side**: authorizing cards, capturing funds, applying fee splits, settling to the right account, and surfacing disputes. Everything around payments stays in your stack and calls Alviere when it's time to charge.
-
-| Alviere handles | You own |
-|---|---|
-| Card processing: authorize, capture, void, refund, 3DS, saved cards | Storefront, cart, and checkout UX |
-| Settlement to the account you designate | Product catalog, SKUs, pricing |
-| Fee splits: `SERVICE_FEE` (platform commission) and `CONVENIENCE_FEE` (payer upcharge) | Order management, fulfillment, returns |
-| Compliance: onboarding, KYB/KYC, dossiers, sanctions screening | Sales tax calculation and filing |
-| Disputes and chargeback handling at the program level | Subscription lifecycle (renewal, dunning) |
-| Auditable transaction reporting with parent/child fee entries | Risk/fraud checks before you call the API |
-
-An order is a commercial record in your system. A payment is what you ask Alviere to do. The API is centered on payments. You keep order state.
-
 ## Before you build
 
 A few things are common to every rail:

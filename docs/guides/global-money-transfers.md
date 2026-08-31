@@ -5,7 +5,7 @@ description: "Send cross-border payments and remittances to beneficiaries worldw
 
 # Global Money Transfers
 
-Send cross-border payments to an international beneficiary's bank account, e-wallet, card, or a cash pickup location. The platform handles currency conversion and routing; you handle the beneficiary setup, the quote, and the remittance call.
+Send cross-border payments to an international beneficiary's bank account, e-wallet, card, or a cash pickup location. Currency conversion and routing run on the platform — you set up the beneficiary, create the quote, and send the remittance.
 
 The flow has three steps, and the first two happen before any money moves:
 

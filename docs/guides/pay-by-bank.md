@@ -105,9 +105,9 @@ POST /v3/ach/debit
 Fetch the text at the time you display it rather than hardcoding a UUID. Legal texts are versioned, and a new version means the wording the payer agreed to has changed. A pinned UUID quietly keeps collecting consent against superseded language.
 :::
 
-### What you still own
+### Records to retain
 
-Alviere records the mandate acceptance. It does not know anything else about the payer's intent, so keep this alongside your own order record:
+Alviere stores which legal text version the payer accepted. Keep the following alongside your order record:
 
 * Payer name and contact information
 * Authorized amount, or how a variable amount is determined

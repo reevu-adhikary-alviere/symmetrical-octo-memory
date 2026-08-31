@@ -5,7 +5,7 @@ description: "Let payers pay their bills by card, with an optional convenience f
 
 # Bill Pay
 
-A payer (consumer or business) pays a biller by card. Funds settle into the biller's account. You own the payer experience (bill presentment, notifications, autopay scheduling); Alviere processes the card and posts the funds.
+A payer (consumer or business) pays a biller by card. Funds settle into the biller's account. Bill presentment, notifications, and autopay scheduling stay in your stack — you call Alviere to charge the card and post the funds.
 
 The pattern fits any platform that collects payments on behalf of the organizations doing the billing, whether that's one biller or thousands.
 
@@ -19,7 +19,7 @@ Card is a great **convenience rail** when payers want instant confirmation. Many
 | Invoice / amount due | Biller billing systems | The `amount` you send is the validated balance |
 | Notifications | Your email/SMS | Subscribe to webhooks for success and failure events |
 | Autopay / scheduling | Your scheduler | Trigger `POST /v3/cards/debit` on the due date |
-| Legacy ACH / lockbox | Biller's bank | Can run alongside. Alviere handles the card path |
+| Legacy ACH / lockbox | Biller's bank | Can run alongside — card path runs through Alviere |
 
 ## How accounts are set up
 

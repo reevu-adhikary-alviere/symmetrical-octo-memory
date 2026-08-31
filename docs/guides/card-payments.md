@@ -51,6 +51,6 @@ Alviere is not a payment facilitator, so scheme-level features like per-sub-merc
 
 ## Next steps
 
-1. Read the [Payment Acceptance overview](/guides/payment-acceptance/payment-acceptance) for what you keep vs. what Alviere handles.
+1. Read the [Payment Acceptance overview](/guides/payment-acceptance/payment-acceptance).
 2. Follow [Integration](/guides/payment-acceptance/online-payments/card-payments/integration) to make your first charge.
 3. Pick the configuration that matches your business model.

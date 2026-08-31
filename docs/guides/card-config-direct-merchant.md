@@ -57,8 +57,7 @@ Two options for billing:
 
 - US-only acquiring
 - One program-level statement descriptor on the card statement
-- You build your own checkout UX
-- You keep storefront, catalog, tax, and fulfillment
+- Checkout UX, storefront, catalog, tax, and fulfillment stay in your stack
 
 ## Related
 
