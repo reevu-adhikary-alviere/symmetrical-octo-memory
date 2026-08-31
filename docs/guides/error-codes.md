@@ -62,53 +62,36 @@ These fields are empty when the request has no issues.
 
 ## How to read an error code
 
-Codes are six digits, and the digits are not arbitrary. The leading pair identifies the domain that rejected the request, which tells you where to look before you have even found the code in the table below.
+Codes are six digits, and the digits are not arbitrary. The first digit identifies the service that rejected the request, which tells you where to look before you have even found the code in the table below.
 
 ```
 3 2 0 0 0 5
-│ │ └─┴─┴─┴── specific error within that domain
-└─┴───────── domain: 32 = accounts
+│ └─┴─┴─┴── specific error within that service
+└───────── service: 3 = accounts and onboarding
 ```
 
-| Prefix | Domain |
+| Prefix | Service |
 |--------|--------|
-| `10xxxx` | Authentication and session |
-| `11xxxx` | Authentication and session |
-| `20xxxx` | Payment instruments |
-| `21xxxx` | Payment instruments |
-| `23xxxx` | Payment instruments |
-| `31xxxx` | Accounts and onboarding |
-| `32xxxx` | Accounts and onboarding |
-| `33xxxx` | Accounts and onboarding |
-| `34xxxx` | Accounts and onboarding |
-| `35xxxx` | Accounts and onboarding |
-| `38xxxx` | Accounts and onboarding |
-| `39xxxx` | Accounts and onboarding |
-| `41xxxx` | Money movement |
-| `42xxxx` | Money movement |
-| `43xxxx` | Money movement |
-| `45xxxx` | Money movement |
-| `46xxxx` | Money movement |
-| `49xxxx` | Money movement |
-| `50xxxx` | Money movement |
-| `51xxxx` | Cards, wallets, and incentives |
-| `52xxxx` | Cards, wallets, and incentives |
-| `53xxxx` | Cards, wallets, and incentives |
-| `61xxxx` | Account services |
-| `62xxxx` | Account services |
-| `69xxxx` | Account services |
-| `71xxxx` | Checks |
-| `72xxxx` | Checks |
-| `91xxxx` | Shared validation |
+| `1xxxxx` | Authentication and session |
+| `2xxxxx` | Payment instruments |
+| `3xxxxx` | Accounts and onboarding |
+| `4xxxxx` | Money movement |
+| `5xxxxx` | Cards, wallets, and incentives |
+| `6xxxxx` | Account services |
+| `7xxxxx` | Checks |
+| `8xxxxx` | Reserved (not currently published) |
+| `9xxxxx` | Shared validation |
 
-The practical value is triage. A `32xxxx` means the account is wrong or in the wrong state, so nothing about your transaction payload will fix it. A `43xxxx` means the account was fine and the transaction itself was rejected.
+The second digit refines the area within that service — for example, `32xxxx` and `34xxxx` are both `3xxxxx` (accounts) but cover different account operations. The tables below list every sub-prefix you'll see in the wild.
+
+The practical value is triage. A `3xxxxx` means the account is wrong or in the wrong state, so nothing about your transaction payload will fix it. A `4xxxxx` means the account was fine and the transaction itself was rejected.
 
 :::scalar-callout{type="info"}
 Codes repeat across domains by design. `Account not found` exists as `320001`, `410000`, and `610000` because three different services can independently fail to find it. Match on the full code, never on the description text.
 :::
 
 :::scalar-callout{type="warning"}
-One code in the catalog, `1016008`, is seven digits where every other code is six. Parse `error_code` as a string rather than assuming a fixed width.
+One code in the catalog, `1016008`, is seven digits where every other code is six — it uses an extended two-digit prefix (`10`). Parse `error_code` as a string rather than assuming a fixed width.
 :::
 
 ## Errors you will actually hit
@@ -138,7 +121,7 @@ Codes labelled a **configuration error** mean your program settings do not permi
 
 ### Authentication and session
 
-32 codes, prefixes `10`, `11`.
+32 codes, prefix `1`.
 
 | Code | Description |
 |------|-------------|
@@ -177,7 +160,7 @@ Codes labelled a **configuration error** mean your program settings do not permi
 
 ### Payment instruments
 
-30 codes, prefixes `20`, `21`, `23`.
+30 codes, prefix `2`.
 
 | Code | Description |
 |------|-------------|
@@ -214,7 +197,7 @@ Codes labelled a **configuration error** mean your program settings do not permi
 
 ### Accounts and onboarding
 
-175 codes, prefixes `31`, `32`, `33`, `34`, `35`, `38`, `39`.
+175 codes, prefix `3`.
 
 | Code | Description |
 |------|-------------|
@@ -396,7 +379,7 @@ Codes labelled a **configuration error** mean your program settings do not permi
 
 ### Money movement
 
-97 codes, prefixes `41`, `42`, `43`, `45`, `46`, `49`, `50`.
+96 codes, prefix `4`.
 
 | Code | Description |
 |------|-------------|
@@ -496,14 +479,14 @@ Codes labelled a **configuration error** mean your program settings do not permi
 | `494008` | Invalid funding method |
 | `499001` | Invalid request error |
 | `499003` | Invalid request : missing parameter |
-| `500003` | Invalid Headers |
 
 ### Cards, wallets, and incentives
 
-96 codes, prefixes `51`, `52`, `53`.
+97 codes, prefix `5`.
 
 | Code | Description |
 |------|-------------|
+| `500003` | Invalid Headers |
 | `510000` | Action not allowed because Issued card was not found |
 | `510002` | Issued card doesnt not found |
 | `510003` | Issued card action not possible to be performed |
@@ -603,7 +586,7 @@ Codes labelled a **configuration error** mean your program settings do not permi
 
 ### Account services
 
-11 codes, prefixes `61`, `62`, `69`.
+11 codes, prefix `6`.
 
 | Code | Description |
 |------|-------------|
@@ -621,7 +604,7 @@ Codes labelled a **configuration error** mean your program settings do not permi
 
 ### Checks
 
-24 codes, prefixes `71`, `72`.
+24 codes, prefix `7`.
 
 | Code | Description |
 |------|-------------|
@@ -652,7 +635,7 @@ Codes labelled a **configuration error** mean your program settings do not permi
 
 ### Shared validation
 
-11 codes, prefixes `91`.
+11 codes, prefix `9`.
 
 | Code | Description |
 |------|-------------|
