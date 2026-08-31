@@ -1,23 +1,23 @@
 ---
 title: "Periodic Reports"
-description: "Daily and monthly CSVs on SFTP for warehouse ingest and reconciliation — Data Reporting"
+description: "Daily and monthly CSVs on SFTP for warehouse ingest and reconciliation. Data Reporting"
 ---
 
 # Periodic Reports
 
-> Data Reporting. Same files, same SFTP — called Data Reporting in ops and on the SFTP.
+Called Data Reporting in ops and on the SFTP. Same files.
 
-Every program gets daily CSVs on SFTP with the same entities the APIs return. Use the APIs and `WALLET_TRANSACTION` webhooks for real-time flow; use these files for warehouse backfill, BI, and end-of-day reconciliation.
+Every program gets daily CSVs on SFTP with the same entities the APIs return. Use the APIs and `WALLET_TRANSACTION` webhooks for real-time flow. Use these files for warehouse backfill, BI, and end-of-day reconciliation.
 
-The format is complementary to the API docs. If a field is on the API, it is on the report with the same semantics.
+Fields match the API docs. If a field is on the API, it is on the report with the same meaning.
 
 ## How it works
 
-* **CSV, UTF-8, header row, one record per row.** Blank string field is empty, non-string nulls are `null`.
-* **UTC everywhere**, generated daily at **08:00 UTC**.
-* **SFTP:** `sftp.program.alviere.com:22`, username = `program_uuid`, auth = private key.
-* **Filename encodes the query:**
-  ` [ProgramName]_[Scope]-report_[Type]_[Frequency]_[From]_[To].csv`
+* **CSV, UTF-8, header row, one record per row.** Blank string field is empty. Non-string nulls are `null`.
+* **UTC.** Generated daily at 08:00 UTC.
+* **SFTP.** `sftp.program.alviere.com:22`, username is `program_uuid`, auth is private key.
+* **Filename encodes the query.**
+  `[ProgramName]_[Scope]-report_[Type]_[Frequency]_[From]_[To].csv`
   Snapshot omits `From`: `..._[Type]_[Frequency]_[To].csv`
   Example: `utility-pay-by-bank_payout-reconciliation-report_delta_daily_2026-03-23T000000Z_2026-03-23T235959Z.csv`
 
@@ -41,8 +41,6 @@ One file per scope. Identify it from the filename's `Scope` segment.
 | `activities` (PREP-13) | Denied auths, PIN changes, NOCs, etc. |
 | `beneficiaries` (PREP-14) | Beneficiary status and ID |
 | `payout-reconciliation` (PREP-17) | Payout legs with settlement stamps |
-
-Batches (`GET /v3/batches`) is not this. Batches lives under `/{base}/incoming|outgoing/` on the same SFTP; reports live outside it and are never moved or gated by Batches.
 
 ## Types and frequency
 
@@ -72,15 +70,15 @@ Filename's `Frequency` is `daily` or `monthly`.
 
 ## Setup
 
-**During implementation:** generate a key pair via AWS Transfer Family, share the public key with Implementation over Sharefile. Alviere provisions the SFTP and confirms.
+**During implementation.** Generate a key pair via AWS Transfer Family, share the public key with Implementation over Sharefile. Alviere provisions the SFTP and confirms.
 
-**After go-live:** open a CARE ticket (`support@alviere.com` or Portal → Get Support) naming the exact report: ` [ProgramName]_[Scope]-report_[Type]_[Frequency]_[From]_[To].csv`. Say if you need backfill from inception.
+**After go-live.** Open a CARE ticket (`support@alviere.com` or Portal → Get Support) naming the exact report: `[ProgramName]_[Scope]-report_[Type]_[Frequency]_[From]_[To].csv`. Say if you need backfill from inception.
 
 ## Using the files
 
-* Join on the UUIDs, not names: `transaction_uuid`, `wallet_uuid`, `account_uuid`, `payment_method_uuid`, `beneficiary_uuid` etc. Relations match the API — see the primary-key diagram in the full client guide.
-* Files are ordered by `updated_at` ascending. Treat them as the reconciliation source of truth, APIs/webhooks as the operational signal.
-* For Pay by Bank reconciliation, `payout-reconciliation` (delta, daily) + the transaction reports give you settled legs; pair with `WALLET_TRANSACTION` webhooks and `GET /transactions`. See [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction).
+* **Join on UUIDs.** Use `transaction_uuid`, `wallet_uuid`, `account_uuid`, `payment_method_uuid`, `beneficiary_uuid`, not names. Relations match the API. See the primary-key diagram in the full client guide.
+* **Ordered by `updated_at` ascending.** Treat the files as the reconciliation source of truth. Treat APIs and webhooks as the operational signal.
+* **Pay by Bank.** `payout-reconciliation` (delta, daily) plus the transaction reports gives you settled legs. Pair with `WALLET_TRANSACTION` webhooks and `GET /transactions`. See [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction).
 
 ## Related
 
