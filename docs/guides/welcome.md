@@ -1,70 +1,106 @@
 ---
 title: Welcome
-description: "Guides, API reference, and SDKs for building payments, cards, and money movement on the Alviere HIVE platform"
+description: "Platform definitions, integration guides, SDK documentation, webhook guidance, and the HIVE API reference"
 ---
 
 # Welcome to Alviere HIVE
 
-Platform definitions, integration guides, SDKs, webhooks, and the HIVE API reference — embedded-finance infrastructure for accounts, wallets, cards, and money movement.
+The Alviere Developer Portal contains documentation for integrating with the Alviere HIVE platform. It includes platform definitions, integration guides, SDK documentation, webhook guidance, and the HIVE API reference.
 
-HIVE is accessed through **Programs**: isolated workspaces of modules and configuration. Data does not cross Programs, even under the same Brand. Limits, card settings, fees, and KYC/KYB are owned by your program manager, not the API. New to the model? Start with [Platform Overview](/guides/overview/platform-overview).
+## The Alviere HIVE platform
 
-## Get started
+HIVE supports the configuration and operation of financial services through Alviere technology and partner integrations.
 
-::::scalar-row
-:::scalar-card{title="Quickstart" icon="rocket"}
-Make your first authenticated call against sandbox and list an account's wallets.
-[Open Quickstart](/guides/getting-started/quickstart)
-:::
-:::scalar-card{title="Authentication" icon="lock"}
-How to sign requests, manage credentials, and keep secrets off the client.
-[Authentication](/guides/getting-started/authentication)
-:::
-:::scalar-card{title="Environments" icon="flask"}
-Sandbox and production base URLs, version headers, and what sandbox simulates.
-[Environments](/guides/getting-started/environments)
-:::
-::::
+Clients access HIVE through Programs. Each Program contains the modules, configuration, controls, and entities associated with a specific financial-services implementation.
 
-## Explore HIVE
+## Core concepts
 
-::::scalar-row
-:::scalar-card{title="Accept payments" icon="storefront"}
-Card and bank (ACH) acceptance over V3 — direct, marketplace, bill pay, and a hosted checkout.
-[Payment Acceptance](/guides/payment-acceptance/payment-acceptance)
-:::
-:::scalar-card{title="Issue cards" icon="credit-card"}
-Debit, prepaid, and gift cards that spend from a wallet, with physical, virtual, and digital-first options.
-[Card Issuing](/guides/cards/card-issuing-overview)
-:::
-:::scalar-card{title="Move money" icon="arrows-left-right"}
-ACH, inbound wires, instant payments, global transfers, checks, cash loading, and wallet-to-wallet.
-[Transactions](/guides/transactions/transactions-overview)
-:::
-::::
+Core concepts explain the modules and entities used within HIVE, including Programs, Accounts, Wallets, Treasury Vault, and money movement flows. See [Platform Overview](/guides/overview/platform-overview) for the full module and entity map.
 
-Those three are motions on one program. If you are scoping an evaluation, they are not the platform — the primitives below are.
+### Program
 
-## Foundations
+A Program is a configured instance of Alviere modules for a client. A client can operate multiple Programs, each with an independent entity namespace. Data does not cross Program boundaries, including between Programs operated by the same client.
 
-Most integrations use the same building blocks regardless of which motion you start with:
+Program configuration defines transaction limits, card settings, service fees, KYC and KYB requirements, fraud controls, and compliance rules.
 
-- **[Accounts, Wallets, Treasury, and Identity](/guides/resources/accounts)** — accounts hold wallets; wallets hold funds and cards; [treasury vaults](/guides/resources/treasury) hold program funds; dossiers hold KYC/KYB. [Payment Methods](/guides/resources/payment-methods) and [Beneficiaries](/guides/resources/beneficiaries) connect external cards, bank accounts, and payout destinations. [Activity](/guides/resources/activity) and [Periodic Reports](/guides/reporting/periodic-reports) give you the auditable ledger and reconciliation.
-- **[Sandbox Testing](/guides/sandbox-testing/mock-services)** — drive a realistic lifecycle in sandbox: KYC scenarios, card issuance, payment method verification, returns, and fraud and sanctions screens, without touching production.
-- **[Webhooks](/guides/more/webhooks)** — subscribe to `ISSUED_CARD`, `WALLET_TRANSACTION`, and other events instead of polling. Payload shapes are documented per subscription.
-- **[SDKs](/guides/sdks/overview)** — REST APIs or SDKs per surface: [UI](https://websdk.alviere.com/quick-start/overview) (`@alviere/ui`) and headless [Core](https://websdk.alviere.com/core/overview) (`@alviere/core`) for web, [JavaScript SDK](/guides/sdks/overview) via web sessions, and four packages for iOS/Android. The [Bootstrap App](/guides/sdks/bootstrap-app/introduction) is a forkable reference. Card display and PIN entry are SDK-only.
+Your Alviere program manager manages Program configuration. It cannot be changed through the API.
 
-Common integration requirements live under [Getting Started](/guides/getting-started/quickstart): [Authentication](/guides/getting-started/authentication), [Environments](/guides/getting-started/environments), [Error Codes](/guides/getting-started/error-codes), [Metadata](/guides/getting-started/metadata), and [Idempotency](/guides/getting-started/idempotency).
+## Integration options
 
-## API reference
+Client applications can interact with HIVE through REST APIs or supported SDKs. The available option depends on the application type and the functionality being implemented.
 
-HIVE has two live versions. [Which API version?](/guides/getting-started/api-versions) explains the split:
+### [The HIVE APIs](/api-v2)
 
-- **[API v2](/api-v2)** — accounts, wallets, card issuance, transactions, beneficiaries, and most platform resources. Also the stable path for existing integrations.
-- **[API v3](/api-v3)** — payment acceptance (`/v3/cards/*`, `/v3/ach/debit`), instant payments, fee rules, and webhooks.
+The HIVE API reference documents available API operations, request parameters, response objects, and operation-specific requirements. See [Which API version?](/guides/getting-started/api-versions) for V2 vs V3.
 
-Both references are OpenAPI and sit alongside these guides in the header. Start with the guides for the flow, then open the reference for the exact request shape.
+HIVE APIs follow REST conventions and use standard HTTP methods, status codes, and authentication mechanisms.
 
----
+### [UI SDK](https://websdk.alviere.com/quick-start/overview)
 
-New here? [Start with the Quickstart](/guides/getting-started/quickstart) or skim [Platform Overview](/guides/overview/platform-overview) to see how Programs, Modules, and Entities fit together.
+`@alviere/ui` is a component library for onboarding and payment flows. It provides forms, multi-step flows, validated inputs, and interface elements.
+
+The package includes framework-independent Web Components and typed Svelte components. Both formats expose the same properties and events.
+
+UI SDK components use `@alviere/core` for authentication, validation, encryption, and communication with Alviere services.
+
+### [Core SDK](https://websdk.alviere.com/core/overview)
+
+`@alviere/core` is the headless logic and data layer used by the UI SDK. It provides typed services for account management, payments, wallets, authentication, request encryption, validation, logging, and error handling.
+
+Core does not provide interface components. It can be used when an application supplies its own interface or integrates Alviere functionality into an existing component library or design system.
+
+### [JavaScript SDK](/guides/sdks/overview)
+
+The JavaScript SDK supports browser-based payment, fraud, and card functionality.
+
+The client backend creates an authenticated web session. The frontend then loads the SDK using the session identifier and accesses the supported SDK functionality. See [SDKs](/guides/sdks/overview).
+
+The documentation covers payment method collection, fraud device data, and card operations such as PIN management.
+
+### [Mobile SDKs](/guides/sdks/overview)
+
+The Mobile SDK documentation covers the integration of supported Alviere functionality into native mobile applications.
+
+## Integration guides
+
+The integration guides describe the common requirements for connecting an application to HIVE.
+
+### [Integration overview](/guides/getting-started/quickstart)
+
+The integration overview describes the REST conventions used by HIVE, including URLs, request and response formats, HTTP methods, and status codes.
+
+Access to HIVE requires Portal access and authentication credentials. Your Alviere program manager provides the credentials associated with your Program.
+
+### [Authentication](/guides/getting-started/authentication)
+
+The authentication guide explains the requirements for authenticating HIVE API requests and using the credentials assigned to your Program.
+
+Authentication credentials must be stored securely and must not be exposed in client-side applications.
+
+### [Environments](/guides/getting-started/environments)
+
+Alviere provides separate Sandbox and Production environments, each with its own Portal and API URLs.
+
+Use Sandbox to develop and test your integration in an isolated environment. Sandbox does not connect to backend systems, so it does not support KYC or KYB validation, real-money wallet transfers, or bank-account transfers.
+
+Production connects to Alviere systems and partners. The functionality available in Production depends on your Program configuration.
+
+### [Webhooks](/guides/more/webhooks)
+
+Use webhooks to receive events from Alviere. For example, when a transaction settles, Alviere sends an event to your webhook consumer with the transaction details.
+
+Events are grouped into Subscriptions. When you create a Subscription, you provide the URL where its events should be sent.
+
+Alviere sends events asynchronously, so their delivery does not block the operation that produced them. Each event represents an action that has already occurred.
+
+### [Error codes](/guides/getting-started/error-codes)
+
+The error code reference documents errors returned by HIVE APIs and the information included in error responses.
+
+Applications should use the HTTP status, error code, and error description to determine how a failed request should be handled.
+
+### [Mock services](/guides/sandbox-testing/mock-services)
+
+Mock services provide documented test scenarios for validating an integration without initiating the corresponding live financial activity.
+
+Mock behavior is limited to the scenarios described in the guide and does not reproduce every Production behavior or partner interaction.
