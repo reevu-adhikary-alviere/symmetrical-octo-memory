@@ -68,33 +68,107 @@
     'resources': 'Resources',
     'transactions': 'Transactions',
     'cards': 'Card Issuing',
+    'sdks': 'SDKs',
     'sandbox-testing': 'Sandbox Testing',
+    'reporting': 'Data Reporting',
     'more': 'More',
   };
 
-  function relabelSectionHeader() {
-    var aside = document.querySelector("aside[class*='sidebar']");
-    if (!aside) return;
+  function normalizeBackText(t) {
+    return (t || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
 
+  function isBackLabel(txt) {
+    var n = normalizeBackText(txt);
+    if (n === 'back') return true;
+    if (n.length <= 10 && n.endsWith('back')) {
+      var prefix = n.slice(0, -4).trim();
+      if (prefix === '' || prefix === '←' || prefix === '‹' || prefix === '<' || prefix === '→' || prefix === '›' || prefix === '‹—' || prefix === '←—') return true;
+    }
+    return false;
+  }
+
+  function relabelOneAside(aside, label) {
+    var el = aside.querySelector('.hive-section-header');
+    if (el) {
+      if (el.textContent.trim() !== label) el.textContent = label;
+      el.classList.add('hive-section-header');
+      el.style.pointerEvents = 'none';
+      el.style.cursor = 'default';
+      el.setAttribute('aria-hidden', 'true');
+      el.setAttribute('tabindex', '-1');
+      if (el.tagName === 'A') el.removeAttribute('href');
+      var svg = el.querySelector('svg');
+      if (svg) svg.style.display = 'none';
+      return true;
+    }
+
+    var candidates = aside.querySelectorAll('a, button, [role="button"]');
+    var found = null;
+    for (var i = 0; i < candidates.length; i++) {
+      var node = candidates[i];
+      if (isBackLabel(node.textContent)) {
+        found = node;
+        break;
+      }
+      var aria = node.getAttribute('aria-label');
+      if (aria && isBackLabel(aria)) {
+        found = node;
+        break;
+      }
+    }
+
+    if (!found) {
+      var all = aside.querySelectorAll('*');
+      for (var j = 0; j < all.length; j++) {
+        var t = normalizeBackText(all[j].textContent);
+        if (t !== 'back') continue;
+        var tag = all[j].tagName;
+        if (tag === 'A' || tag === 'BUTTON' || all[j].getAttribute('role') === 'button') {
+          // Avoid matching the whole aside which aggregates many texts
+          // Only accept if the element's own trimmed text is exactly Back (no surrounding guide titles)
+          // Check that element does not contain a large list of links
+          if (all[j].querySelectorAll('a').length <= 1) {
+            found = all[j];
+            break;
+          }
+        }
+        var p = all[j].parentElement;
+        if (p && (p.tagName === 'A' || p.tagName === 'BUTTON' || p.getAttribute('role') === 'button')) {
+          if (isBackLabel(p.textContent)) {
+            found = p;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!found) return false;
+
+    el = found;
+    el.classList.add('hive-section-header');
+    el.textContent = label;
+    el.style.pointerEvents = 'none';
+    el.style.cursor = 'default';
+    el.setAttribute('aria-hidden', 'true');
+    el.setAttribute('tabindex', '-1');
+    if (el.tagName === 'A') el.removeAttribute('href');
+    var s = el.querySelector('svg');
+    if (s) s.style.display = 'none';
+    return true;
+  }
+
+  function relabelSectionHeader() {
     var seg = window.location.pathname.split('/')[2] || '';
     var title = SECTION_TITLES[seg];
     if (!title) return;
     var label = 'Guides • ' + title;
 
-    var el = aside.querySelector('.hive-section-header');
-    if (!el) {
-      var nodes = aside.querySelectorAll('a, button, [role="button"]');
-      for (var i = 0; i < nodes.length; i++) {
-        if (nodes[i].textContent.trim().toLowerCase() === 'back') {
-          el = nodes[i];
-          break;
-        }
-      }
+    var asides = document.querySelectorAll("aside[class*='sidebar'], aside");
+    if (!asides.length) return;
+    for (var k = 0; k < asides.length; k++) {
+      relabelOneAside(asides[k], label);
     }
-    if (!el) return;
-
-    el.classList.add('hive-section-header');
-    if (el.textContent.trim() !== label) el.textContent = label;
   }
 
   function markLandingRoute() {
@@ -115,9 +189,43 @@
     applyLayout();
   });
 
+  // SPA route changes via history API don't always trigger a body mutation
+  // that the observer catches in time, so also wrap push/replace and listen
+  // to popstate/hashchange.
+  (function wrapHistory() {
+    try {
+      var _push = history.pushState;
+      var _replace = history.replaceState;
+      function onRoute() {
+        setTimeout(applyLayout, 0);
+        setTimeout(applyLayout, 50);
+        setTimeout(applyLayout, 250);
+      }
+      history.pushState = function () {
+        var r = _push.apply(this, arguments);
+        onRoute();
+        return r;
+      };
+      history.replaceState = function () {
+        var r = _replace.apply(this, arguments);
+        onRoute();
+        return r;
+      };
+      window.addEventListener('popstate', onRoute);
+      window.addEventListener('hashchange', onRoute);
+    } catch (e) {}
+  })();
+
   // Scalar injects this in <head>; document.body may not exist yet.
   function boot() {
     applyLayout();
+    // Poll briefly after boot to catch late-mounted sidebar (Scalar renders async)
+    var tries = 0;
+    var poll = setInterval(function () {
+      applyLayout();
+      tries++;
+      if (tries > 20) clearInterval(poll);
+    }, 100);
     observer.observe(document.body, { childList: true, subtree: true });
   }
 

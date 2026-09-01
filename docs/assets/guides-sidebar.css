@@ -54,12 +54,23 @@ body.hive-landing [class*='card' i]:hover {
 }
 
 /* Nested sidebar: the back control is relabeled to "Guides • <section>" (see header-layout.js). */
-aside[class*='sidebar'] .hive-section-header {
-  font-weight: 600;
-  pointer-events: none;
-  cursor: default;
+aside[class*='sidebar'] .hive-section-header,
+aside .hive-section-header,
+[class*='Sidebar'] .hive-section-header {
+  font-weight: 600 !important;
+  pointer-events: none !important;
+  cursor: default !important;
+  text-decoration: none !important;
+  opacity: 1 !important;
 }
 
-aside[class*='sidebar'] .hive-section-header svg {
-  display: none;
+aside[class*='sidebar'] .hive-section-header svg,
+aside .hive-section-header svg,
+[class*='Sidebar'] .hive-section-header svg {
+  display: none !important;
+}
+
+/* Fallback: hide any stray back-arrow svg before JS relabels it */
+aside[class*='sidebar'] [class*='back' i] svg {
+  display: none !important;
 }
