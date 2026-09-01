@@ -74,7 +74,7 @@ The response is the transaction. `COMPLETED` means the payment went through. `FA
 
 ## The convenience fee
 
-Billers rarely absorb card cost. A convenience fee is a fee rule with `fee_type: CONVENIENCE_FEE` and `calc_type: UPCHARGE`. It increases what the payer's card is charged, and the fee is credited as a positive child transaction on the payment. Where the fee revenue goes, to the biller or to your platform, is set in program configuration.
+Billers rarely absorb card cost. A convenience fee is a fee rule with `fee_type: CONVENIENCE_FEE` and `calc_type: UPCHARGE`. It increases what the payer's card is charged, and the fee is credited to the biller's wallet as a positive child transaction on the payment. It is the biller's money. Revenue for your platform is the service fee, described below.
 
 ```bash
 POST /v3/fee-rules
