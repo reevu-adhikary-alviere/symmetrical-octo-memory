@@ -1,37 +1,35 @@
 ---
 title: "Card Payments"
-description: "Accept online card payments on a single API: direct merchant, marketplace, bill pay, subscriptions, and donations"
+description: "Accept online card payments through one endpoint and route the funds to whichever account gets paid"
 ---
 
 # Card Payments
 
-Charge your customers' cards online and get paid. One endpoint powers direct ecommerce, marketplace platforms, bill pay, subscriptions, and donations. The fee-rules engine handles the splits between you, your sellers, and your payers.
+Charge a customer's card online and route the funds to the account that gets paid. One endpoint covers every business model. The fee-rules engine handles any split between you, your sellers, and your payers.
 
-Ready to make your first charge? Go straight to [Integration](/guides/payment-acceptance/online-payments/card-payments/integration).
+If you already know the model you need, go to [Integration](/guides/payment-acceptance/online-payments/card-payments/integration) and make the first charge.
 
 ## One endpoint, many business models
 
-You decide where the funds land by setting `destination.wallet_uuid`, the account that gets paid. That single choice is what turns the same primitive into "direct merchant," "marketplace," or "bill pay."
+You decide where the funds land by setting `destination.wallet_uuid` on the charge. That one field is the difference between the configurations below.
 
-| Configuration | Funds go to | Example |
-|---|---|---|
-| [Direct merchant ecommerce](/guides/payment-acceptance/use-cases/card-config-direct-merchant) | Your merchant account | Shopify-style store |
-| [Marketplace](/guides/payment-acceptance/use-cases/card-config-marketplace) | Seller's account | Etsy, Substack |
-| [Bill pay](/guides/payment-acceptance/use-cases/card-config-bill-pay) | Biller's account | Biller portal |
-| Subscription / recurring | Merchant account | Membership, SaaS rebill |
-| Donations | Nonprofit account | GiveLively, ActBlue |
+| Configuration | Funds go to |
+|---|---|
+| [Direct merchant](/guides/payment-acceptance/use-cases/card-config-direct-merchant) | Your own account. You sell, you get paid |
+| [Marketplace](/guides/payment-acceptance/use-cases/card-config-marketplace) | The seller's account, with your platform fee split off by a fee rule |
+| [Bill pay](/guides/payment-acceptance/use-cases/card-config-bill-pay) | The biller's account, with an optional convenience fee to the payer |
+
+Recurring charges and donations are the direct merchant configuration with a saved card. Nothing about the charge itself changes.
 
 ## Where this fits
 
-Card Payments is one of two acceptance rails:
+Card Payments is one of two acceptance rails. The other is [Bank Payments](/guides/payment-acceptance/online-payments/pay-by-bank/introduction), which accepts ACH debits.
 
-- **[Bank Payments](/guides/payment-acceptance/online-payments/pay-by-bank/introduction)**. Accept ACH debits.
-
-To save a card on file before charging it, start with [Payment Methods](/guides/resources/payment-methods).
+To charge a card more than once, save it first through [Payment Methods](/guides/resources/payment-methods).
 
 ## Accounts involved
 
-A card charge touches a few entity types. You'll see them in webhooks and reports:
+A card charge involves three entity types. They show up in webhooks and reports:
 
 | Entity | Role |
 |---|---|
@@ -41,12 +39,12 @@ A card charge touches a few entity types. You'll see them in webhooks and report
 
 ## What's supported
 
-- **US transactions only.** No DCC, no PSD2/SCA, no local schemes.
-- **V3 endpoints** for all Card Payments work.
-- **Settlement to your designated account.** Funds land in the `destination.wallet_uuid` you set on the charge.
+- US transactions only. There is no dynamic currency conversion, no PSD2 or SCA, and no local schemes.
+- All Card Payments work uses the V3 endpoints.
+- Funds settle to the `destination.wallet_uuid` you set on the charge.
 
 :::scalar-callout{type="info"}
-Alviere is not a payment facilitator, so scheme-level features like per-sub-merchant statement descriptors, per-sub-merchant MCC, and scheme-level chargeback isolation aren't available.
+Alviere is not a payment facilitator. Per-sub-merchant statement descriptors, per-sub-merchant MCC, and per-sub-merchant chargeback isolation are not available.
 :::
 
 ## Next steps
