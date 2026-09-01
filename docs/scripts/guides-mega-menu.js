@@ -219,8 +219,8 @@
     if (!panel) return;
 
     var rect = wrapper.getBoundingClientRect();
-    var left = Math.max(16, rect.left);
     var width = Math.min(920, window.innerWidth - 32);
+    var left = Math.max(16, Math.min(rect.left, window.innerWidth - width - 16));
 
     panel.style.left = left + 'px';
     panel.style.top = rect.bottom + 8 + 'px';
