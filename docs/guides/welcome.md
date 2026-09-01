@@ -5,102 +5,102 @@ description: "Platform definitions, integration guides, SDK documentation, webho
 
 # Welcome to Alviere HIVE
 
-The Alviere Developer Portal contains documentation for integrating with the Alviere HIVE platform. It includes platform definitions, integration guides, SDK documentation, webhook guidance, and the HIVE API reference.
+This portal documents how to integrate with the Alviere HIVE platform. It has platform definitions, integration guides, SDK documentation, webhook guidance, and the HIVE API reference.
 
 ## The Alviere HIVE platform
 
-HIVE supports the configuration and operation of financial services through Alviere technology and partner integrations.
+HIVE is the platform behind Alviere's financial services. Alviere runs some of it directly and delivers the rest through bank and network partners.
 
-Clients access HIVE through Programs. Each Program contains the modules, configuration, controls, and entities associated with a specific financial-services implementation.
+You access HIVE through a Program. A Program holds the modules, configuration, controls, and entities for one financial-services implementation.
 
 ## Core concepts
 
-Core concepts explain the modules and entities used within HIVE, including Programs, Accounts, Wallets, Treasury Vault, and money movement flows. See [Platform Overview](/guides/overview/platform-overview) for the full module and entity map.
+The core concepts are Programs, Accounts, Wallets, Treasury Vault, and the money movement flows between them. [Platform Overview](/guides/overview/platform-overview) has the full module and entity map.
 
 ### Program
 
-A Program is a configured instance of Alviere modules for a client. A client can operate multiple Programs, each with an independent entity namespace. Data does not cross Program boundaries, including between Programs operated by the same client.
+A Program is a configured set of Alviere modules for one client. A client can run several Programs. Each has its own entity namespace, and data never crosses between them, even when the same client owns both.
 
-Program configuration defines transaction limits, card settings, service fees, KYC and KYB requirements, fraud controls, and compliance rules.
+The Program configuration sets transaction limits, card settings, service fees, KYC and KYB requirements, fraud controls, and compliance rules.
 
-Your Alviere program manager manages Program configuration. It cannot be changed through the API.
+Your Alviere program manager owns that configuration. The API cannot change it.
 
 ## Integration options
 
-Client applications can interact with HIVE through REST APIs or supported SDKs. The available option depends on the application type and the functionality being implemented.
+Your application talks to HIVE through the REST APIs or one of the SDKs. Which one fits depends on where the code runs and what it needs to do.
 
 ### [The HIVE APIs](/api-v2)
 
-The HIVE API reference documents available API operations, request parameters, response objects, and operation-specific requirements. See [Which API version?](/guides/getting-started/api-versions) for V2 vs V3.
+The API reference lists every operation with its request parameters, response objects, and any operation-specific rules. There are two versions. [Which API version?](/guides/getting-started/api-versions) explains when to use V2 and when to use V3.
 
-HIVE APIs follow REST conventions and use standard HTTP methods, status codes, and authentication mechanisms.
+The APIs are REST. They use standard HTTP methods, status codes, and bearer authentication.
 
 ### [UI SDK](https://websdk.alviere.com/quick-start/overview)
 
-`@alviere/ui` is a component library for onboarding and payment flows. It provides forms, multi-step flows, validated inputs, and interface elements.
+`@alviere/ui` is a component library for onboarding and payment flows. It ships forms, multi-step flows, and validated inputs.
 
-The package includes framework-independent Web Components and typed Svelte components. Both formats expose the same properties and events.
+The package includes framework-independent Web Components and typed Svelte components. Both expose the same properties and events.
 
-UI SDK components use `@alviere/core` for authentication, validation, encryption, and communication with Alviere services.
+UI SDK components use `@alviere/core` for authentication, validation, encryption, and calls to Alviere services.
 
 ### [Core SDK](https://websdk.alviere.com/core/overview)
 
-`@alviere/core` is the headless logic and data layer used by the UI SDK. It provides typed services for account management, payments, wallets, authentication, request encryption, validation, logging, and error handling.
+`@alviere/core` is the headless layer under the UI SDK. It has typed services for account management, payments, wallets, authentication, request encryption, validation, logging, and error handling.
 
-Core does not provide interface components. It can be used when an application supplies its own interface or integrates Alviere functionality into an existing component library or design system.
+Core has no interface components. Use it when your application already has its own design system and you want Alviere functionality inside it.
 
 ### [JavaScript SDK](/guides/sdks/overview)
 
-The JavaScript SDK supports browser-based payment, fraud, and card functionality.
+The JavaScript SDK handles browser-side payment, fraud, and card functionality.
 
-The client backend creates an authenticated web session. The frontend then loads the SDK using the session identifier and accesses the supported SDK functionality. See [SDKs](/guides/sdks/overview).
+Your backend creates an authenticated web session. Your frontend loads the SDK with the session identifier and calls it from there. See [SDKs](/guides/sdks/overview).
 
-The documentation covers payment method collection, fraud device data, and card operations such as PIN management.
+The SDK collects payment methods, gathers fraud device data, and runs card operations such as PIN management.
 
 ### [Mobile SDKs](/guides/sdks/overview)
 
-The Mobile SDK documentation covers the integration of supported Alviere functionality into native mobile applications.
+The Mobile SDK documentation covers adding Alviere functionality to native iOS and Android applications.
 
 ## Integration guides
 
-The integration guides describe the common requirements for connecting an application to HIVE.
+The guides cover what every integration needs before it can move money.
 
 ### [Integration overview](/guides/getting-started/quickstart)
 
-The integration overview describes the REST conventions used by HIVE, including URLs, request and response formats, HTTP methods, and status codes.
+The quickstart walks through URLs, request and response formats, HTTP methods, and status codes, then makes a first authenticated call.
 
-Access to HIVE requires Portal access and authentication credentials. Your Alviere program manager provides the credentials associated with your Program.
+You need Portal access and API credentials first. Your Alviere program manager issues both for your Program.
 
 ### [Authentication](/guides/getting-started/authentication)
 
-The authentication guide explains the requirements for authenticating HIVE API requests and using the credentials assigned to your Program.
+How to authenticate HIVE API requests with the credentials assigned to your Program.
 
-Authentication credentials must be stored securely and must not be exposed in client-side applications.
+Store credentials server-side. Never ship them in a client application.
 
 ### [Environments](/guides/getting-started/environments)
 
-Alviere provides separate Sandbox and Production environments, each with its own Portal and API URLs.
+Alviere runs separate Sandbox and Production environments, each with its own Portal and API URLs.
 
-Use Sandbox to develop and test your integration in an isolated environment. Sandbox does not connect to backend systems, so it does not support KYC or KYB validation, real-money wallet transfers, or bank-account transfers.
+Sandbox is for development and testing. It has no connection to backend systems, so KYC and KYB validation, real-money wallet transfers, and bank-account transfers do not run there.
 
-Production connects to Alviere systems and partners. The functionality available in Production depends on your Program configuration.
+Production connects to Alviere systems and partners. What is available depends on your Program configuration.
 
 ### [Webhooks](/guides/more/webhooks)
 
-Use webhooks to receive events from Alviere. For example, when a transaction settles, Alviere sends an event to your webhook consumer with the transaction details.
+Webhooks push events from Alviere to you. When a transaction settles, Alviere posts the transaction details to your webhook consumer.
 
-Events are grouped into Subscriptions. When you create a Subscription, you provide the URL where its events should be sent.
+Events are grouped into Subscriptions. Each Subscription has a URL you provide when you create it.
 
-Alviere sends events asynchronously, so their delivery does not block the operation that produced them. Each event represents an action that has already occurred.
+Delivery is asynchronous and never blocks the operation that produced the event. Every event describes something that has already happened.
 
 ### [Error codes](/guides/getting-started/error-codes)
 
-The error code reference documents errors returned by HIVE APIs and the information included in error responses.
+The error code reference lists the errors HIVE APIs return and what each error response contains.
 
-Applications should use the HTTP status, error code, and error description to determine how a failed request should be handled.
+Use the HTTP status, error code, and error description together to decide how to handle a failed request.
 
 ### [Mock services](/guides/sandbox-testing/mock-services)
 
-Mock services provide documented test scenarios for validating an integration without initiating the corresponding live financial activity.
+Mock services give you documented test scenarios that run without touching live financial rails.
 
-Mock behavior is limited to the scenarios described in the guide and does not reproduce every Production behavior or partner interaction.
+Mock behavior is limited to the scenarios in the guide. It does not reproduce every Production behavior or partner interaction.
