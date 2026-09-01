@@ -7,19 +7,7 @@ description: "Let payers pay their bills by card, with an optional convenience f
 
 A payer (consumer or business) pays a biller by card. Funds settle into the biller's account. Bill presentment, notifications, and autopay scheduling stay in your stack. You call Alviere to charge the card and post the funds.
 
-The pattern fits any platform that collects payments on behalf of the organizations doing the billing, whether that's one biller or thousands.
-
-Card is a great **convenience rail** when payers want instant confirmation. Many programs offer ACH alongside via [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) for cost-sensitive payers.
-
-## How this connects to your stack
-
-| Your system | Examples | How it ties to Alviere |
-|---|---|---|
-| Biller roster, account numbers | Your CRM, biller systems | Pass `metadata` linking payer reference to biller account |
-| Invoice / amount due | Biller billing systems | The `amount` you send is the validated balance |
-| Notifications | Your email/SMS | Subscribe to webhooks for success and failure events |
-| Autopay / scheduling | Your scheduler | Trigger `POST /v3/cards/debit` on the due date |
-| Legacy ACH / lockbox | Biller's bank | Can run alongside. Only the card path runs through Alviere |
+The pattern fits one biller or thousands. Your system holds the biller roster and the amount due. On the due date, or when the payer clicks pay, you call `POST /v3/cards/debit` with the validated balance and put the biller and payer references in `metadata`. Webhooks tell you when the payment succeeds or fails so you can notify the payer.
 
 ## How accounts are set up
 

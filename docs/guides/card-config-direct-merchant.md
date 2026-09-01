@@ -7,18 +7,7 @@ description: "Sell your own goods online and receive card payments into a single
 
 You sell your own goods or services and receive card payments into one account. There's no marketplace split at checkout. You're both the seller and the one getting paid.
 
-Typical setups: a standalone ecommerce store, a DTC brand, a B2B invoice payment portal, or a SaaS subscription billing flow.
-
-## How this connects to your stack
-
-| Your system | Examples | How it ties to Alviere |
-|---|---|---|
-| Storefront / cart | Hosted, custom, or headless | Your checkout calls `POST /v3/cards/debit` |
-| Order management | Your OMS order ID | Pass `external_id` and `metadata.order_id` on the charge |
-| Tax | Avalara, TaxJar | You calculate tax; pass it as part of `amount` |
-| Fulfillment | WMS, 3PL | Out of scope. Happens after payment |
-| Accounting | QuickBooks, Xero | Pull settled transactions from Alviere |
-| Fraud | Signifyd, in-house | Run checks before you call `debit` |
+Your checkout calls `POST /v3/cards/debit` once the order is ready to pay. Send the full amount including tax, put your order ID in `external_id` and `metadata`, and run any fraud checks before the call. Settled transactions come back through webhooks and `GET /transactions` for your accounting.
 
 ## Charge a card
 
@@ -52,12 +41,6 @@ Two options for billing:
 
 - **Configured fee rule**. `SERVICE_FEE`, `DEDUCT` deducts the Alviere processing fee from your account at charge time.
 - **External billing**. No fee rule; you're billed separately off-platform.
-
-## Things to know
-
-- US-only acquiring
-- One program-level statement descriptor on the card statement
-- Checkout UX, storefront, catalog, tax, and fulfillment stay in your stack
 
 ## Related
 
