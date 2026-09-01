@@ -76,7 +76,7 @@ Three fields do marketplace work here.
 
 **`destination.wallet_uuid`** picks the seller. Get this wrong and the money lands in the wrong seller's wallet, and the only way back is a refund and a new charge. Store the wallet UUID against your seller record at onboarding and never look it up by name.
 
-**`merchant_details`** controls what the buyer sees on their card statement. Put the seller's name in the descriptor so the buyer recognizes the charge. Unrecognized charges are the most common cause of avoidable disputes. Card networks limit descriptor length and format, so keep it short and test it.
+**`merchant_details`** controls what the buyer sees on their card statement. Put the seller's name in the descriptor so the buyer recognizes the charge. Unrecognized charges are the most common cause of avoidable chargebacks. Card networks limit descriptor length and format, so keep it short and test it.
 
 **`metadata`** is where your order and seller IDs go. It comes back on every transaction, every child fee, and every webhook, so put in whatever your reconciliation will need to join on.
 
