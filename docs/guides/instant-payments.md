@@ -157,7 +157,7 @@ in a form you can show or log.
 
 `type_details.instant_transfer_details.iso_reason_code` carries an ISO 20022 code
 such as `AC03`, `AG01`, or `AM09`, but **only** when the rail returned a real one. It
-is absent otherwise, so never branch on it alone — fall back to `status_reason`.
+is absent otherwise, so never branch on it alone. Fall back to `status_reason`.
 
 Instant rails are final. A settled instant payment does not come back the way an ACH
 debit can be returned inside a return window, so validate the destination before you

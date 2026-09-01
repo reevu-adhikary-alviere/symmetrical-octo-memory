@@ -99,7 +99,7 @@ Branch on `result`, not on the HTTP status. Both outcomes return `200`, and `res
 
 | Field | Notes |
 |---|---|
-| `result` | `SUCCESS` or `FAILED`. Always present — branch on this |
+| `result` | `SUCCESS` or `FAILED`. Always present. Branch on this |
 | `error_code` | Present only when `result` is `FAILED`. For human triage only; look it up on [Error Codes](/guides/getting-started/error-codes) if needed |
 | `provisioning_request_data` | The payload for the wallet provider's SDK. Shape depends on the provider |
 
@@ -115,7 +115,7 @@ Pass these through to the SDK exactly as received. They are encrypted for the wa
 
 ## Retrying
 
-When `result` is `FAILED`, `error_code` (for human triage) says why — do not switch on it, branch on `result`. The usual causes are a nonce that has already been used, certificates that do not match the card's brand, and a card that is not yet in a state the provider accepts.
+When `result` is `FAILED`, `error_code` says why. It is for human triage, so branch on `result` rather than switching on it. The usual causes are a nonce that has already been used, certificates that do not match the card's brand, and a card that is not yet in a state the provider accepts.
 
 Retry from step 1. The parameters from the wallet provider's SDK are tied to a single attempt, so ask the SDK for fresh ones and send those.
 

@@ -48,7 +48,7 @@ The send endpoint is only available to customers subscribed to a P2P program. If
 
 ## When to use what
 
-Internal transfers move money between wallets you already hold on the program. If the recipient is outside the program, you need a different rail: [Global Money Transfers](/guides/transactions/global-money-transfers) for an international beneficiary, or a withdrawal to a bank account. Sending to a saved beneficiary's payout method is a transfer, not an internal transfer — see [Beneficiaries](/guides/resources/beneficiaries).
+Internal transfers move money between wallets you already hold on the program. If the recipient is outside the program, you need a different rail: [Global Money Transfers](/guides/transactions/global-money-transfers) for an international beneficiary, or a withdrawal to a bank account. Sending to a saved beneficiary's payout method is a transfer, not an internal transfer. See [Beneficiaries](/guides/resources/beneficiaries).
 
 ## Related
 

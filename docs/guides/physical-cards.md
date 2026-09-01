@@ -121,7 +121,7 @@ Every one of these is gated by your card product, and a `400` validation error t
 - `carrier_message` is not usable for this card genre
 - `carrier_message` is not usable for this card type
 
-Whether `carrier_id` is required or forbidden is a property of the product. Do not send it unconditionally — check what your `product_id` allows.
+Whether `carrier_id` is required or forbidden is a property of the product. Do not send it unconditionally. Check what your `product_id` allows.
 
 ## Knowing where a card is
 

@@ -15,7 +15,7 @@ One endpoint covers it:
 
 ## Prerequisite: a saved card
 
-The card has to be tokenized as a [payment method](/guides/resources/payment-methods) first. The load request only ever references `payment_method_uuid` — card details never appear in it.
+The card has to be tokenized as a [payment method](/guides/resources/payment-methods) first. The load request only ever references `payment_method_uuid`. Card details never appear in it.
 
 ## Loading
 
@@ -48,12 +48,12 @@ A successful `201` is an accepted load, not settled money. The amount lands in t
 
 ## What the transaction looks like
 
-The load posts as `LOAD_FUNDS` with a negative-amount counterpart nowhere — this is money in, so the wallet record is positive. Statuses run `CREATED` → `PROCESSING_PAYMENT` → `COMPLETED`, with `FAILED` if the issuer declines the charge. Card declines surface through the transaction, so monitor the transaction status rather than treating the `201` as the money being there.
+The load posts as `LOAD_FUNDS` with a positive amount, since this is money in. Statuses run `CREATED` → `PROCESSING_PAYMENT` → `COMPLETED`, with `FAILED` if the issuer declines the charge. Card declines surface through the transaction, so monitor the transaction status rather than treating the `201` as the money being there.
 
 Two late-arrival cases to build for:
 
-- **`LOAD_PULLBACK`** — a completed load being pulled back, carrying `parent_transaction_uuid` pointing at the original load. See [Transactions Overview](/guides/transactions/transactions-overview#reversals-and-money-coming-back).
-- **`REFUND`** — loads can be refunded through `POST /transactions/{transaction_uuid}/refund`.
+- **`LOAD_PULLBACK`**. A completed load being pulled back, carrying `parent_transaction_uuid` pointing at the original load. See [Transactions Overview](/guides/transactions/transactions-overview#reversals-and-money-coming-back).
+- **`REFUND`**. Loads can be refunded through `POST /transactions/{transaction_uuid}/refund`.
 
 ## Related
 

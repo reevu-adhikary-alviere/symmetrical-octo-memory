@@ -5,7 +5,7 @@ description: "Run a platform where many sellers transact, with automatic commiss
 
 # Marketplace
 
-You run a platform where many sellers transact through you, the Etsy or Substack model. When a buyer pays a seller, part of the money goes to the seller and part to you as commission.
+You run a platform where many sellers transact through you. When a buyer pays a seller, part of the money goes to the seller and part to you as commission.
 
 You don't need anything marketplace-specific on the API call. Each seller gets their own account, the buyer's card is charged at your checkout, and the fee-rules engine routes commission to your platform and the rest to the seller.
 

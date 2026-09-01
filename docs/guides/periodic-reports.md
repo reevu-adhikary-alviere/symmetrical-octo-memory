@@ -82,6 +82,6 @@ Filename's `Frequency` is `daily` or `monthly`.
 
 ## Related
 
-* [Transactions Overview](/guides/transactions/transactions-overview) — statuses and types
+* [Transactions Overview](/guides/transactions/transactions-overview). Statuses and types
 * [Webhooks](/guides/more/webhooks)
 * [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction)

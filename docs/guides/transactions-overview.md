@@ -197,7 +197,7 @@ Do not switch on `transaction_type` alone when deciding whether money moved in o
 
 Per-type fields live under `type_details`, a discriminated object keyed on the transaction type.
 
-Both list endpoints filter by transaction type server-side, through a query parameter named `type` — not `transaction_type`, which is the field name on the response object and an easy thing to grep past. `type` takes any of the 37 wallet-scope types, comma-separated for multiples:
+Both list endpoints filter by transaction type server-side, through a query parameter named `type`. That is not `transaction_type`, which is the field name on the response object and easy to grep past. `type` takes any of the 37 wallet-scope types, comma-separated for multiples:
 
 ```
 GET /transactions?type=LOAD_FUNDS,WITHDRAW_FUNDS
@@ -205,4 +205,4 @@ GET /transactions?type=LOAD_FUNDS,WITHDRAW_FUNDS
 
 Combine it with `status`, `start_date` and `end_date`, and the entity filters (`account_uuid`, `wallet_uuid`, `beneficiary_uuid`, `issued_card_uuid`, `payment_method_uuid`).
 
-One boundary: the `type` enum covers only the wallet-scope list. The vault- and passthrough-scope types from the tables above — `PREFUND`, `ACH_PRENOTE`, the passthrough family, the treasury movements — are not filterable this way. If you need those, read `GET /transactions` without a type filter and match on `transaction_type` in the response.
+One boundary: the `type` enum covers only the wallet-scope list. The vault- and passthrough-scope types from the tables above are not filterable this way. That includes `PREFUND`, `ACH_PRENOTE`, the passthrough family, and the treasury movements. If you need those, read `GET /transactions` without a type filter and match on `transaction_type` in the response.

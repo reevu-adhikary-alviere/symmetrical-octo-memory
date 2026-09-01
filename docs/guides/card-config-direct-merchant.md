@@ -13,8 +13,8 @@ Typical setups: a standalone ecommerce store, a DTC brand, a B2B invoice payment
 
 | Your system | Examples | How it ties to Alviere |
 |---|---|---|
-| Storefront / cart | Shopify, custom, headless | Your checkout calls `POST /v3/cards/debit` |
-| Order management | OMS, Shopify order ID | Pass `external_id` and `metadata.order_id` on the charge |
+| Storefront / cart | Hosted, custom, or headless | Your checkout calls `POST /v3/cards/debit` |
+| Order management | Your OMS order ID | Pass `external_id` and `metadata.order_id` on the charge |
 | Tax | Avalara, TaxJar | You calculate tax; pass it as part of `amount` |
 | Fulfillment | WMS, 3PL | Out of scope. Happens after payment |
 | Accounting | QuickBooks, Xero | Pull settled transactions from Alviere |

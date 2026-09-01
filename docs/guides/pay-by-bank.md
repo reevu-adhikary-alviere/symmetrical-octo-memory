@@ -20,9 +20,9 @@ Use it anywhere you can wait for funds and want to avoid interchange.
 
 ## What you'll build
 
-1. **Bank linking.** Your checkout collects the bank account via the [Payment Methods](/guides/resources/payment-methods) API. Or drop in [Alviere Checkout](/guides/payment-acceptance/online-payments/alviere-checkout/introduction) — an embedded web component that handles linking, mandate, and debit in your page. Alviere does not host a payment page.
+1. **Bank linking.** Your checkout collects the bank account via the [Payment Methods](/guides/resources/payment-methods) API. Or drop in [Alviere Checkout](/guides/payment-acceptance/online-payments/alviere-checkout/introduction), an embedded web component that handles linking, mandate, and debit in your page. Alviere does not host a payment page.
 2. **Scheduled payments.** One-time and recurring schedules via `POST /v3/schedule/payments`. You own the schedule, the platform executes.
-3. **Reconciliation.** [Data Reporting — Periodic Reports](/guides/reporting/periodic-reports) (CSV on SFTP) plus `GET /transactions` and `WALLET_TRANSACTION` webhooks.
+3. **Reconciliation.** [Periodic Reports](/guides/reporting/periodic-reports) (CSV on SFTP) plus `GET /transactions` and `WALLET_TRANSACTION` webhooks.
 4. **Returns.** NACHA return handling with webhook notifications.
 
 ## How an ACH debit moves
@@ -89,7 +89,7 @@ POST /v3/ach/debit
 ```
 
 :::scalar-callout{type="warning"}
-Fetch at display time. Texts are versioned — a pinned UUID keeps collecting consent against superseded language.
+Fetch at display time. Texts are versioned, and a pinned UUID keeps collecting consent against superseded language.
 :::
 
 ### Records to retain
@@ -106,12 +106,12 @@ A return is the payer's bank sending the debit back. Alviere posts a `RETURN` tr
 |---|---|---|
 | `R01` | Insufficient funds | Yes, up to two more times |
 | `R09` | Uncollected funds | Yes, up to two more times |
-| `R02` | Account closed | No — new account needed |
-| `R03` | No account on file | No — name/number mismatch |
-| `R04` | Invalid account number | No — malformed |
+| `R02` | Account closed | No. New account needed |
+| `R03` | No account on file | No. Name or number mismatch |
+| `R04` | Invalid account number | No. Malformed |
 | `R08` | Stop payment | Only with new authorization and block lifted |
 
-`R05`, `R07`, `R10`, `R11`, `R29`, `R51` are unauthorized — do not retry without resolving with the payer. Codes surface as `type_details.ach_payment_details.return_code` / `return_reason` on the `RETURN`.
+`R05`, `R07`, `R10`, `R11`, `R29`, `R51` are unauthorized. Do not retry without resolving with the payer. Codes surface as `type_details.ach_payment_details.return_code` / `return_reason` on the `RETURN`.
 
 ### Return windows and thresholds
 
@@ -138,9 +138,9 @@ Scheduled debits are not retries. If the January occurrence of `POST /v3/schedul
 
 Join on: `external_id` (your id) + `transaction_uuid` (from `201`) + the `RETURN`'s `parent_transaction_uuid` / `return_code` / `return_reason` / `trace_number`. Do not join on `trace_number` alone.
 
-`WALLET_TRANSACTION` gives you `PAYMENT` (`CREATED` → `PROCESSING` → `COMPLETED`) and on return a second `RETURN` with `parent_transaction_uuid`. Post both so the ledger stays auditable. For warehouse and end-of-day, use [Data Reporting — Periodic Reports](/guides/reporting/periodic-reports) (CSV on SFTP, same UUIDs).
+`WALLET_TRANSACTION` gives you `PAYMENT` (`CREATED` → `PROCESSING` → `COMPLETED`) and on return a second `RETURN` with `parent_transaction_uuid`. Post both so the ledger stays auditable. For warehouse and end-of-day, use [Periodic Reports](/guides/reporting/periodic-reports) (CSV on SFTP, same UUIDs).
 
-Webhooks retry with polynomial backoff (20ms → 2m) and are FIFO — return `200` quickly and process asynchronously.
+Webhooks retry with polynomial backoff from 20ms up to 2 minutes and are FIFO. Return `200` quickly and process asynchronously.
 
 ## Sandbox testing
 
@@ -164,7 +164,7 @@ Cover: happy path `PAYMENT` → `COMPLETED`; `R01` then retry with new `external
 | `POST /v3/instant/transfer` | Available | Send an instant payment. See [Instant Payments](/guides/transactions/instant-payments). |
 | `POST /v3/instant/request` | Available | Request a payment (RfP). See [Instant Payments](/guides/transactions/instant-payments). |
 
-Schemas: **Bank Payments** in [V3 API Reference](/api-v3). No `company_entry_description`/`company_name` — platform handles Nacha fields. Responses carry `transaction_uuid`, `type`, `status`, `type_details.ach_payment_details.trace_number`/`return_code`/`return_reason`.
+Schemas: **Bank Payments** in [V3 API Reference](/api-v3). There is no `company_entry_description` or `company_name`. The platform handles the Nacha fields. Responses carry `transaction_uuid`, `type`, `status`, `type_details.ach_payment_details.trace_number`/`return_code`/`return_reason`.
 
 ## Future-dating a debit
 
@@ -202,5 +202,5 @@ Offer Pay by Bank as the default for recurring charges, keep card as a convenien
 * [Which API version?](/guides/getting-started/api-versions)
 * [Transactions Overview](/guides/transactions/transactions-overview)
 * [Webhooks](/guides/more/webhooks)
-* [Data Reporting — Periodic Reports](/guides/reporting/periodic-reports)
+* [Periodic Reports](/guides/reporting/periodic-reports)
 * [Sandbox Testing](/guides/sandbox-testing/mock-services)

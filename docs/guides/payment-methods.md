@@ -122,13 +122,13 @@ If the bank later needs re-auth (`status: PENDING` + `NEEDS_UPDATE`), request an
 
 **Fail reasons:** `CUSTOM`, `TRANSACTION_FAILED`, `NEEDS_UPDATE`, `ACCOUNT_MISMATCH`, `INVALID_BANK_TYPE`, `INVALID_PUBLIC_TOKEN`, `BANK_FAILED` (e.g. bad routing). `flags.debit` / `flags.credit` (or `load_supported` / `withdraw_supported`) tells you if the account can be debited or credited.
 
-Always read `payment_method_uuid` from the `201` body — that's the handle for every later money-movement call.
+Always read `payment_method_uuid` from the `201` body. That is the handle for every later money-movement call.
 
 ## Using a payment method
 
-* **Load a wallet:** `POST /wallets/{wallet_uuid}/load` with `payment_method_uuid` — funds land in `transit` (prefunded) or `pending` then `balance`. See [Wallets](/guides/resources/wallets).
-* **Withdraw to bank/card:** `POST /wallets/{wallet_uuid}/withdraw` with `payment_method_uuid` — amount is held in `captive` until settled.
-* **Other flows:** international transfers, `POST /v3/ach/debit` (Pay by Bank) — all take the same UUID.
+* **Load a wallet.** `POST /wallets/{wallet_uuid}/load` with `payment_method_uuid`. Funds land in `transit` if prefunded, otherwise `pending`, then move to `balance`. See [Wallets](/guides/resources/wallets).
+* **Withdraw to a bank or card.** `POST /wallets/{wallet_uuid}/withdraw` with `payment_method_uuid`. The amount is held in `captive` until settled.
+* **Other flows.** International transfers and `POST /v3/ach/debit` for Pay by Bank take the same UUID.
 
 ## Manage
 
@@ -137,16 +137,16 @@ Always read `payment_method_uuid` from the `201` body — that's the handle for 
 | List cards | `GET /accounts/{account_uuid}/payment-methods/cards` |
 | Get card | `GET /accounts/{account_uuid}/payment-methods/cards/{payment_method_uuid}` |
 | Update card | `PATCH /payment-methods/cards/{payment_method_uuid}` |
-| Delete card | `DELETE /accounts/{account_uuid}/payment-methods/cards/{payment_method_uuid}` — `204`. Not allowed when `FAILED` |
+| Delete card | `DELETE /accounts/{account_uuid}/payment-methods/cards/{payment_method_uuid}`. Returns `204`. Not allowed when `FAILED` |
 | List banks | `GET /accounts/{account_uuid}/payment-methods/bank-accounts` |
 | Get bank | `GET /accounts/{account_uuid}/payment-methods/bank-accounts/{payment_method_uuid}` |
 | Update bank | `PATCH /payment-methods/bank-accounts/{payment_method_uuid}` |
-| Delete bank | `DELETE /accounts/{account_uuid}/payment-methods/bank-accounts/{payment_method_uuid}` — `204`. Not allowed when `CREATED`/`FAILED`/`REJECTED` |
+| Delete bank | `DELETE /accounts/{account_uuid}/payment-methods/bank-accounts/{payment_method_uuid}`. Returns `204`. Not allowed when `CREATED`/`FAILED`/`REJECTED` |
 
-`external_id` must be unique per account — duplicate returns `409` on Plaid, `400` on raw. Use `primary: true` to mark a default. `metadata` is free-form on all creates.
+`external_id` must be unique per account. A duplicate returns `409` on Plaid and `400` on raw. Use `primary: true` to mark a default. `metadata` is free-form on all creates.
 
 ## Related
 
-* [Plaid Integration](/guides/more/plaid) — Link setup, OAuth, sandbox test credentials
-* [Wallets](/guides/resources/wallets) — `transit` / `pending` / `captive` buckets
-* [ACH](/guides/transactions/ach) / [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) — using a bank PM to pull funds
+* [Plaid Integration](/guides/more/plaid). Link setup, OAuth, sandbox test credentials
+* [Wallets](/guides/resources/wallets). The `transit`, `pending`, and `captive` buckets
+* [ACH](/guides/transactions/ach) and [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). Using a bank payment method to pull funds
