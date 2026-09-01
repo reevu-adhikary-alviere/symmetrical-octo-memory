@@ -103,7 +103,7 @@ If the bank later needs re-auth (`status: PENDING` + `NEEDS_UPDATE`), request an
 |--------|-------|--------|
 | `ACTIVE` | Verified and ready | Use it |
 | `PENDING` / `CREATED` | Being verified | Wait, poll `GET .../cards/{pm_uuid}` |
-| `FAILED` | Validation failed | Check `fail_reason` / `validation.error_code`, fix and retry with new `external_id` |
+| `FAILED` | Validation failed | Check `status` and `fail_reason`, fix and retry with new `external_id` (for human triage you can look up `validation.error_code` on [Error Codes](/guides/getting-started/error-codes)) |
 | `REJECTED` | Declined by system | Don't retry same card |
 | `EXPIRED` | Past expiry | Ask for new card |
 | `DELETED` | Removed | Create again if needed |
