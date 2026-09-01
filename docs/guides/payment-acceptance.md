@@ -28,9 +28,9 @@ Payouts (money going **out** to a card or bank: push-to-card, ACH credit, withdr
 
 ## Things to know
 
-Acceptance is US-only. There is no multi-currency acquiring, no EU local schemes, no dynamic currency conversion, and no PSD2 or SCA.
+Acceptance covers US transactions in USD.
 
-Alviere is not a payment facilitator. Card statements show one program-level descriptor, and chargebacks land at the program level rather than per sub-merchant. There is no per-sub-merchant MCC or statement descriptor.
+Card statements show your program's descriptor, and chargebacks are handled at the program level.
 
 Each charge names its own destination. The `destination.wallet_uuid` on the request decides where the funds settle.
 

@@ -13,10 +13,6 @@ You don't need anything marketplace-specific on the API call. Each seller gets t
 Commission rules are fee rules. Create them with `POST /v3/fee-rules`, or have your program manager configure them for you. A `PROGRAM`-scoped rule applies to every account without further wiring; an `ACCOUNT`-scoped rule applies only to the accounts you associate with it.
 :::
 
-:::scalar-callout{type="warning"}
-Alviere isn't a payment facilitator, so per-seller statement descriptors, per-seller MCC, and per-seller chargeback isolation aren't available.
-:::
-
 ## How sellers are modeled
 
 ```

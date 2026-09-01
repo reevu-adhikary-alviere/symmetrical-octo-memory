@@ -39,13 +39,9 @@ A card charge involves three entity types. They show up in webhooks and reports:
 
 ## What's supported
 
-- US transactions only. There is no dynamic currency conversion, no PSD2 or SCA, and no local schemes.
+- US card transactions in USD.
 - All Card Payments work uses the V3 endpoints.
 - Funds settle to the `destination.wallet_uuid` you set on the charge.
-
-:::scalar-callout{type="info"}
-Alviere is not a payment facilitator. Per-sub-merchant statement descriptors, per-sub-merchant MCC, and per-sub-merchant chargeback isolation are not available.
-:::
 
 ## Next steps
 
