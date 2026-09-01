@@ -171,7 +171,7 @@ def alviere_webhook():
 Compare signatures with a constant-time function (`crypto.timingSafeEqual`, `hmac.compare_digest`). A plain `==` leaks the correct signature one byte at a time to anyone who can measure your response latency.
 :::
 
-Two things worth building in from the start:
+Build these in before go-live, because both are painful to retrofit.
 
 - **Deduplicate on `event_uuid`.** A retried delivery carries the same `event_uuid` with `event_retry` incremented. Storing processed IDs is what keeps a retry from double-crediting a customer.
 - **Acknowledge, then process.** Alviere's queue is FIFO and retries block everything behind them. Return `200` as soon as the signature checks out and do the real work on a queue.
@@ -186,9 +186,9 @@ Retries are continuous and block subsequent messages, because Alviere maintains 
 
 ## Event payloads
 
-The `entity` object is the full entity, in the same shape the REST API returns it, at the moment the event fired. There is no separate webhook schema to learn and no delta format: if you can parse a `GET` response for a resource, you can parse its webhook.
+The `entity` object is the full entity, in the same shape the REST API returns it, at the moment the event fired. There is no separate webhook schema. If you can parse a `GET` response for a resource, you can parse its webhook.
 
-That also means the payload tells you the **current** state, not what changed. Nothing in the event says which field moved. If you need the transition, diff against what you already stored.
+The payload carries the current state only. Nothing in the event says which field moved. If you need the transition, diff against what you already stored.
 
 | Subscription | `entity` is | Key off | Watch |
 |---|---|---|---|
