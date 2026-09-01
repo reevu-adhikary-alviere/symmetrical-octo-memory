@@ -5,11 +5,9 @@ description: "Guides, API reference, and SDKs for building payments, cards, and 
 
 # Welcome to Alviere HIVE
 
-This portal contains platform definitions, integration guides, SDK documentation, webhook guidance, and the HIVE API reference for building payments, cards, and money movement on Alviere HIVE. HIVE is embedded-finance infrastructure — accounts, wallets, cards, and money movement behind clear APIs — so teams that do not run a bank can still hold funds, issue cards, and accept payments without assembling the underlying rails themselves.
+Platform definitions, integration guides, SDKs, webhooks, and the HIVE API reference — embedded-finance infrastructure for accounts, wallets, cards, and money movement.
 
-Clients access HIVE through **Programs**. Each Program is a configured instance of modules, controls, and entities for a specific implementation. A client can operate multiple Programs, each with an independent entity namespace — data does not cross Programs, even under the same Brand. Transaction limits, card settings, service fees, KYC/KYB requirements, and fraud controls are Program configuration managed by your Alviere program manager; configuration itself is not changed through the API.
-
-HIVE is organized around **Programs**, **Modules**, and **Entities** (accounts, wallets, cards, transactions — the objects you call). If that map is new, start with [Platform Overview](/guides/overview/platform-overview) before you pick an endpoint.
+HIVE is accessed through **Programs**: isolated workspaces of modules and configuration. Data does not cross Programs, even under the same Brand. Limits, card settings, fees, and KYC/KYB are owned by your program manager, not the API. New to the model? Start with [Platform Overview](/guides/overview/platform-overview).
 
 ## Get started
 
@@ -54,7 +52,7 @@ Most integrations use the same building blocks regardless of which motion you st
 - **[Accounts, Wallets, Treasury, and Identity](/guides/resources/accounts)** — accounts hold wallets; wallets hold funds and cards; [treasury vaults](/guides/resources/treasury) hold program funds; dossiers hold KYC/KYB. [Payment Methods](/guides/resources/payment-methods) and [Beneficiaries](/guides/resources/beneficiaries) connect external cards, bank accounts, and payout destinations. [Activity](/guides/resources/activity) and [Periodic Reports](/guides/reporting/periodic-reports) give you the auditable ledger and reconciliation.
 - **[Sandbox Testing](/guides/sandbox-testing/mock-services)** — drive a realistic lifecycle in sandbox: KYC scenarios, card issuance, payment method verification, returns, and fraud and sanctions screens, without touching production.
 - **[Webhooks](/guides/more/webhooks)** — subscribe to `ISSUED_CARD`, `WALLET_TRANSACTION`, and other events instead of polling. Payload shapes are documented per subscription.
-- **[SDKs](/guides/sdks/overview)** — integrate through REST APIs or SDKs depending on the surface: [UI SDK](https://websdk.alviere.com/quick-start/overview) (`@alviere/ui` — Web Components + Svelte) and headless [Core SDK](https://websdk.alviere.com/core/overview) (`@alviere/core`) for web, [JavaScript SDK](/guides/sdks/overview) for browser payment/fraud/card flows via web sessions, and four packages for iOS and Android. The complete [Bootstrap App](/guides/sdks/bootstrap-app/introduction) is a reference implementation you can fork. Card display and PIN entry are SDK-only by design.
+- **[SDKs](/guides/sdks/overview)** — REST APIs or SDKs per surface: [UI](https://websdk.alviere.com/quick-start/overview) (`@alviere/ui`) and headless [Core](https://websdk.alviere.com/core/overview) (`@alviere/core`) for web, [JavaScript SDK](/guides/sdks/overview) via web sessions, and four packages for iOS/Android. The [Bootstrap App](/guides/sdks/bootstrap-app/introduction) is a forkable reference. Card display and PIN entry are SDK-only.
 
 Common integration requirements live under [Getting Started](/guides/getting-started/quickstart): [Authentication](/guides/getting-started/authentication), [Environments](/guides/getting-started/environments), [Error Codes](/guides/getting-started/error-codes), [Metadata](/guides/getting-started/metadata), and [Idempotency](/guides/getting-started/idempotency).
 
