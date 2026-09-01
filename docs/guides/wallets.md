@@ -9,10 +9,7 @@ A wallet is the core ledger on an account. It tracks balances, money in and out,
 
 ## What you can do with a wallet
 
-- **Move money between wallets**. Between the same account or to a different account holder.
-- **Send to an external bank**. Withdraw to a connected bank account.
-- **Load funds in**. Deposit from a saved payment method.
-- **Fund issued cards**. Back card spending with the wallet balance.
+A wallet loads funds from a saved payment method, transfers to another wallet on the same or a different account, and withdraws to a connected bank account. It also funds issued cards, so card spending draws down the wallet balance.
 
 ## Wallet types
 
@@ -61,11 +58,11 @@ Settled funds in the wallet (in cents). These exist in the underlying bank accou
 
 ### Transit
 
-Unsettled funds (in cents) from authorized but not-yet-settled transactions. **Counted as available** because they're prefunded. Moves to `balance` once settlement clears.
+Unsettled funds (in cents) from authorized but not-yet-settled transactions. Counted as available because the program prefunds them. Moves to `balance` once settlement clears.
 
 ### Pending
 
-Unsettled funds (in cents), similar to transit. **Not counted as available** since they're not prefunded. Moves to `balance` once settled.
+Unsettled funds (in cents), like transit but not prefunded, so not counted as available. Moves to `balance` once settled.
 
 ### Captive
 
