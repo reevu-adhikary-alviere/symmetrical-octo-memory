@@ -7,7 +7,7 @@ description: "Charge buyers, pay sellers, and keep your commission, with the spl
 
 You run a platform where sellers transact through you. A buyer pays at your checkout, the seller gets the sale, and you keep a commission. On Alviere the seller is an account, the buyer is a card, and the commission is a fee rule that fires on every charge. Nothing on the charge request itself says "marketplace."
 
-One fact about the API shapes every decision on this page. A card charge settles into exactly one wallet, the `destination.wallet_uuid` you name on the request. Refunds come back out of that wallet, disputes are recorded against that charge, and fees are computed from it. Decide which wallet receives each charge and the rest of the design follows.
+One fact about the API shapes every decision on this page. A card charge settles into exactly one wallet, the `destination.wallet_uuid` you name on the request. Refunds come back out of that wallet, chargebacks land on that seller's charge, and fees are computed from it. Decide which wallet receives each charge and the rest of the design follows.
 
 ## The parties
 
@@ -147,13 +147,11 @@ Your commission is a separate transaction and the refund leaves it alone. Whethe
 
 An authorization that was never captured is voided rather than refunded. The reverse call returns `204` with no body, and the parent flips to `VOIDED`.
 
-## Disputes
+## Chargebacks
 
-When a buyer's bank raises a chargeback, the original `PAYMENT` gets `disputed: true` and a `dispute_details` object with a `status` of `OPEN`, `WON`, `LOST`, or `CLOSED`, a `status_reason`, the raw network reason, and any `recovered_amount`. The `WALLET_TRANSACTION` webhook fires on each change, so subscribe to it and route dispute events to whoever handles evidence.
+A chargeback is raised by the buyer's bank against a specific charge, and that charge belongs to a seller. Decide before launch how the loss is handled. Some platforms pass it to the seller. Others absorb it and recover through the next commission. Your program manager will walk you through how chargebacks are worked on your program and what evidence is needed.
 
-The dispute is on the seller's charge, in the seller's wallet. Decide before launch how you want that to work operationally. Some platforms pass the loss to the seller. Others absorb it and recover through the next commission. The API records the outcome either way. The policy is yours.
-
-The cheapest dispute is the one that never happens. A recognizable `merchant_details.descriptor`, a clear refund policy the seller can act on quickly, and capturing on shipment rather than at checkout remove most of them.
+The cheapest chargeback is the one that never happens. A recognizable `merchant_details.descriptor`, a refund policy the seller can act on quickly, and capturing on shipment rather than at checkout remove most of them.
 
 ## Pay sellers
 
@@ -167,13 +165,13 @@ Funds from a sale settle into the seller's wallet and are available according to
 
 ### Holding a reserve
 
-Nothing in the platform holds seller funds back automatically. If you want a buffer for refunds and disputes, build it into the payout timing. Sweep on a weekly rather than daily schedule, or withdraw on demand only the portion of the balance older than your dispute window. The wallet's `balance` versus `available` buckets tell you what has settled. Your own ledger of charge dates tells you what has aged.
+Nothing in the platform holds seller funds back automatically. If you want a buffer for refunds and chargebacks, build it into the payout timing. Sweep on a weekly rather than daily schedule, or withdraw on demand only the portion of the balance older than your chargeback window. The wallet's `balance` versus `available` buckets tell you what has settled. Your own ledger of charge dates tells you what has aged.
 
 ## Splitting one cart across sellers
 
 A charge has one destination, so a cart with items from three sellers is three charges, one per seller, each with its own `external_id`. The buyer sees three lines on their statement, each with that seller's descriptor. Authorize all three, then capture each as its seller ships.
 
-If you would rather the buyer see one charge, land it in a wallet you control and move the seller shares afterward with `POST /wallets/{wallet_uuid}/send`. That is an [internal transfer](/guides/transactions/internal-transfers) and needs the P2P module on your program. In this model the refund and dispute liability sit in your wallet rather than the seller's, and your commission is whatever you keep back rather than a fee rule. It is more work and more exposure. Take it on only when a single statement line is a hard requirement.
+If you would rather the buyer see one charge, land it in a wallet you control and move the seller shares afterward with `POST /wallets/{wallet_uuid}/send`. That is an [internal transfer](/guides/transactions/internal-transfers) and needs the P2P module on your program. In this model the refund and chargeback liability sit in your wallet rather than the seller's, and your commission is whatever you keep back rather than a fee rule. It is more work and more exposure. Take it on only when a single statement line is a hard requirement.
 
 ## What the seller sees
 
@@ -185,5 +183,5 @@ Give sellers a view of their own money. Everything you need is on `GET /v3/trans
 - [Accounts](/guides/resources/accounts). Business account statuses and KYB stages.
 - [Payment Methods](/guides/resources/payment-methods). Saving buyer cards and seller bank accounts.
 - [Transactions Overview](/guides/transactions/transactions-overview). Statuses, child transactions, and reversals.
-- [Webhooks](/guides/more/webhooks). `ACCOUNT` for seller onboarding, `WALLET_TRANSACTION` for sales, refunds, and disputes.
+- [Webhooks](/guides/more/webhooks). `ACCOUNT` for seller onboarding, `WALLET_TRANSACTION` for sales and refunds.
 - [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). The same marketplace model over ACH.
