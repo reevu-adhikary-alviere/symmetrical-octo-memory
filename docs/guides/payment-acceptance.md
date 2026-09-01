@@ -14,30 +14,29 @@ Accept payments from your customers on two rails, cards and bank accounts, throu
 
 ## Pick a rail
 
-- **Online card payments** for ecommerce, marketplaces, subscriptions, donations → [Accept card payments](/guides/payment-acceptance/online-payments/card-payments/introduction)
-- **ACH debit** for recurring billing and any charge where card interchange costs too much → [Accept bank payments](/guides/payment-acceptance/online-payments/pay-by-bank/introduction)
-
-Many partners use more than one. A marketplace can run card acceptance for buyers and ACH for high-ticket B2B sellers on the same setup.
+Cards settle faster and the customer already knows the flow. ACH costs less per transaction and suits recurring or high-ticket charges where interchange would eat the margin. Most programs end up running both on the same setup, with the choice made per charge.
 
 ## Before you build
 
-A few things are common to every rail:
+Every rail depends on the same three pieces.
 
 - **[Payment Methods](/guides/resources/payment-methods)**. Save cards and bank accounts so you can charge them later.
-- **[Accounts](/guides/resources/accounts)**. Set up the businesses that get paid (KYB, dossiers).
-- **[Webhooks](/guides/more/webhooks)**. Get notified when a payment settles, fails, or gets disputed.
+- **[Accounts](/guides/resources/accounts)**. Set up the businesses that get paid, including KYB and dossiers.
+- **[Webhooks](/guides/more/webhooks)**. Get notified when a payment settles, fails, or is disputed.
 
 Payouts (money going **out** to a card or bank: push-to-card, ACH credit, withdrawals) live under a different section in the API reference. Payment Acceptance is acceptance only.
 
 ## Things to know
 
-| Constraint | What it means |
-|---|---|
-| **US-only** | No multi-currency acquiring, no EU local schemes, no DCC, no PSD2/SCA |
-| **Not a payment facilitator** | Card statements show one program-level descriptor; chargebacks happen at the program level, not per sub-merchant. No per-sub-merchant MCC or statement descriptors |
-| **Settlement to a designated account** | Each charge sets `destination.wallet_uuid` for where funds land |
-| **Fee rules are an API** | Create `SERVICE_FEE` and `CONVENIENCE_FEE` rules with `POST /v3/fee-rules`, or have your program manager set them up |
-| **V3 endpoints** for new acceptance work | Existing V2 integrations keep running |
+Acceptance is US-only. There is no multi-currency acquiring, no EU local schemes, no dynamic currency conversion, and no PSD2 or SCA.
+
+Alviere is not a payment facilitator. Card statements show one program-level descriptor, and chargebacks land at the program level rather than per sub-merchant. There is no per-sub-merchant MCC or statement descriptor.
+
+Each charge names its own destination. The `destination.wallet_uuid` on the request decides where the funds settle.
+
+Fee rules are configured through the API. Create `SERVICE_FEE` and `CONVENIENCE_FEE` rules with `POST /v3/fee-rules`, or ask your program manager to set them up.
+
+New acceptance work uses the V3 endpoints. Existing V2 integrations keep running.
 
 ## Where to start
 
