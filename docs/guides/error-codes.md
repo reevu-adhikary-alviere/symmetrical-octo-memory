@@ -5,6 +5,10 @@ description: "HTTP response codes, the validation block, and the full Alviere er
 
 # Error Codes
 
+:::scalar-callout{type="warning"}
+Numeric `error_code` values are for human triage, not for programmatic branching. Branch on the HTTP status and on stable enumerated fields (`status`, `result`, `type`). Error codes can change without a version bump — do not `switch` on them. This page is the only place they are documented; guides describe the condition in words and point here for lookup.
+:::
+
 Alviere employs standardized HTTP response codes to convey the outcome of API requests. Each response code provides insights into whether a request was successful, requires redirection, has client-induced errors, or encountered server-side issues.
 
 ### **Categories of HTTP Response Codes:**

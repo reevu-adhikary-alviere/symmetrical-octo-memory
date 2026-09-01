@@ -93,7 +93,7 @@ Rules can expire two ways, both set under `expiration_rules`:
 
 The same `incentives` object works on `PATCH`, so you can attach rules to a card after it exists. Rules currently on a card come back as `incentive_rule_uuids` on the card object.
 
-Incentives are enabled per program. If yours is not configured for them, attaching rules returns `510033` or `510046`.
+Incentives are enabled per program. If yours is not configured for them, attaching rules returns a `400` validation error.
 
 ## Related
 

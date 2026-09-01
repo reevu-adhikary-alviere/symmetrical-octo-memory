@@ -74,7 +74,7 @@ You never get the full card number back from this call. `last_4` is all the crea
 | `auto_pin_generation` | Have Alviere generate the PIN instead of prompting the cardholder | [Card Data and PCI](/guides/cards/card-security) |
 | `metadata` | Arbitrary keys and values stored with the card. Never used for logic |
 
-Most of these are program-gated. Sending a field your product does not allow returns a configuration error rather than being silently ignored: `510041` for a disallowed `shipping_method`, `510038` for merchant lists, `510033` for incentives, `510062` for a `carrier_id`.
+Most of these are program-gated. Sending a field your product does not allow returns a `400` configuration error rather than being silently ignored. Look up the `error_code` on [Error Codes](/guides/getting-started/error-codes) if you need to triage which field was disallowed.
 
 ### Idempotency
 
@@ -90,7 +90,7 @@ Most of these are program-gated. Sending a field your product does not allow ret
 }
 ```
 
-So a `409` on retry is a safe outcome. Read `card_uuid` off it and carry on rather than treating it as a failure. A duplicate caught at validation instead returns `510045`.
+So a `409` on retry is a safe outcome. Read `card_uuid` off it and carry on rather than treating it as a failure. A duplicate caught at validation instead returns a `400`.
 
 ## Card lifecycle
 

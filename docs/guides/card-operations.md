@@ -17,7 +17,7 @@ Everything you do to a card after it exists. Each of these is a single call, and
 
 ## Activate
 
-Activation applies to physical card products only. Calling it on a card that is not physical returns `510016`.
+Activation applies to physical card products only. Calling it on a card that is not physical returns a `400` validation error.
 
 There are two ways a physical card gets activated, and both end in the same place:
 
@@ -48,15 +48,13 @@ curl -X PUT https://api.snd.alviere.com/wallets/{wallet_uuid}/issued-cards/{card
 | `expiration_date` | Yes | `MM/YY` |
 | `security_code` | No | Three digits |
 
-The card must be in `READY_TO_ACTIVATE`. Common failures:
+The card must be in `READY_TO_ACTIVATE`. Common failures return a `400` validation error:
 
-| Error | Meaning |
-|---|---|
-| `510007` | Card is not ready to activate |
-| `510015` | Card is already active |
-| `510016` | Card is not physical |
-| `510018` | The owning account is not in a state that permits activation |
-| `510019` | Activation data was missing from the request |
+- Card is not ready to activate (not in `READY_TO_ACTIVATE`)
+- Card is already active
+- Card is not physical
+- The owning account is not in a state that permits activation
+- Activation data was missing from the request
 
 In Sandbox, advance a card to `READY_TO_ACTIVATE` with the mock ship endpoint described in [Card Issuance Testing](/guides/sandbox-testing/test-cards).
 
@@ -74,7 +72,7 @@ curl -X PUT https://api.snd.alviere.com/wallets/{wallet_uuid}/issued-cards/{card
 
 Neither call takes a body. Unfreeze is the same request against `/unfreeze` and puts the card back to `ACTIVE`.
 
-A card in a final status cannot be frozen. `510078` means the card's current status does not permit the action, and `510064` means the card is not `ACTIVE`.
+A card in a final status cannot be frozen. The API returns a `400` validation error when the card's current status does not permit the action, for example when the card is not `ACTIVE`.
 
 Two boolean fields on the card object describe this, and they are not the same field:
 
@@ -83,7 +81,7 @@ Two boolean fields on the card object describe this, and they are not the same f
 | `frozen` | The card is currently frozen |
 | `blocked` | The card is blocked and will decline |
 
-A card can be blocked without being frozen. If unfreeze does not bring a card back, check `blocked`. `510017` and `510067` both report a blocked card, and unfreezing will not clear them.
+A card can be blocked without being frozen. If unfreeze does not bring a card back, check `blocked`. A blocked card returns a `400` validation error and unfreezing will not clear it.
 
 :::scalar-callout{type="info"}
 Freeze is the right response to a card the cardholder has misplaced. It keeps the card number, so everything the cardholder has saved with a merchant carries on working once they unfreeze. Reserve replace for confirmed loss or compromise, where a new card number is the point.
@@ -126,7 +124,7 @@ Note the path: replace is one of two card endpoints that is not wallet-scoped. I
 
 | Field | Required | Notes |
 |---|---|---|
-| `external_id` | Yes | Must be unique. Reusing one returns `409` or `510103` |
+| `external_id` | Yes | Must be unique. Reusing one returns `409` |
 | `action` | Yes | `REPLACE` |
 | `reason` | Yes | `DAMAGED`, `ATM_MALFUNCTION`, `DATA_COMPROMISED`, `ABOUT_TO_EXPIRE`, `EXPIRED`, `OTHER` |
 | `description` | No | Free text for your own records |
@@ -136,15 +134,13 @@ Note the path: replace is one of two card endpoints that is not wallet-scoped. I
 
 Pick the accurate `reason`. It is what you and Alviere will be reading back in disputes and audits, and `DATA_COMPROMISED` in particular is worth recording honestly.
 
-Replacement is refused in a few cases worth handling:
+Replacement is refused in a few cases, all with a `400` validation error:
 
-| Error | Meaning |
-|---|---|
-| `510084` | The wallet balance does not cover the replacement service fee |
-| `510085` | Replace is not allowed for this card genre |
-| `510088` | Replace is not allowed from this card status |
-| `510091` | This card has already been replaced |
-| `510103` | Duplicate replace request |
+- The wallet balance does not cover the replacement service fee
+- Replace is not allowed for this card genre
+- Replace is not allowed from this card status
+- This card has already been replaced
+- Duplicate replace request (or `409` when the `external_id` collides)
 
 A replacement lands in the account activity feed as `CARD_REPLACEMENT`. See [Activity](/guides/resources/activity).
 

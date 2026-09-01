@@ -33,16 +33,7 @@ The rest of the issued-card types are in [Transactions Overview](/guides/transac
 
 `product_id` determines the card's brand, genre, BIN range, whether it supports a PIN, how long the name on the card can be, and which optional fields you are allowed to send.
 
-A `product_id` that is not configured for your program is rejected:
-
-| Error | Meaning |
-|---|---|
-| `510034` | Product ID is not set for the program |
-| `510068` | Card product is missing from configuration |
-| `510072` | Card issued type is not configured |
-| `510096` | Generic card issuance is not configured |
-
-If you get one of these, it is a program setup issue rather than a bad request. Talk to your program manager.
+A `product_id` that is not configured for your program is rejected with a `400` validation error. It is a program setup issue rather than a malformed request — talk to your program manager. Look up the `error_code` on [Error Codes](/guides/getting-started/error-codes) if you need the exact value for triage.
 
 ## Genres
 
@@ -64,7 +55,7 @@ A virtual card can be converted to physical later if Alviere has approved it for
 
 ### How many cards a wallet can hold
 
-The number of cards a wallet may hold is set by your program configuration rather than by the API. Exceeding it returns `510044` or `510049`, and `510048` means the card type is not allowed for that wallet type.
+The number of cards a wallet may hold is set by your program configuration rather than by the API. Exceeding it returns a `400` validation error, and requesting a card type that is not allowed for that wallet type also returns a `400`. Both are configuration issues — talk to your program manager.
 
 ## Types
 
@@ -77,7 +68,7 @@ The number of cards a wallet may hold is set by your program configuration rathe
 
 What separates the last two is where the money comes from, not how many times the card can be loaded. A non-reloadable prepaid card is loaded with the consumer's own funds. A gift card is loaded from your program's funds.
 
-Type is also driven by the card product. Passing a type-specific field to the wrong product fails: `initial_balance` on a non-gift product returns `510037`, and omitting it on a gift product returns `510036`.
+Type is also driven by the card product. Passing a type-specific field to the wrong product fails with a `400` — `initial_balance` sent for a non-gift product, or omitted for a gift product. Branch on the HTTP status and handle it as a validation error.
 
 ## The endpoints
 

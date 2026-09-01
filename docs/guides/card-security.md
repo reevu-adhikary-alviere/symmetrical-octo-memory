@@ -58,10 +58,7 @@ The same restriction applies: this endpoint is for the Alviere SDK or a preautho
 
 Alongside the card's status, the request is checked against the account that owns it, that the wallet is active, that the consumer is active, and that the card is not blocked. The PIN itself is checked against the length your card program allows.
 
-| Error | Meaning |
-|---|---|
-| `510066` | The submitted PIN is not valid for this program's rules |
-| `510073` | The program's PIN length is not configured |
+A `400` validation error is returned when the submitted PIN is not valid for the program's rules, or when the program's PIN length is not configured.
 
 The same endpoint sets and changes a PIN. There is no separate change-PIN call, and no endpoint reads a PIN back. See below.
 

@@ -35,13 +35,13 @@ curl -X POST https://api.snd.alviere.com/wallets/{wallet_uuid}/issued-cards \
 
 `30000` is $300.00. The minimum is `1`.
 
-The field is strictly conditional, and it fails in both directions:
+The field is strictly conditional, and it fails in both directions with a `400` validation error:
 
 | Situation | Result |
 |---|---|
 | Gift product, `initial_balance` sent | Card is created with that balance |
-| Gift product, `initial_balance` omitted | `400`, error `510036` |
-| Non-gift product, `initial_balance` sent | `400`, error `510037` |
+| Gift product, `initial_balance` omitted | `400` — required field missing |
+| Non-gift product, `initial_balance` sent | `400` — field not allowed for this product |
 
 Branch on the product before you build the request, and send `initial_balance` only for gift products.
 
@@ -79,13 +79,9 @@ Branch on the product before you build the request, and send `initial_balance` o
 
 The fee is a fixed amount. There is no percentage option on an issued card activation fee.
 
-Because the fee deducts from the card, the opening balance has to cover it. A $300 card with a $5 activation fee gives the cardholder $295. The balance has to cover the fees at creation, which `510079` checks. That means a card that goes active has always settled its own fee.
+Because the fee deducts from the card, the opening balance has to cover it. A $300 card with a $5 activation fee gives the cardholder $295. The balance has to cover the fees at creation — a `400` is returned if it does not. That means a card that goes active has always settled its own fee.
 
-| Error | Meaning |
-|---|---|
-| `510075` | The service fee is not valid |
-| `510076` | Duplicate service fee external ID |
-| `510079` | The initial balance does not cover the deducted service fees |
+Common fee validation errors (`400`) are an invalid service fee, a duplicate service fee `external_id`, or an initial balance that does not cover the deducted fees.
 
 Service fees are not gift-only. They are most useful here because a gift card has a balance to deduct from at the moment it activates.
 

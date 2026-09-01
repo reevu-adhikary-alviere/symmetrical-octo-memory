@@ -75,7 +75,7 @@ Pass the territory code in `state`, exactly as you would a state code, with `USA
 
 To release a card from `PENDING`, `PATCH` it with a valid address. Issuance continues from there. You do not create a second card.
 
-A card with no address at all cannot be shipped or replaced, which returns `510032`. An address that fails validation returns `510021`.
+A card with no address at all cannot be shipped or replaced, and an address that fails validation, both return a `400` validation error.
 
 ## Embossing and the carrier
 
@@ -106,24 +106,22 @@ A card with no address at all cannot be shipped or replaced, which returns `5100
 | `carrier_message` | 1-150 characters | Printed on the insert, not on the card |
 | `emboss_id` | Program-defined | Required by some products, forbidden by others |
 
-Every one of these is gated by your card product, and the errors tell you which way a product is configured rather than that your request was malformed:
+Every one of these is gated by your card product, and a `400` validation error tells you which way a product is configured rather than that your request was malformed:
 
-| Error | Meaning |
-|---|---|
-| `510039` | The product requires `emboss_id` but it is not configured |
-| `510040` | `emboss_id` is required and was not sent |
-| `510095` | `emboss_id` is not valid |
-| `510041` | This product does not allow `shipping_method` |
-| `510042` | `name_on_card` is longer than the product allows |
-| `510043` | `name_on_card` contains characters that cannot be embossed |
-| `510082` | The product's name length is not configured |
-| `510060` | The product requires `carrier_id` but it is not configured |
-| `510061` | `carrier_id` is required and was not sent |
-| `510062` | `carrier_id` cannot be sent for this product |
-| `510080` | `carrier_message` is not usable for this card genre |
-| `510092` | `carrier_message` is not usable for this card type |
+- The product requires `emboss_id` but it is not configured
+- `emboss_id` is required and was not sent
+- `emboss_id` is not valid
+- This product does not allow `shipping_method`
+- `name_on_card` is longer than the product allows
+- `name_on_card` contains characters that cannot be embossed
+- The product's name length is not configured
+- The product requires `carrier_id` but it is not configured
+- `carrier_id` is required and was not sent
+- `carrier_id` cannot be sent for this product
+- `carrier_message` is not usable for this card genre
+- `carrier_message` is not usable for this card type
 
-`510061` and `510062` are opposites, and which one you get is a property of the product. Do not send `carrier_id` unconditionally.
+Whether `carrier_id` is required or forbidden is a property of the product. Do not send it unconditionally — check what your `product_id` allows.
 
 ## Knowing where a card is
 

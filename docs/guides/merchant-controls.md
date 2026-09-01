@@ -76,13 +76,13 @@ curl https://api.snd.alviere.com/wallets/{wallet_uuid}/issued-cards/{card_uuid} 
 
 ## Program configuration
 
-Merchant allow-lists are enabled per card product. If yours is not configured for them, sending a list returns `510038` and no rule is stored.
+Merchant allow-lists are enabled per card product. If yours is not configured for them, sending a list returns a `400` validation error and no rule is stored.
 
 ## What this does not cover
 
 Merchant controls decide **where** a card works. They do not decide how much it can spend.
 
-Spending caps on Alviere are set at the **account** level and apply across the account rather than to one card. Those enforce as daily and rolling-period limits, and they return their own errors: `430106` for a daily limit, `430107` for a rolling period, `430110` and `430111` for related checks. See [Accounts](/guides/resources/accounts).
+Spending caps on Alviere are set at the **account** level and apply across the account rather than to one card. Those enforce as daily and rolling-period limits and return a `400` validation error when hit. See [Accounts](/guides/resources/accounts) and [Error Codes](/guides/getting-started/error-codes) for lookup.
 
 Do not model per-card spend caps on top of account limits. They are different features with different scopes, and an account limit hit on one card affects every card on that account.
 

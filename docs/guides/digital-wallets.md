@@ -74,15 +74,7 @@ Both take the same two fields, and both are values the provider's SDK returns to
 }
 ```
 
-These fields are brand-sensitive, so send what the card's brand calls for rather than sending both unconditionally:
-
-| Error | Meaning |
-|---|---|
-| `510028` | Card brand is not supported |
-| `510030` | Mastercard parameters not present for a Mastercard card |
-| `510031` | VISA parameters not present for a VISA card |
-
-Apple Pay does not use these two fields.
+These fields are brand-sensitive, so send what the card's brand calls for rather than sending both unconditionally. A mismatch returns a `400` validation error. Apple Pay does not use these two fields.
 
 Alviere issues Visa and Mastercard cards, so `brand` on the card object tells you which set of parameters to send. Read it before you build the request rather than sending both.
 
