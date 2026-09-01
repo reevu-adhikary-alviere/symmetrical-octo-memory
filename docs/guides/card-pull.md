@@ -44,7 +44,7 @@ The same endpoint loads from bank payment methods too. The `ACH_type` and `ach_r
 
 ## Settlement timing
 
-A successful `201` is an accepted load, not settled money. The amount lands in the wallet's `transit` bucket — or `pending`, depending on the program's prefunding setting — and moves into available balance according to the payment method's settlement times. Build your UI around the wallet's available balance rather than around the load call returning.
+A successful `201` is an accepted load, not settled money. The amount lands in the wallet's `transit` bucket, or in `pending` if the program is not prefunded, and moves into available balance on the payment method's settlement schedule. Build your UI around the wallet's available balance rather than around the load call returning.
 
 ## What the transaction looks like
 

@@ -5,7 +5,7 @@ description: "Activate, freeze, unfreeze, cancel, and replace an issued card"
 
 # Card Operations
 
-Everything you do to a card after it exists. Each of these is a single call, and all but replace return `204 No Content` with no body. Read the resulting state from the `ISSUED_CARD` webhook or a follow-up `GET`.
+These are the operations on a card after it exists. Each is a single call, and all but replace return `204 No Content` with no body. Read the resulting state from the `ISSUED_CARD` webhook or a follow-up `GET`.
 
 | Operation | Endpoint |
 |---|---|

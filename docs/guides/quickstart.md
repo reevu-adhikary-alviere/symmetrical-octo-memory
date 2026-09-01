@@ -5,7 +5,7 @@ description: "Make your first authenticated API calls against the Alviere sandbo
 
 # Quickstart
 
-Make your first authenticated API call against the Alviere sandbox in a few minutes. Once you can authenticate and read your accounts and their wallets, you've got everything you need to start building.
+Make your first authenticated API call against the Alviere sandbox. Once you can authenticate and read your accounts and their wallets, the rest of the guides build on the same calls.
 
 ## API conventions
 
@@ -49,7 +49,7 @@ curl https://api.snd.alviere.com/accounts/{account_uuid}/wallets \
   -H "Authorization: Bearer $ALVIERE_API_KEY"
 ```
 
-If you get a `2xx` back with the account's wallets, you're set.
+A `2xx` with the account's wallets means authentication and routing both work.
 
 ## Next steps
 

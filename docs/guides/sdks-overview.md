@@ -19,9 +19,9 @@ Past that it is a question of how much of the interface you want to hand over. P
 
 ## Web
 
-**UI SDK, `@alviere/ui`.** A component library for onboarding and payment flows: forms, multi-step flows, and validated inputs. It ships framework-independent Web Components alongside typed Svelte components. Both formats expose the same properties and events, so pick whichever your stack prefers and you give up nothing either way. Components call the Core SDK underneath for authentication, validation, encryption, and talking to Alviere.
+**UI SDK, `@alviere/ui`.** A component library for onboarding and payment flows: forms, multi-step flows, and validated inputs. It ships framework-independent Web Components alongside typed Svelte components. Both formats expose the same properties and events, so the choice is only about your framework. Components call the Core SDK underneath for authentication, validation, encryption, and talking to Alviere.
 
-**Core SDK, `@alviere/core`.** The headless layer the UI SDK runs on, with typed services for accounts, payments, wallets, authentication, request encryption, validation, logging, and errors. No components at all. This is the one to use when you already have a design system and intend to keep it.
+**Core SDK, `@alviere/core`.** The headless layer the UI SDK runs on, with typed services for accounts, payments, wallets, authentication, request encryption, validation, logging, and errors. It has no interface components. Use it when you already have a design system and intend to keep it.
 
 **Alviere Checkout.** A prebuilt, themeable checkout you drop in as a single tag. Bank payments by default, cards optional. It runs account entry, the mandate, and the debit as one flow, then hands you an event when the money moves. See [Alviere Checkout](/guides/payment-acceptance/online-payments/alviere-checkout/introduction) and the [web integration guide](/guides/payment-acceptance/online-payments/alviere-checkout/web).
 

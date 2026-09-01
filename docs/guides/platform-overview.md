@@ -39,7 +39,7 @@ Modules are clusters of features that deliver a specific financial service. Your
 
 ## Entity hierarchy
 
-Every object in HIVE belongs to a clear parent-child hierarchy. Knowing this map makes the API a lot easier to navigate. When you create or query an entity, you'll always know what it depends on.
+Every object in HIVE has one parent. The map below tells you which UUID you need before you can create or query an entity.
 
 ```mermaid
 graph TD
