@@ -7,10 +7,7 @@ description: "Push funds in seconds over FedNow and TCH RTP, or ask a payer to s
 
 Move money in seconds instead of banking days. Instant payments run on the two US
 real-time rails, FedNow and TCH RTP, which clear and settle around the clock,
-including weekends and holidays. Use them for payouts a recipient is waiting on,
-same-day disbursements, and withdrawals where the wait is the product problem.
-
-Two operations cover it:
+including weekends and holidays. Use them when the recipient is waiting on the money.
 
 | Operation | Endpoint | Direction |
 |---|---|---|
@@ -47,8 +44,7 @@ POST /v3/instant/transfer
 }
 ```
 
-`destination` takes exactly one of two keys, and which one you send decides who gets
-paid:
+`destination` takes one of two keys, and which one you send decides who gets paid.
 
 | Key | Pays |
 |---|---|
@@ -59,7 +55,7 @@ paid:
 bank statement. It is the only free text the rail carries, so spend it on something
 the recipient will recognise, like an invoice number.
 
-`amount` is a decimal string, not cents. `"250.00"`, not `25000`.
+`amount` is a decimal string, as on every V3 endpoint. `"250.00"` is $250.00. V2 endpoints take cents instead.
 
 ### Choosing a network
 
@@ -92,8 +88,6 @@ POST /v3/instant/request
   "description": "Rent request June 2026"
 }
 ```
-
-Three things differ from a send:
 
 - **TCH RTP only.** FedNow does not carry requests for payment.
 - **`expires_at` is required.** The request closes itself at that moment and can no
@@ -142,7 +136,7 @@ goods, mark an invoice paid, or notify a recipient on the `201` alone.
 
 Poll `GET /v3/transactions/{transaction_uuid}` or listen for the transaction webhook
 for the terminal `COMPLETED` or `REJECTED`. In flight, a send sits at
-`PROCESSING_PAYMENT`; a fresh RfP sits at `CREATED` until the payer acts.
+`PROCESSING_PAYMENT`. A fresh RfP sits at `CREATED` until the payer acts.
 
 Note the sign. A send returns `amount` as a negative decimal string, because the
 funds debit the source wallet in the ledger. Sum amounts rather than branching on
@@ -156,8 +150,8 @@ Read `status_reason` first. It is present on every rejection and carries the rea
 in a form you can show or log.
 
 `type_details.instant_transfer_details.iso_reason_code` carries an ISO 20022 code
-such as `AC03`, `AG01`, or `AM09`, but **only** when the rail returned a real one. It
-is absent otherwise, so never branch on it alone. Fall back to `status_reason`.
+such as `AC03`, `AG01`, or `AM09`, but only when the rail returned one. It is absent
+otherwise, so never branch on it alone. Fall back to `status_reason`.
 
 Instant rails are final. A settled instant payment does not come back the way an ACH
 debit can be returned inside a return window, so validate the destination before you
@@ -165,10 +159,9 @@ send rather than planning to reverse afterwards.
 
 ## Idempotency
 
-`external_id` is your own identifier for the transaction and is what makes both
-endpoints safe to retry. Send the same `external_id` twice and the second call
-returns `409` with the existing transaction rather than paying twice. Generate it
-before the first attempt and reuse it on every retry of the same payment.
+`external_id` is your [idempotency key](/guides/getting-started/idempotency) and is what makes both
+endpoints safe to retry. Generate it before the first attempt and reuse it on every
+retry of the same payment.
 
 ## Related
 
