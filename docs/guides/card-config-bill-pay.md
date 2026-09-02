@@ -134,7 +134,7 @@ Give each bill its own `external_id`, for example the biller ID plus the invoice
 
 An overpayment or a duplicate payment is reversed with `POST /v3/cards/reverse` against the original transaction, for any amount up to what remains refundable, with a `refund_reason` of `DUPLICATE`, `CUSTOMER_REQUEST`, or another value from the list. The `REFUND` lands on the biller's wallet with a negative amount and `parent_transaction_uuid` pointing at the payment.
 
-The convenience fee is a separate transaction and the refund leaves it in place. Whether a refunded payer also gets the fee back is your policy and the biller's. Reversing it is a separate call on the specific fee transaction.
+The convenience fee is a separate transaction and the refund leaves it in place. Whether a refunded payer also gets the fee back is your policy and the biller's.
 
 Because the refund debits the biller's wallet, a biller swept to zero every night cannot refund until the next payment arrives. Keep a small working balance in the biller's wallet, or time remittances so one day of collections stays behind.
 
