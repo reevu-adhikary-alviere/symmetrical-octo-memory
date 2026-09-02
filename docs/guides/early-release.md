@@ -92,7 +92,7 @@ Funding instruments represent the bank account or financial source behind a depo
 
 ### Transactional history
 
-The _Calculate transactional summary data_ endpoint gives you historical signal by `account_uuid` or `funding_instrument_uuid`:
+`GET /transactions/summary-data` gives you historical signal by `account_uuid` or `funding_instrument_uuid`:
 
 - Number of returned transactions
 - Completed and failed transaction counts
