@@ -139,8 +139,8 @@ These are the ones that arrive late. Every one of them carries `parent_transacti
 |---|---|---|
 | `RETURN` | The payer's bank returning an ACH debit. Carries `type_details.ach_payment_details.return_code` | Yes |
 | `CHECK_DEPOSIT_RETURN` | A deposited check coming back unpaid | Yes |
-| `REFUND` | `POST /transactions/{transaction_uuid}/refund` | Yes |
-| `REVERSAL` | `POST /transactions/{transaction_uuid}/reverse` | Yes |
+| `REFUND` | `POST /v3/cards/reverse` against a captured card charge, or `POST /payments/refund` against a V2 payment. Refunds of an uncaptured authorization void the parent instead and create nothing | Yes |
+| `REVERSAL` | `POST /transactions/{transaction_uuid}/reverse`. Only for `SERVICE_FEE`, `CASHBACK`, `CARD_ISSUED_INITIAL`, and card-funded `LOAD_FUNDS` | Yes |
 | `CHARGEBACK` | A cardholder disputing a charge through their issuer | Yes |
 | `LOAD_PULLBACK` | A completed load being pulled back | Yes |
 
