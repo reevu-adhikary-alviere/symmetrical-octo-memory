@@ -96,7 +96,7 @@ The transaction's `type_details.global_payments_details` carries the cross-borde
 
 Cash pickup locations are searchable through the cash pickup endpoints (`GET /cash-pickup/locations`, `GET /cash-pickup/cities`) if you need to show the beneficiary where they can collect.
 
-A remittance can be refunded through `POST /transactions/{transaction_uuid}/refund`. In Sandbox the whole flow is simulated, including failure and cancellation scenarios. See [Transfers Testing](/guides/sandbox-testing/test-transfers).
+When a remittance is refunded and the sender paid in cash, the `REFUND` sits in `PENDING` until you tell Alviere how the sender gets the money back. `PUT /transactions/{transaction_uuid}/refund` with `refund_method` set to `CASH` or `CHECK` releases it. In Sandbox the whole flow is simulated, including failure and cancellation scenarios. See [Transfers Testing](/guides/sandbox-testing/test-transfers).
 
 ## Related
 
