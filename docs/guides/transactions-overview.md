@@ -102,7 +102,7 @@ The sandbox return simulator, `POST mock.snd.alviere.com/generateReturn`, accept
 
 | Type | What creates it | Wallet scope |
 |---|---|---|
-| `LOAD_FUNDS` | `POST /wallets/{wallet_uuid}/load`. Pulls from a saved card or bank payment method. Over ACH this is a pull | Yes |
+| `LOAD_FUNDS` | `POST /wallets/{wallet_uuid}/load`. Pulls from a saved card or bank payment method | Yes |
 | `CASH_LOADING` | A barcode redeemed at a retail location | Yes |
 | `CHECK_DEPOSIT` | `POST /wallets/{wallet_uuid}/check-deposits` | Yes |
 | `BANK_CREDIT` | An incoming ACH credit from an external bank account | Yes |
@@ -115,7 +115,7 @@ The sandbox return simulator, `POST mock.snd.alviere.com/generateReturn`, accept
 
 | Type | What creates it | Wallet scope |
 |---|---|---|
-| `WITHDRAW_FUNDS` | `POST /wallets/{wallet_uuid}/withdraw` to an external card or bank. Over ACH this is a push | Yes |
+| `WITHDRAW_FUNDS` | `POST /wallets/{wallet_uuid}/withdraw` to an external card or bank | Yes |
 | `BANK_DEBIT` | `POST /wallets/{wallet_uuid}/transfer` to a beneficiary's bank payout method | Yes |
 | `INTERNATIONAL_TRANSFER` | `POST /wallets/{wallet_uuid}/remittances` to an international beneficiary | Yes |
 | `CHECK_DISBURSEMENT` | A check issued out of a wallet | Yes |
@@ -135,7 +135,7 @@ These arrive late, sometimes weeks after the transaction they undo, and often af
 
 | Type | What creates it | Wallet scope |
 |---|---|---|
-| `RETURN` | The payer's bank returning an ACH debit. Carries `type_details.ach_payment_details.return_code` | Yes |
+| `RETURN` | The payer's bank sending an ACH debit back. Carries `type_details.ach_payment_details.return_code` | Yes |
 | `CHECK_DEPOSIT_RETURN` | A deposited check coming back unpaid | Yes |
 | `REFUND` | `POST /v3/cards/reverse` against a captured card charge, or `POST /payments/refund` against a V2 payment. Refunds of an uncaptured authorization void the parent instead and create nothing | Yes |
 | `REVERSAL` | `POST /transactions/{transaction_uuid}/reverse`. Only for `SERVICE_FEE`, `CASHBACK`, `CARD_ISSUED_INITIAL`, and card-funded `LOAD_FUNDS` | Yes |
