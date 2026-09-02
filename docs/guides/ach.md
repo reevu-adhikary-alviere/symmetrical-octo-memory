@@ -5,11 +5,11 @@ description: "Move funds through the ACH network: pull to load wallets, push to 
 
 # ACH
 
-Move funds through the ACH network. ACH **pulls** debit a connected bank account to load funds into a wallet. ACH **pushes** credit an external bank account from a wallet for payouts and withdrawals. Both directions settle in 1-3 banking days and can be returned after settlement.
+Move funds through the ACH network. A pull debits a connected bank account to load a wallet. A push credits an external bank account from a wallet for payouts and withdrawals. Both directions settle in one to three banking days and can be returned after settlement.
 
 Save bank accounts as [Payment Methods](/guides/resources/payment-methods) before debiting or crediting them. Plaid or the SDK handles the account connection.
 
-For ACH **payment acceptance** (incoming debits as a checkout option for billers), see [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). That guide covers mandates, return windows, R-codes, and retry rules in detail.
+To offer ACH debit as a checkout option, see [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). That guide covers mandates, return windows, R-codes, and retry rules in detail.
 
 ## How ACH moves funds
 
@@ -43,7 +43,7 @@ Weekends and federal holidays are not banking days. A Friday evening submission 
 
 A return is the payer bank sending the transfer back after settlement. Your integration did nothing wrong, and you should expect a steady trickle of them. The common codes are `R01` insufficient funds, `R02` account closed, `R03` no account on file, `R04` invalid number, and `R08` stop payment.
 
-The network caps your return rates. Administrative returns must stay below 3.0% and unauthorized returns below 0.5% over a rolling 60-day window.
+Nacha, which runs the network, caps return rates. Administrative returns must stay below 3.0% and unauthorized returns below 0.5% over a rolling 60-day window, and a program that breaches them faces network penalties.
 
 To match a return to the original debit, use the `RETURN` transaction's `parent_transaction_uuid` together with your `external_id` and the `transaction_uuid` from the `201` response. The `WALLET_TRANSACTION` webhook carries `type_details.ach_payment_details.return_code` and `return_reason`. The `trace_number` alone is not a reliable key.
 
@@ -57,6 +57,6 @@ ACH endpoints live in the [V2 API Reference](/api-v2) under **Money Movement**, 
 
 * [Payment Methods](/guides/resources/payment-methods). Save bank accounts before ACH.
 * [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). Mandates, R-codes, retries, and reconciliation.
-* [Transactions Overview](/guides/transactions/transactions-overview). Statuses and lifecycle.
+* [Transactions Overview](/guides/transactions/transactions-overview). The types ACH activity posts under.
 * [Webhooks](/guides/more/webhooks). Subscribe to `WALLET_TRANSACTION` for settlement and return events.
 * [Sandbox Testing](/guides/sandbox-testing/mock-services). Trigger returns without waiting for the network.
