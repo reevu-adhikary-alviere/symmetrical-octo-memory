@@ -33,7 +33,10 @@ A seller has to be `ACTIVE` before a charge can land in their wallet. The path f
 
 1. **Create the `BUSINESS` account** with the business details, then attach each officer as a `STAKEHOLDER`. Upload the incorporation documents as [dossiers](/guides/resources/identity).
 2. **Watch the `ACCOUNT` webhook.** The account moves through `PROCESSING`, and may stop at `PENDING_USER` when the business needs to supply something, or `MANUAL_REVIEW` when a stage needs a person. The `stage` field says which check is running: `SANCTIONS`, `PREVALIDATION`, `VERIFICATION`, `DOCUMENTS`, or `STAKEHOLDERS`. Build your seller dashboard around these so a stuck seller knows what to fix.
-3. **Assign fee rules** once the account is `ACTIVE`, if you use per-seller commission tiers. One call attaches every rule the seller needs:
+3. **Assign fee rules** once the account is `ACTIVE`, if you use per-seller commission tiers. One call attaches every rule the seller needs.
+4. **Save the seller's bank account** as a payment method on their account. Payouts go there.
+
+The fee rule association from step 3:
 
 ```bash
 PUT /v3/fee-rules/account-associations
@@ -43,8 +46,6 @@ PUT /v3/fee-rules/account-associations
   "remove_fee_rule_uuids": []
 }
 ```
-
-4. **Save the seller's bank account** as a payment method on their account so they have somewhere to be paid. Without it, funds accumulate in the wallet with no way out.
 
 Sandbox does not run KYB, so accounts there activate without the review stages. Use it to build the flow and use production to see the stages fire. [Test KYC](/guides/sandbox-testing/test-kyc) covers what the sandbox can simulate.
 
