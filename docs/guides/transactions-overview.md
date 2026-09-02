@@ -28,7 +28,7 @@ graph LR
 | Scope | What it records |
 |-------|-------------|
 | Wallet | Money moving in or out of a wallet. This is where almost everything you originate lands |
-| Passthrough | A child transaction that funds its parent straight from a payment method. A card-funded international transfer has a `CARD_PASSTHROUGH` child, and the wallet ledger never sees the money |
+| Passthrough | A child transaction that funds its parent straight from a payment method. A card-funded international transfer has a `CARD_PASSTHROUGH` child and a bank-funded one a `BANK_PASSTHROUGH` child. The wallet ledger never sees the money |
 | Vault | Movement between wallets and treasury vaults, or between a vault and the external bank behind it |
 
 ## Statuses
@@ -137,7 +137,7 @@ These arrive late, sometimes weeks after the transaction they undo, and often af
 |---|---|---|
 | `RETURN` | The payer's bank sending an ACH debit back. Carries `type_details.ach_payment_details.return_code` | Yes |
 | `CHECK_DEPOSIT_RETURN` | A deposited check coming back unpaid | Yes |
-| `REFUND` | `POST /v3/cards/reverse` against a captured card charge, or `POST /payments/refund` against a V2 payment. Refunds of an uncaptured authorization void the parent instead and create nothing | Yes |
+| `REFUND` | `POST /v3/cards/reverse` against a captured card charge, or `POST /payments/refund` against a V2 payment. Refunds of an uncaptured authorization void the parent instead and create nothing. A refund of a cash-funded transaction, such as a cash remittance, sits in `PENDING` until you set how the customer gets the money back with `PUT /transactions/{transaction_uuid}/refund`, either `CASH` or `CHECK` | Yes |
 | `REVERSAL` | `POST /transactions/{transaction_uuid}/reverse`. Only for `SERVICE_FEE`, `CASHBACK`, `CARD_ISSUED_INITIAL`, and card-funded `LOAD_FUNDS` | Yes |
 | `CHARGEBACK` | A cardholder disputing a charge through their issuer | Yes |
 | `LOAD_PULLBACK` | A completed load being pulled back | Yes |
