@@ -5,9 +5,7 @@ description: "Send cross-border payments and remittances to beneficiaries worldw
 
 # Global Money Transfers
 
-Send cross-border payments to an international beneficiary's bank account, e-wallet, card, or a cash pickup location. Currency conversion and routing run on the platform. You set up the beneficiary, create the quote, and send the remittance.
-
-The flow has three steps, and the first two happen before any money moves:
+Send cross-border payments to an international beneficiary's bank account, e-wallet, card, or a cash pickup location. Alviere handles the currency conversion and the routing. You set up the beneficiary, price the transfer with a quote, and commit the quote. No money moves until the last step.
 
 1. Set up the recipient as a [beneficiary](/guides/resources/beneficiaries) of international type, with a payout method for how they want to receive the money.
 2. Price the transfer with a quote, which fixes the FX rate, the fees, and the amount the beneficiary receives.
@@ -34,9 +32,9 @@ POST /wallets/{wallet_uuid}/quote
 }
 ```
 
-`amount_currency` decides what `amount` means: `ORIGIN_CURRENCY` quotes from the program's base currency, `DESTINATION_CURRENCY` quotes from the amount the beneficiary should receive. Quote from whichever side your customer thinks in.
+`amount_currency` decides what `amount` means. `ORIGIN_CURRENCY` quotes from the program's base currency and `DESTINATION_CURRENCY` from the amount the beneficiary should receive. Quote from whichever side your customer thinks in.
 
-The response carries everything you need to show before committing:
+The response carries what you show the sender before they confirm.
 
 ```json
 {
@@ -53,9 +51,9 @@ The response carries everything you need to show before committing:
 
 - **`send_amount`** is what the beneficiary receives, in the destination currency.
 - **`transaction_cost`** is the total cost to the sender in cents, funding plus service fees.
-- **`expires_at`** is the deadline. Quotes are rate locks, and rates move. Commit before expiry or requote.
+- **`expires_at`** is when the locked rate lapses. Commit before it or request a new quote.
 
-Two pricing options exist for programs with external FX management: `exchange_rate` supplies your own rate, and `exchange_rate_markup` sets a percent markup over mid-market. Service fees on quotes are limited to `UPCHARGE` type.
+Programs that manage their own FX can pass `exchange_rate` to supply the rate, or `exchange_rate_markup` for a percent markup over mid-market. Service fees on a quote must be `UPCHARGE`.
 
 ## Sending
 
@@ -72,22 +70,22 @@ POST /wallets/{wallet_uuid}/remittances
 }
 ```
 
-The quote drives the amount, the rate, and the destination, so the remittance body carries none of them. What it does carry:
+The quote already fixed the amount, the rate, and the destination, so the remittance body carries none of them.
 
 | Field | Notes |
 |---|---|
 | `quote_uuid` | Required. The quote to commit |
-| `external_id` | Your idempotency key. Retrying with the same value returns `409` with the original transaction |
+| `external_id` | Your [idempotency key](/guides/getting-started/idempotency) |
 | `payment_method_uuid` | Optional. Fund from a saved payment method instead of wallet balance |
 | `funding_method` | Set to `CASH` when the sender pays with cash |
 | `transaction_purpose` | Free-form compliance field. Valid values are corridor-specific |
 | `source_of_funds` | One of `EMPLOYMENT_INCOME`, `OWNED_BUSINESS`, `FAMILY_INCOME`, `SAVINGS`, `INVESTMENTS`, `INHERITANCE`, `PROCEEDS_OF_SALE`, `PENSION` |
 
-`transaction_purpose` and `source_of_funds` are regulatory fields, not metadata. Collect them deliberately in your flow. A remittance can be held for review when they are missing or implausible.
+`transaction_purpose` and `source_of_funds` are regulatory fields, not metadata. Ask the sender for them as part of the flow rather than defaulting them, because a remittance with a missing or implausible value can be held for review.
 
 ## Following the money
 
-The transaction's `type_details.global_payments_details` carries the cross-border specifics:
+The transaction's `type_details.global_payments_details` carries the cross-border specifics.
 
 - `exchange_rate`, the rate actually applied.
 - `transaction_reference`, the code the beneficiary presents at a cash pickup location.
@@ -101,6 +99,6 @@ When a remittance is refunded and the sender paid in cash, the `REFUND` sits in 
 ## Related
 
 - [Beneficiaries](/guides/resources/beneficiaries). Set up recipients and payout methods.
-- [Transactions Overview](/guides/transactions/transactions-overview). Statuses and lifecycle.
+- [Transactions Overview](/guides/transactions/transactions-overview). `INTERNATIONAL_TRANSFER` and the passthrough children.
 - [Internal Transfers](/guides/transactions/internal-transfers). Same-program wallet-to-wallet transfers.
 - [Transfers Testing](/guides/sandbox-testing/test-transfers). Simulating remittances in Sandbox.
