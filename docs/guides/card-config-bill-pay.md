@@ -1,6 +1,6 @@
 ---
 title: "Bill Pay"
-description: "Collect bill payments by card on behalf of billers, with a disclosed convenience fee and autopay you control"
+description: "Take bill payments by card for the billers on your platform, pass the card cost to the payer, and remit to each biller"
 ---
 
 # Bill Pay
@@ -12,16 +12,16 @@ A payer settles a bill by card, the funds land in the biller's account, and the 
 ```
 Your platform (the program)
 ├── Program fee revenue          your SERVICE_FEE per payment, if you charge one
-├── Biller A   BUSINESS account, KYB'd
+├── Biller A   BUSINESS account, KYB complete
 │   └── wallet                   receives A's payments, pays A's refunds
-├── Biller B   BUSINESS account, KYB'd
+├── Biller B   BUSINESS account, KYB complete
 │   └── wallet
 └── Payers     guests paying once, or CONSUMER accounts with a saved card for autopay
 ```
 
 **Billers** are `BUSINESS` accounts, one per biller, each through KYB with its officers attached as `STAKEHOLDER` accounts. The biller's wallet is the `destination.wallet_uuid` on every payment for that biller. Store it against your biller record at onboarding. [Accounts](/guides/resources/accounts) covers the statuses and the stages a biller can get stuck in during review.
 
-**Payers** are usually guests. A guest pays with a card passed inline on the charge, which puts card data on your servers and inside your PCI scope. A payer who enrolls in autopay needs a `CONSUMER` account holding a saved [payment method](/guides/resources/payment-methods), which the SDK can tokenize so the card number never reaches you. Most bill pay platforms run both: guests for one-time payments, accounts for autopay.
+**Payers** paying a one-off bill are guests. Their card is passed inline on the charge, so card data crosses your servers and sits inside your PCI scope. A payer who enrolls in autopay needs a `CONSUMER` account with a saved [payment method](/guides/resources/payment-methods). Tokenize it through the SDK and the card number never reaches you. Plan for both kinds of payer from the start.
 
 ## Onboard a biller
 
@@ -66,15 +66,15 @@ POST /v3/cards/debit
 }
 ```
 
-`amount` is whatever your system says is due. The platform charges what you send, so partial payments, overpayments, and minimum-due rules are yours to enforce before the call. `merchant_details.descriptor` puts the biller's name on the payer's statement. A payer who sees your platform's name instead of their utility's will call their bank. `metadata` carries the biller and the payer's account reference, and it comes back on every transaction and webhook, which is how you build the biller's remittance file.
+`amount` is whatever your system says is due. Alviere charges what you send, so partial payments, overpayments, and minimum-due rules are yours to enforce before the call. `merchant_details.descriptor` puts the biller's name on the payer's statement. A payer who sees your platform's name instead of their utility's will call their bank. `metadata` carries the biller and the payer's account reference, and it comes back on every transaction and webhook, which is how you build the biller's remittance file.
 
-Bill pay by card is always `AUTHCAP`. There is nothing to ship, so there is nothing to wait for. Use `channel: MOTO` for payments an agent keys in from a phone call.
+Use `AUTHCAP`. A bill has nothing to ship, so a separate capture step would only delay the biller's funds. Use `channel: MOTO` for payments an agent keys in from a phone call.
 
-The response is the transaction. `COMPLETED` means the payment went through. `FAILED` carries a `status_reason` such as `NON_SUFFICIENT_FUNDS` to show the payer. `PENDING` with `status_reason: 3DS_AUTH_REQUIRED` means the payer's bank wants to verify them: redirect the payer to the `redirect_url` in `type_details.card_payment_details.3ds_challenge`, and after they finish, read the final result from `GET /v3/transactions/{transaction_uuid}` or the `WALLET_TRANSACTION` webhook.
+The response is the transaction. `COMPLETED` means the payment went through. `FAILED` carries a `status_reason` such as `NON_SUFFICIENT_FUNDS` to show the payer. `PENDING` with `status_reason: 3DS_AUTH_REQUIRED` means the payer's bank wants to verify them. Redirect the payer to the `redirect_url` in `type_details.card_payment_details.3ds_challenge`. When they return, read the final result from `GET /v3/transactions/{transaction_uuid}` or the `WALLET_TRANSACTION` webhook, never from the redirect itself.
 
 ## The convenience fee
 
-Billers rarely absorb card cost. A convenience fee is a fee rule with `fee_type: CONVENIENCE_FEE` and `calc_type: UPCHARGE`. It increases what the payer's card is charged, and the fee is credited to the biller's wallet as a positive child transaction on the payment. It is the biller's money. Revenue for your platform is the service fee, described below.
+A convenience fee moves the card cost to the payer. It is a fee rule with `fee_type: CONVENIENCE_FEE` and `calc_type: UPCHARGE`. It increases what the payer's card is charged, and the fee is credited to the biller's wallet as a positive child transaction on the payment. It is the biller's money. Revenue for your platform is the service fee, described below.
 
 ```bash
 POST /v3/fee-rules
@@ -114,7 +114,7 @@ A $142.37 bill, a $2.95 convenience fee kept by the biller, and a $0.50 platform
 
 ## Autopay
 
-Autopay by card is your scheduler calling the charge endpoint on the due date with the payer's saved card. The platform's payment schedules take bank accounts with a mandate, so they are the tool for ACH autopay, and card autopay stays with you.
+Autopay by card is your scheduler calling the charge endpoint on the due date with the payer's saved card. Alviere's own payment schedules debit bank accounts under a mandate, which makes them the tool for ACH autopay. Card autopay runs on your side.
 
 Enrollment is a charge with the payer present. Charge the current bill against the saved card with a `recurring` block of `initiator: CARDHOLDER`, `processing_model: UNSCHEDULED`, `sequence: INITIAL`. That stores the credential for later. Every automatic payment after that is:
 
@@ -140,25 +140,19 @@ Because the refund debits the biller's wallet, a biller swept to zero every nigh
 
 ## Chargebacks
 
-A chargeback is raised by the payer's bank against a specific payment, and that payment belongs to a biller. Agree with each biller before launch who absorbs a lost chargeback. Your program manager will explain how chargebacks are worked on your program. The best defense is the descriptor: a payer who recognizes their utility's name on the statement does not dispute the charge.
+The payer's bank raises a chargeback against one payment, and that payment belongs to a biller. Agree with each biller before launch who absorbs a lost chargeback. Your program manager will explain how your program handles them. Most of the defense is the descriptor. A payer who reads their utility's name on the statement has no reason to dispute it.
 
 ## Remit to billers
 
-Collections settle into each biller's wallet on the card settlement schedule. Remittance is a withdrawal from that wallet to the biller's saved bank account, and there are three ways to run it.
-
-**On demand.** `POST /wallets/{wallet_uuid}/withdraw` for an amount, when your remittance job decides. Funds sit in `captive` until the bank settles them, one to three banking days.
-
-**On a schedule.** `POST /v3/schedule/withdraws` with `amount.type: RULE` and `rule_name: SETTLED_BALANCE` sweeps what has settled on a daily, weekly, or monthly cadence. Most bill pay platforms run a daily sweep per biller. An occurrence that finds nothing settled records a `SKIPPED` execution and moves no money.
-
-**Instantly.** `POST /v3/instant/transfer` to the biller's bank payment method settles in seconds, for billers who pay for same-day remittance. See [Instant Payments](/guides/transactions/instant-payments).
+Collections settle into each biller's wallet on the card settlement schedule. Remittance is a withdrawal from that wallet to the bank account you saved for the biller. The usual shape is one `POST /v3/schedule/withdraws` per biller with `amount.type: RULE` and `rule_name: SETTLED_BALANCE` on a daily frequency, so each biller receives yesterday's collections without your remittance job touching the API. Bank settlement takes one to three banking days. A biller who pays for same-day remittance can be paid over `POST /v3/instant/transfer` instead, which settles in seconds. The on-demand, scheduled, and instant options are described in full under [Getting paid](/guides/payment-acceptance/use-cases/card-config-direct-merchant#getting-paid) in the direct merchant guide.
 
 ### The remittance file
 
-Billers need to post each payment to the right customer account. `GET /v3/transactions` filtered by the biller's account returns every `PAYMENT` with its `metadata`, so the payer account reference and invoice ID you set at charge time come straight back, alongside the child fees and any `REFUND`. Build the biller's daily file from that, and reconcile the total against the sweep. [Periodic Reports](/guides/reporting/periodic-reports) deliver the same records as CSV on SFTP with the same UUIDs for billers who want a drop rather than an API.
+Billers need to post each payment to the right customer account. `GET /v3/transactions` filtered by the biller's account returns every `PAYMENT` with its `metadata`, so the payer account reference and invoice ID you set at charge time come straight back, alongside the child fees and any `REFUND`. Build the biller's daily file from that, and reconcile the total against the sweep. A biller who wants a file drop rather than an API can take the same records from [Periodic Reports](/guides/reporting/periodic-reports), delivered as CSV over SFTP.
 
 ## Card and ACH together
 
-The same biller accounts, fee rules, and remittance flow serve both rails. Offer [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) as the low-cost default for recurring bills and card as the option for payers who want instant confirmation or need to pay today. The ACH side also brings the platform's payment schedules, so ACH autopay can run on the platform while card autopay runs on your scheduler.
+The same biller accounts, fee rules, and remittance flow serve both rails. Offer [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction) as the low-cost default for recurring bills and card as the option for payers who want instant confirmation or need to pay today. ACH autopay can run on Alviere's payment schedules while card autopay runs on yours.
 
 ## Related
 
