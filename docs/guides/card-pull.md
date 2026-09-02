@@ -53,7 +53,7 @@ The load posts as `LOAD_FUNDS` with a positive amount, since this is money in. S
 Two late-arrival cases to build for:
 
 - **`LOAD_PULLBACK`**. A completed load being pulled back, carrying `parent_transaction_uuid` pointing at the original load. See [Transactions Overview](/guides/transactions/transactions-overview#reversals-and-money-coming-back).
-- **`REFUND`**. Loads can be refunded through `POST /transactions/{transaction_uuid}/refund`.
+- **`REVERSAL`**. `POST /transactions/{transaction_uuid}/reverse` against a completed card load sends the money back to the card and posts a `REVERSAL` with a negative amount.
 
 ## Related
 
