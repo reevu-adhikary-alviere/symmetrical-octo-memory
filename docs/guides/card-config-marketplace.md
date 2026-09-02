@@ -1,29 +1,29 @@
 ---
 title: "Marketplace"
-description: "Charge buyers, pay sellers, and keep your commission, with the split enforced by fee rules on every charge"
+description: "Charge buyers at your checkout, pay each seller what they earned, and keep your commission on every sale"
 ---
 
 # Marketplace
 
-You run a platform where sellers transact through you. A buyer pays at your checkout, the seller gets the sale, and you keep a commission. On Alviere the seller is an account, the buyer is a card, and the commission is a fee rule that fires on every charge. Nothing on the charge request itself says "marketplace."
+You run a platform where sellers transact through you. A buyer pays at your checkout, the seller gets the sale, and you keep a commission. On Alviere the seller is an account, the buyer is a card, and the commission is a fee rule that fires on every charge.
 
-One fact about the API shapes every decision on this page. A card charge settles into exactly one wallet, the `destination.wallet_uuid` you name on the request. Refunds come back out of that wallet, chargebacks land on that seller's charge, and fees are computed from it. Decide which wallet receives each charge and the rest of the design follows.
+A card charge settles into exactly one wallet, the `destination.wallet_uuid` you name on the request. Refunds come back out of that wallet, chargebacks land on that seller's charge, and fees are computed from it. Every design choice on this page comes back to which wallet you name.
 
 ## The parties
 
 ```
 Your platform (the program)
 ├── Program fee revenue          where SERVICE_FEE commission lands
-├── Seller A   BUSINESS account, KYB'd
+├── Seller A   BUSINESS account, KYB complete
 │   └── wallet                   receives A's sales, pays A's refunds
-├── Seller B   BUSINESS account, KYB'd
+├── Seller B   BUSINESS account, KYB complete
 │   └── wallet
 └── Buyers     guests at checkout, or CONSUMER accounts with saved cards
 ```
 
 **Sellers** are `BUSINESS` accounts on your program. Each goes through KYB before it can receive funds. The officers of the business are attached as `STAKEHOLDER` accounts, which is where individual identity checks run. [Accounts](/guides/resources/accounts) covers the statuses and stages.
 
-**Buyers** come in two forms, and the choice is yours to make early. A guest buyer is a card passed inline on the charge, which means card data touches your servers and your PCI scope. A returning buyer with a saved card is a `CONSUMER` account holding a [payment method](/guides/resources/payment-methods), which the SDK can tokenize so the card number never reaches you. Returning buyers cost you an account per buyer. Guests cost you PCI.
+**Buyers** are either guests or account holders, and you should decide early which you support. A guest buyer's card is passed inline on the charge, so card data touches your servers and widens your PCI scope. An account holder is a `CONSUMER` account with a saved [payment method](/guides/resources/payment-methods) that the SDK tokenized, so you hold a reference and never the card number. Account holders mean one account per buyer to create and maintain. Guests mean PCI obligations on your side.
 
 **You**, the platform, are the program. Commission revenue from `PROGRAM`-owned fee rules accrues to the program, and you see it as `SERVICE_FEE` child transactions on each sale.
 
@@ -73,17 +73,15 @@ POST /v3/cards/debit
 }
 ```
 
-Three fields do marketplace work here.
-
 **`destination.wallet_uuid`** picks the seller. Get this wrong and the money lands in the wrong seller's wallet, and the only way back is a refund and a new charge. Store the wallet UUID against your seller record at onboarding and never look it up by name.
 
-**`merchant_details`** controls what the buyer sees on their card statement. Put the seller's name in the descriptor so the buyer recognizes the charge. Unrecognized charges are the most common cause of avoidable chargebacks. Card networks limit descriptor length and format, so keep it short and test it.
+**`merchant_details`** controls what the buyer sees on their card statement. Put the seller's name in the descriptor. A buyer who recognizes the charge has no reason to dispute it. Card networks limit descriptor length and format, so keep it short and test it.
 
 **`metadata`** is where your order and seller IDs go. It comes back on every transaction, every child fee, and every webhook, so put in whatever your reconciliation will need to join on.
 
 ### Authorize now, capture on fulfillment
 
-Physical goods marketplaces usually authorize at checkout and capture when the seller ships. Send `auth_type: AUTH` at checkout, then `POST /v3/cards/capture` with the transaction UUID when the seller confirms shipment. Capture less than the authorized amount if an item was removed, and the difference is released to the buyer's card. If the seller never ships, `POST /v3/cards/reverse` voids the authorization with no refund transaction and nothing for anyone to reconcile.
+For physical goods, authorize at checkout and capture when the seller ships. Send `auth_type: AUTH` at checkout, then `POST /v3/cards/capture` with the transaction UUID when the seller confirms shipment. Capture less than the authorized amount if an item was removed, and the difference is released to the buyer's card. If the seller never ships, `POST /v3/cards/reverse` voids the authorization. No refund transaction is created.
 
 ### Preview the split before the buyer confirms
 
@@ -142,7 +140,7 @@ The parent `PAYMENT` returned by `GET /v3/transactions/{transaction_uuid}` carri
 
 A refund is `POST /v3/cards/reverse` against the original transaction UUID with an amount up to what remains refundable and a `refund_reason`. It creates a `REFUND` transaction with a negative amount on the seller's wallet, linked back through `parent_transaction_uuid`. Partial refunds work, and you can refund the same charge more than once until it is exhausted.
 
-The refund debits the seller's wallet because the sale credited it. If the wallet cannot cover it, the refund cannot complete, so a seller who withdraws every dollar the moment it settles is a seller who cannot refund. The payout section below has the answer to that.
+The refund debits the seller's wallet because the sale credited it. If the wallet cannot cover the amount, the refund fails. A seller whose balance is swept to zero every night cannot refund until the next sale lands, which is why the payout section below recommends holding a reserve.
 
 Your commission is a separate transaction and the refund leaves it alone. Whether you return it to the seller is your policy. When you do, reverse the specific fee with `POST /wallets/{wallet_uuid}/service-fees/{transaction_uuid}/reverse` on the seller's wallet, which creates a `SERVICE_FEE_REVERSAL`.
 
@@ -150,33 +148,27 @@ An authorization that was never captured is voided rather than refunded. The rev
 
 ## Chargebacks
 
-A chargeback is raised by the buyer's bank against a specific charge, and that charge belongs to a seller. Decide before launch how the loss is handled. Some platforms pass it to the seller. Others absorb it and recover through the next commission. Your program manager will walk you through how chargebacks are worked on your program and what evidence is needed.
+The buyer's bank raises a chargeback against one charge, and that charge belongs to a seller. Decide before launch who eats the loss. Some platforms pass it to the seller. Others absorb it and recover it from the next commission. Your program manager will walk you through how your program handles chargebacks and what evidence to keep.
 
-The cheapest chargeback is the one that never happens. A recognizable `merchant_details.descriptor`, a refund policy the seller can act on quickly, and capturing on shipment rather than at checkout remove most of them.
+A recognizable `merchant_details.descriptor`, a refund policy the seller can act on quickly, and capturing on shipment rather than at checkout prevent most of them.
 
 ## Pay sellers
 
-Funds from a sale settle into the seller's wallet and are available according to the card settlement schedule. Getting them to the seller's bank is a withdrawal from that wallet to the bank payment method you saved at onboarding. You have three ways to run it.
-
-**On demand.** `POST /wallets/{wallet_uuid}/withdraw` for a specific amount, when the seller clicks "pay out" or your logic decides to. The amount moves to the wallet's `captive` bucket until the bank settles it, one to three banking days.
-
-**On a schedule.** `POST /v3/schedule/withdraws` creates a standing instruction. Set `amount.type: RULE` with `rule_name: SETTLED_BALANCE` and a daily or weekly frequency, and each occurrence sweeps whatever has settled since the last one. Occurrences on weekends and holidays run the next banking day. An occurrence that finds nothing settled records a `SKIPPED` execution rather than a zero transaction.
-
-**Instantly.** `POST /v3/instant/transfer` with the seller's `payment_method_uuid` as the destination pushes over an instant rail and settles in seconds. Charge the seller for it through a fee if you like. See [Instant Payments](/guides/transactions/instant-payments).
+Funds from a sale settle into the seller's wallet on the card settlement schedule. Paying the seller is a withdrawal from that wallet to the bank payment method you saved at onboarding. With many sellers, a standing instruction per seller beats a payout job of your own. `POST /v3/schedule/withdraws` with `amount.type: RULE` and `rule_name: SETTLED_BALANCE` sweeps whatever has settled since the last run, daily or weekly, and skips silently when there is nothing to move. Sellers who want their money now can trigger `POST /wallets/{wallet_uuid}/withdraw` from your dashboard, or you can offer `POST /v3/instant/transfer` for a fee and settle in seconds. [Getting paid](/guides/payment-acceptance/use-cases/card-config-direct-merchant#getting-paid) in the direct merchant guide describes all three in full.
 
 ### Holding a reserve
 
-Nothing in the platform holds seller funds back automatically. If you want a buffer for refunds and chargebacks, build it into the payout timing. Sweep on a weekly rather than daily schedule, or withdraw on demand only the portion of the balance older than your chargeback window. The wallet's `balance` versus `available` buckets tell you what has settled. Your own ledger of charge dates tells you what has aged.
+Alviere does not hold seller funds back automatically. If you want a buffer for refunds and chargebacks, build it into the payout timing. Sweep weekly rather than daily, or withdraw on demand only the portion of the balance older than your chargeback window. The wallet's `balance` and `available` buckets tell you what has settled, and your own record of charge dates tells you what has aged past the window.
 
 ## Splitting one cart across sellers
 
 A charge has one destination, so a cart with items from three sellers is three charges, one per seller, each with its own `external_id`. The buyer sees three lines on their statement, each with that seller's descriptor. Authorize all three, then capture each as its seller ships.
 
-If you would rather the buyer see one charge, land it in a wallet you control and move the seller shares afterward with `POST /wallets/{wallet_uuid}/send`. That is an [internal transfer](/guides/transactions/internal-transfers) and needs the P2P module on your program. In this model the refund and chargeback liability sit in your wallet rather than the seller's, and your commission is whatever you keep back rather than a fee rule. It is more work and more exposure. Take it on only when a single statement line is a hard requirement.
+If you would rather the buyer see one charge, land it in a wallet you control and move the seller shares afterward with `POST /wallets/{wallet_uuid}/send`. That is an [internal transfer](/guides/transactions/internal-transfers) and needs the P2P module on your program. In this model the refund and chargeback liability sit in your wallet rather than the seller's, and your commission is whatever you keep back rather than a fee rule. Take on that exposure only when a single statement line is a hard requirement.
 
 ## What the seller sees
 
-Give sellers a view of their own money. Everything you need is on `GET /v3/transactions` filtered by their account: each `PAYMENT` with its child fees, each `REFUND` linked to its parent, and each withdrawal with its status. The `metadata` you set at charge time ties every row back to an order. For end-of-day and month-end, [Periodic Reports](/guides/reporting/periodic-reports) deliver the same records as CSV on SFTP with the same UUIDs.
+Give sellers a view of their own money. Everything you need is on `GET /v3/transactions` filtered by their account: each `PAYMENT` with its child fees, each `REFUND` linked to its parent, and each withdrawal with its status. The `metadata` you set at charge time ties every row back to an order. If sellers want a month-end statement rather than a live view, [Periodic Reports](/guides/reporting/periodic-reports) carry the same transactions, with the same UUIDs, as CSV files on SFTP.
 
 ## Related
 
