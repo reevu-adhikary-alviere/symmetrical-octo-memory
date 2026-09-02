@@ -73,15 +73,13 @@ stateDiagram-v2
 
 ## Transaction types
 
-The API reference enumerates 47 transaction types, and `WIRE_TRANSFER` is a real one it currently omits. You will never handle all of them: your program's modules determine which ones you can actually produce. What matters when you build is knowing which types you originate yourself, which ones Alviere posts on your behalf, and which ones can show up unannounced days after the fact.
+The API reference enumerates 47 transaction types, and `WIRE_TRANSFER` is a real one it currently omits. Your program's modules decide which of them you can produce, so you will handle a fraction. What matters when you build is knowing which types you originate yourself, which ones Alviere posts on your behalf, and which ones can show up unannounced days after the fact.
 
 Nine of them never appear on a wallet ledger. They exist at the vault or passthrough scope, so if you are reading `GET /wallets/{wallet_uuid}/transactions` you will not see them. Read `GET /transactions` instead.
 
-## Types are operations, not rails
+### Types are operations, not rails
 
-This is the distinction that trips people up most, so it is worth stating before the tables.
-
-A transaction type tells you **what operation happened**. It does not tell you **which rail carried the money**. The two are orthogonal, and there is no `ACH` transaction type because ACH is not an operation.
+A transaction type tells you what operation happened. It does not tell you which rail carried the money. The two are independent, and there is no `ACH` transaction type because ACH is not an operation.
 
 ACH shows up under whichever type matches the operation:
 
@@ -96,9 +94,9 @@ ACH shows up under whichever type matches the operation:
 
 So an ACH debit created through `POST /v3/ach/debit` lands in your ledger as a `PAYMENT`, not as anything named ACH. If you are reconciling ACH volume, filtering for a single type will undercount it.
 
-The same logic runs the other way: `LOAD_FUNDS` and `WITHDRAW_FUNDS` are not ACH-only. Both also carry card. The type is the operation; check `type_details` for the rail.
+The same logic runs the other way. `LOAD_FUNDS` and `WITHDRAW_FUNDS` are not ACH-only, since both also carry card. The type is the operation. Check `type_details` for the rail.
 
-The sandbox agrees with this grouping. `POST mock.snd.alviere.com/generateReturn` accepts exactly `LOAD_FUNDS`, `PAYMENT`, `WITHDRAW_FUNDS`, and `BANK_DEBIT`, because those are the pulls and pushes that ACH can return. See [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction).
+The sandbox return simulator, `POST mock.snd.alviere.com/generateReturn`, accepts exactly `LOAD_FUNDS`, `PAYMENT`, `WITHDRAW_FUNDS`, and `BANK_DEBIT`, because those are the pulls and pushes that ACH can return. See [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction).
 
 ### Money in
 
@@ -133,7 +131,7 @@ The sandbox agrees with this grouping. `POST mock.snd.alviere.com/generateReturn
 
 ### Reversals and money coming back
 
-These are the ones that arrive late. Every one of them carries `parent_transaction_uuid` pointing at the transaction it undoes, and every one of them can land after you have already delivered value.
+These arrive late, sometimes weeks after the transaction they undo, and often after you have already delivered value. Each carries `parent_transaction_uuid` pointing at that transaction.
 
 | Type | What creates it | Wallet scope |
 |---|---|---|
@@ -155,7 +153,7 @@ These are the ones that arrive late. Every one of them carries `parent_transacti
 
 ### Issued cards
 
-Every one of these is posted by Alviere in response to network activity. You do not originate them.
+Alviere posts all of these in response to card network activity. You do not originate them.
 
 | Type | Meaning |
 |---|---|
@@ -198,7 +196,7 @@ Do not switch on `transaction_type` alone when deciding whether money moved in o
 
 Per-type fields live under `type_details`, a discriminated object keyed on the transaction type.
 
-Both list endpoints filter by transaction type server-side, through a query parameter named `type`. That is not `transaction_type`, which is the field name on the response object and easy to grep past. `type` takes any of the 38 wallet-scope types, comma-separated for multiples:
+Both list endpoints filter by transaction type server-side, through a query parameter named `type`. The response field is `transaction_type`, and the mismatch is easy to grep past. `type` takes any of the 38 wallet-scope types, comma-separated for multiples:
 
 ```
 GET /transactions?type=LOAD_FUNDS,WITHDRAW_FUNDS
@@ -206,4 +204,4 @@ GET /transactions?type=LOAD_FUNDS,WITHDRAW_FUNDS
 
 Combine it with `status`, `start_date` and `end_date`, and the entity filters (`account_uuid`, `wallet_uuid`, `beneficiary_uuid`, `issued_card_uuid`, `payment_method_uuid`).
 
-One boundary: the `type` enum covers only the wallet-scope list. The vault- and passthrough-scope types from the tables above are not filterable this way. That includes `PREFUND`, `ACH_PRENOTE`, the passthrough family, and the treasury movements. If you need those, read `GET /transactions` without a type filter and match on `transaction_type` in the response.
+The `type` enum covers only the wallet-scope list. The vault- and passthrough-scope types from the tables above are not filterable this way. That includes `PREFUND`, `ACH_PRENOTE`, the passthrough family, and the treasury movements. If you need those, read `GET /transactions` without a type filter and match on `transaction_type` in the response.
