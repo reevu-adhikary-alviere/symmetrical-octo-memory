@@ -47,7 +47,7 @@ The network caps your return rates. Administrative returns must stay below 3.0% 
 
 To match a return to the original debit, use the `RETURN` transaction's `parent_transaction_uuid` together with your `external_id` and the `transaction_uuid` from the `201` response. The `WALLET_TRANSACTION` webhook carries `type_details.ach_payment_details.return_code` and `return_reason`. The `trace_number` alone is not a reliable key.
 
-For the full return handling story, including retry limits and the 10-day proof-of-authorization window, see [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). The V3 request has no `company_entry_description` field. Retries are new `POST /v3/ach/debit` calls with a new `external_id`.
+For the full return handling story, including retry limits and the 10-day proof-of-authorization window, see [Pay by Bank](/guides/payment-acceptance/online-payments/pay-by-bank/introduction). Retries are new `POST /v3/ach/debit` calls with a new `external_id`.
 
 ## API reference
 
