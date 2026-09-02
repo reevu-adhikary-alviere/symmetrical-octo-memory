@@ -47,8 +47,7 @@ The response is the transaction. Read `status` and `status_reason` together.
 
 | `status` | `status_reason` | What happened |
 |---|---|---|
-| `COMPLETED` | | Authorized and captured. The money is on its way to your wallet |
-| `COMPLETED` with `captured_at` absent | | Authorized only. Capture it later |
+| `COMPLETED` | | Authorized. If `type_details.card_payment_details.captured_at` is set, captured too and the money is on its way to you. If it is absent, capture it later |
 | `PENDING` | `3DS_AUTH_REQUIRED` | The buyer's bank wants to verify them. See below |
 | `FAILED` | `NON_SUFFICIENT_FUNDS` and others | Declined. Show the buyer a retry with a different card |
 
