@@ -5,9 +5,7 @@ description: "Generate barcodes so customers can load cash into their wallet at 
 
 # Cash Loading
 
-Let customers turn physical cash into wallet balance at a retail register. You generate a one-time barcode through the API, the customer presents it at the register of a participating store, the cashier scans it and takes the cash, and a `CASH_LOADING` transaction credits the wallet.
-
-Two endpoints cover it:
+Let customers turn cash into wallet balance at a retail register. You generate a one-time barcode, the customer shows it at a participating store, the cashier scans it and takes the cash, and a `CASH_LOADING` transaction credits the wallet.
 
 | Operation | Endpoint |
 |---|---|
@@ -29,16 +27,16 @@ POST /cash-load/barcode
 }
 ```
 
-`owner` takes exactly one of two keys:
+`owner` takes one of two keys.
 
 | Key | Funds land in |
 |---|---|
 | `wallet_uuid` | That wallet |
 | `account_uuid` | The account's primary wallet |
 
-`external_id` is your idempotency key. Sending the same value again returns `409` with the original barcode rather than a new one, so a retried request can never mint a second barcode.
+`external_id` is your [idempotency key](/guides/getting-started/idempotency). A retried request with the same value gets the original barcode back, not a second one.
 
-The response is a render-ready barcode:
+The response is a barcode you can render as is.
 
 ```json
 {
@@ -56,13 +54,11 @@ The response is a render-ready barcode:
 }
 ```
 
-Three things on the barcode drive what you show the customer:
+- **`barcode_image`** is a base64 PNG in `CODE-128`. Render it as delivered rather than rebuilding it from `barcode_data`.
+- **`limits`** gives the minimum and maximum load for this barcode, in cents. Enforce them in your UI before the customer travels to the store.
+- **`expires_at`** is when the barcode stops working. A barcode also stops working after one use.
 
-- **`barcode_image`** is a base64 PNG in `CODE-128` format. Render it as-is; do not rebuild the barcode from `barcode_data`.
-- **`limits`** gives the min and max load amounts for this barcode, in cents. Enforce them in your UI before the customer travels to the store.
-- **`expires_at`** is when the barcode stops working. Treat it as one-time: a barcode that has been used once will fail.
-
-You can pass `customer_location` with the customer's latitude and longitude when generating. It helps route the load to the right store network.
+You can pass `customer_location` with the customer's latitude and longitude when generating, so the barcode is issued for the store network nearest them.
 
 ## Finding stores
 
@@ -74,10 +70,10 @@ Search by `postal_code`, or by `latitude` and `longitude`, with a `radius` in mi
 
 ## Statuses
 
-A cash load follows `CREATED` → `PROCESSING_PAYMENT` → `COMPLETED`. The transaction posts as `CASH_LOADING` with a positive amount, and its `type_details` carries the store and barcode data. In Sandbox the whole flow is simulated. See [Cash Loading Testing](/guides/sandbox-testing/test-cash-loading) for the mock endpoint and failure scenarios.
+A cash load runs `CREATED`, then `PROCESSING_PAYMENT`, then `COMPLETED`. The transaction posts as `CASH_LOADING` with a positive amount, and its `type_details` carries the store and barcode data. In Sandbox the whole flow is simulated. See [Cash Loading Testing](/guides/sandbox-testing/test-cash-loading) for the mock endpoint and failure scenarios.
 
 ## Related
 
 - [Wallets](/guides/resources/wallets). Where loaded cash lands.
-- [Transactions Overview](/guides/transactions/transactions-overview). Statuses and lifecycle.
+- [Transactions Overview](/guides/transactions/transactions-overview). `CASH_LOADING` and its `type_details`.
 - [Cash Loading Testing](/guides/sandbox-testing/test-cash-loading). Simulating loads in Sandbox.
