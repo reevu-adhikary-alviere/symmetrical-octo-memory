@@ -70,7 +70,7 @@ You can pass `customer_location` with the customer's latitude and longitude when
 GET /cash-load/locations?postal_code=30303&radius=5
 ```
 
-Search by `postal_code`, or by `latitude` and `longitude`, with a `radius` in miles from 0.1 to 25 (default 5). The response returns store name, address, phone numbers, distance, and the network's `store_network_id`. The same identifier later shows up on the transaction's `type_details`, which ties a load back to where it happened.
+Search by `postal_code`, or by `latitude` and `longitude`, with a `radius` in miles from 0.1 to 25. The response returns store name, address, phone numbers, distance, and the network's `store_network_id`. The same identifier later shows up on the transaction's `type_details`, which ties a load back to where it happened.
 
 ## Statuses
 
