@@ -27,7 +27,7 @@ Your platform (the program)
 
 1. Create the `BUSINESS` account and its `STAKEHOLDER` accounts, and upload incorporation documents as [dossiers](/guides/resources/identity).
 2. Watch the `ACCOUNT` webhook until the account is `ACTIVE`. A stop at `PENDING_USER` means the biller owes information. The `stage` field says which check is waiting.
-3. If the biller has its own convenience fee amount, associate its fee rule with one call to `PUT /v3/fee-rules/account-associations`. Billers on the standard fee need nothing, because a `PROGRAM`-scoped rule already applies to them.
+3. Associate the biller's convenience fee rule with `PUT /v3/fee-rules/account-associations`. Skip this step if every biller pays the same fee from one `PROGRAM`-scoped rule.
 4. Save the biller's bank account as a payment method so remittances have somewhere to go.
 
 ## Charge a card
@@ -94,7 +94,7 @@ A fixed `amount` is the usual shape for bill pay. A `percent` with a `cap` works
 
 Disclose it with `POST /v3/transactions/preview` before the payer confirms. Pass the biller's account, `type: PAYMENT`, and the amount due, and the response lists the fee and the total the card will be charged. Show both numbers on the confirmation screen. Do not compute the fee yourself in the frontend, because the rule can change and the preview is what will actually be charged.
 
-Billers with negotiated fees get their own rule at `ACCOUNT` scope, associated to that biller only. A biller with both a `PROGRAM` rule and an `ACCOUNT` rule pays both, so when you give a biller a custom rate, make sure the standard rule is `ACCOUNT`-scoped too, or the custom one stacks on top.
+Pick the scope once, for all billers. If every biller pays the same fee, one `PROGRAM`-scoped rule covers them with no association step. If any biller has a negotiated fee, make every convenience fee rule `ACCOUNT`-scoped, the standard one included, and associate each biller with exactly one. Rules stack, so a biller with both a `PROGRAM` rule and an `ACCOUNT` rule charges the payer both.
 
 ### Your platform fee
 
