@@ -25,13 +25,13 @@ There is no `ACH` transaction type. ACH is the rail, and the transaction type re
 | Type | ACH operation | Created by |
 |---|---|---|
 | `LOAD_FUNDS` | Pull | `POST /wallets/{wallet_uuid}/load` with a bank payment method |
-| `BANK_DEBIT` | Pull | A debit against a payer's bank account |
+| `BANK_DEBIT` | Push | `POST /wallets/{wallet_uuid}/transfer` to a beneficiary's bank payout method |
 | `PAYMENT` | Pull | `POST /v3/ach/debit` |
 | `WITHDRAW_FUNDS` | Push | `POST /wallets/{wallet_uuid}/withdraw` to a bank account |
 | `REFUND` | Either | A refund routed back over ACH |
 | `RETURN` | Reversal | The payer's bank returning a pull |
 
-An ACH debit created through `POST /v3/ach/debit` appears in your ledger as a `PAYMENT`, so a report filtered on `BANK_DEBIT` alone undercounts it. In the other direction, `LOAD_FUNDS` and `WITHDRAW_FUNDS` also carry card transactions. Check `type_details` to confirm the rail before you classify a transaction as ACH.
+An ACH debit created through `POST /v3/ach/debit` appears in your ledger as a `PAYMENT`, so a report filtered on `LOAD_FUNDS` alone undercounts your pulls. In the other direction, `LOAD_FUNDS` and `WITHDRAW_FUNDS` also carry card transactions. Check `type_details` to confirm the rail before you classify a transaction as ACH.
 
 See [Transactions Overview](/guides/transactions/transactions-overview) for the full list of types.
 
