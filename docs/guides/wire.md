@@ -5,10 +5,8 @@ description: "Receive wire transfers and reconcile them with Fedwire identifiers
 
 # Wire
 
-Wires are how large, time-critical money reaches your customers. A wire sent
-during the banking day lands the same day, and it lands for good. Payroll funding,
-property deposits, treasury movements, and B2B invoices over the ACH comfort
-threshold all arrive this way.
+A wire sent during the banking day lands the same day, and it lands for good.
+That is why large or time-critical payments to your customers arrive this way.
 
 A wire credits the destination wallet and posts as a `WIRE_TRANSFER` transaction
 carrying the Fedwire identifiers the sending bank stamped on it.
@@ -41,7 +39,7 @@ other wallet movement, with `transaction_type` set to `WIRE_TRANSFER`:
 }
 ```
 
-Amounts are in cents, so `12300` is $123.00. A wire credit posts positive.
+Amounts are in cents, as on every V2 surface, so `12300` is $123.00. A wire credit posts positive.
 
 ## Reading the Fedwire identifiers
 
@@ -85,12 +83,9 @@ counterparty can claw them back the way an ACH originator can pull back a debit
 within the return window. Reversing a wire means asking the originator to send a
 new one in the other direction, at their discretion.
 
-That cuts both ways, and it is the reason wires are used for high-value transfers:
-
-- You can release goods, credit an account, or start work against a settled wire
-  without holding for a return period.
-- A wire sent to the wrong account is a recovery conversation between banks, not an
-  API call.
+You can release goods, credit an account, or start work against a settled wire
+without holding for a return period. The same finality means a wire sent to the wrong
+account is a recovery conversation between banks, not an API call.
 
 See [Transactions Overview](/guides/transactions/transactions-overview) for how
 `WIRE_TRANSFER` sits alongside the other types, and for status semantics.
