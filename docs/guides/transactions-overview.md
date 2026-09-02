@@ -1,15 +1,15 @@
 ---
 title: "Transactions Overview"
-description: "Transaction scopes, statuses, and types: how Alviere records money movement"
+description: "Every movement of money on Alviere is a transaction. This page covers where they live, the statuses they pass through, and the 47 types"
 ---
 
 # Transactions Overview
 
-A transaction represents a single financial operation or movement of funds on the HIVE Platform. Alviere captures every monetary action as a transaction, whether that's loading funds, a card purchase, a transfer, or a fee, so you have an auditable record of where money came from and where it went.
+Every movement of money on Alviere is a transaction. A card charge, a payout to a bank account, a fee deducted from a sale, and a chargeback weeks later are each one record with a UUID, a type, a status, and a signed amount. Fees and refunds link to the transaction they act on through `parent_transaction_uuid`, so you can walk from any record to the ones it caused.
 
 ## Transaction scopes
 
-Transactions exist in three scopes depending on where the funds move:
+A transaction lives in one of three scopes, depending on which ledgers the money touches.
 
 ```mermaid
 graph LR
@@ -25,11 +25,11 @@ graph LR
     TV <-->|"External"| EXT
 ```
 
-| Scope | Description |
+| Scope | What it records |
 |-------|-------------|
-| **Wallet** | Tracks money in and out on a wallet's ledger |
-| **Passthrough** | Child transactions that fund a parent transaction directly from a payment method (e.g. card → international transfer), without touching the wallet ledger |
-| **Vault** | Transfers between wallets and treasury vaults, or between vaults and external banks |
+| Wallet | Money moving in or out of a wallet. This is where almost everything you originate lands |
+| Passthrough | A child transaction that funds its parent straight from a payment method. A card-funded international transfer has a `CARD_PASSTHROUGH` child, and the wallet ledger never sees the money |
+| Vault | Movement between wallets and treasury vaults, or between a vault and the external bank behind it |
 
 ## Statuses
 
@@ -57,19 +57,19 @@ stateDiagram-v2
 
 | Status | Description |
 |--------|-------------|
-| `CREATED` | Transaction initialized |
-| `PROCESSING` | In progress. A ledger transaction requiring a payment action |
-| `PROCESSING_PAYMENT` | Funds being sourced from a payment method (e.g. card) |
-| `COMPLETED` | Funds successfully transferred |
-| `FAILED` | Could not process (e.g. declined card) |
-| `ERROR` | A system anomaly prevented processing |
-| `CANCELED_USER` | Halted by customer or agent via Portal |
-| `CANCELED_SYSTEM` | Canceled by an automated system rule |
-| `VOIDED` | Nullified before payment execution. No debit or credit occurred |
-| `PENDING` | Awaiting customer action or fund settlement |
-| `MANUAL_REVIEW` | Under review by Alviere's compliance and risk team |
-| `WAITING` | On standby for wallet balance availability or prefunding vault input |
-| `REJECTED` | Declined after manual review by risk/fraud |
+| `CREATED` | The record exists and nothing has moved yet |
+| `PROCESSING` | Alviere is working the transaction |
+| `PROCESSING_PAYMENT` | Alviere is pulling funds from the payment method, such as a card authorization in flight |
+| `COMPLETED` | The money moved. Final |
+| `FAILED` | The money did not move, for example a declined card. Final. Read `status_reason` for why |
+| `ERROR` | A fault on Alviere's side stopped it. Final. Raise it with support rather than retrying blindly |
+| `CANCELED_USER` | Your customer or one of your agents canceled it before it ran |
+| `CANCELED_SYSTEM` | A rule on your program canceled it before it ran |
+| `VOIDED` | An authorization released before capture. Nothing was debited or credited |
+| `PENDING` | Waiting on the customer, such as a 3-D Secure challenge, or on funds to settle |
+| `MANUAL_REVIEW` | Alviere's risk team is looking at it. It will end in `COMPLETED` or `REJECTED` |
+| `WAITING` | Waiting for the wallet balance or the prefunding vault to cover it |
+| `REJECTED` | Declined out of manual review. Final |
 
 ## Transaction types
 
