@@ -109,6 +109,7 @@ The sandbox agrees with this grouping. `POST mock.snd.alviere.com/generateReturn
 | `CHECK_DEPOSIT` | `POST /wallets/{wallet_uuid}/check-deposits` | Yes |
 | `BANK_CREDIT` | An incoming ACH credit from an external bank account | Yes |
 | `INSTANT_BANK_TRANSFER` | An incoming instant payment over FedNow or TCH RTP, paid against a request. See [Instant Payments](/guides/transactions/instant-payments) | Yes |
+| `INSTANT_PAYMENT_REQUEST` | `POST /v3/instant/request`. The request for payment itself, with an `expires_at`. The money arrives as the `INSTANT_BANK_TRANSFER` above | Yes |
 | `PAYMENT` | A V3 acceptance charge. Both `POST /v3/cards/debit` and `POST /v3/ach/debit` create one | Yes |
 | `PREFUND` | The prefunding vault advancing funds before settlement | No |
 
