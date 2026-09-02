@@ -5,17 +5,15 @@ description: "Fund a wallet by pulling money from a saved card payment method"
 
 # Card Pull
 
-Pull funds from a saved card payment method into a wallet. The consumer tops up their balance from a debit or credit card on file, the charge runs against the card, and a `LOAD_FUNDS` transaction credits the wallet.
-
-One endpoint covers it:
+Pull funds from a saved card into a wallet. The customer tops up their balance from a debit or credit card on file, the charge runs against the card, and a `LOAD_FUNDS` transaction credits the wallet.
 
 | Operation | Endpoint |
 |---|---|
 | Load funds | `POST /wallets/{wallet_uuid}/load` |
 
-## Prerequisite: a saved card
+## Save the card first
 
-The card has to be tokenized as a [payment method](/guides/resources/payment-methods) first. The load request only ever references `payment_method_uuid`. Card details never appear in it.
+The card has to exist as a [payment method](/guides/resources/payment-methods) before you can pull from it. The load request references `payment_method_uuid` and carries no card details.
 
 ## Loading
 
@@ -34,8 +32,8 @@ POST /wallets/{wallet_uuid}/load
 | Field | Notes |
 |---|---|
 | `payment_method_uuid` | The saved card to charge. Required |
-| `amount` | In cents. `5000`, not `"50.00"`. Required |
-| `external_id` | Your idempotency key, 8 to 64 characters. Required. Retrying with the same value returns `409` with the original transaction instead of charging the card twice |
+| `amount` | In cents, as every V2 endpoint takes it. `5000` is $50.00. Required |
+| `external_id` | Your [idempotency key](/guides/getting-started/idempotency), 8 to 64 characters. Required |
 | `description` | Optional, up to 255 characters |
 | `metadata` | Optional custom key-value pairs |
 | `transaction_options.payment_options.prefund` | Set `true` to prefund this transaction |
@@ -44,13 +42,13 @@ The same endpoint loads from bank payment methods too. The `ACH_type` and `ach_r
 
 ## Settlement timing
 
-A successful `201` is an accepted load, not settled money. The amount lands in the wallet's `transit` bucket, or in `pending` if the program is not prefunded, and moves into available balance on the payment method's settlement schedule. Build your UI around the wallet's available balance rather than around the load call returning.
+The `201` means Alviere accepted the load. The amount lands in the wallet's `transit` bucket, or in `pending` if the program is not prefunded, and moves into available balance on the card's settlement schedule. Show the customer the wallet's available balance, not the load response.
 
 ## What the transaction looks like
 
-The load posts as `LOAD_FUNDS` with a positive amount, since this is money in. Statuses run `CREATED` → `PROCESSING_PAYMENT` → `COMPLETED`, with `FAILED` if the issuer declines the charge. Card declines surface through the transaction, so monitor the transaction status rather than treating the `201` as the money being there.
+The load posts as `LOAD_FUNDS` with a positive amount. Status runs `CREATED`, then `PROCESSING_PAYMENT`, then `COMPLETED`, or `FAILED` if the issuer declines. A decline arrives as a status change on the transaction, so watch the transaction, not the `201`.
 
-Two late-arrival cases to build for:
+Two records can arrive after the fact.
 
 - **`LOAD_PULLBACK`**. A completed load being pulled back, carrying `parent_transaction_uuid` pointing at the original load. See [Transactions Overview](/guides/transactions/transactions-overview#reversals-and-money-coming-back).
 - **`REVERSAL`**. `POST /transactions/{transaction_uuid}/reverse` against a completed card load sends the money back to the card and posts a `REVERSAL` with a negative amount.
@@ -59,4 +57,4 @@ Two late-arrival cases to build for:
 
 - [Payment Methods](/guides/resources/payment-methods). Save cards before pulling from them.
 - [Wallets](/guides/resources/wallets). Where pulled funds land.
-- [Transactions Overview](/guides/transactions/transactions-overview). Statuses and lifecycle.
+- [Transactions Overview](/guides/transactions/transactions-overview). `LOAD_FUNDS`, `LOAD_PULLBACK`, and `REVERSAL`.
