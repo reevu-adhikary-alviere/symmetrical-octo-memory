@@ -5,13 +5,13 @@ description: "Sell your own goods online, charge cards at your checkout, and set
 
 # Direct Merchant Ecommerce
 
-You sell your own goods or services and take card payments at your own checkout. There is one business, one account, and one wallet that every sale settles into. With no split to design, the work is the buyer experience at checkout and getting the money from the wallet to your bank.
+You sell your own goods or services and take card payments at your own checkout. There is one business and one merchant account, and every sale settles into its balance. With no split to design, the work is the checkout experience and getting the money from that balance to your bank.
 
 ## Set up
 
-Your business is a `BUSINESS` account on the program, with its officers attached as `STAKEHOLDER` accounts for KYB. The account's wallet is the `destination.wallet_uuid` on every charge, so store that UUID in configuration once and never pass anything else. Save your bank account on the same account as a payment method. That is where payouts go.
+Your business is a `BUSINESS` account on the program, with its officers attached as `STAKEHOLDER` accounts for KYB. The account's balance lives in a wallet, and that wallet's UUID is the `destination.wallet_uuid` on every charge. Store it in configuration once and never pass anything else. Save your bank account on the same account as a payment method. That is where payouts go.
 
-Buyers come in two forms. A guest buyer is a card passed inline on the charge, which puts card data on your servers and inside your PCI scope. A returning buyer is a `CONSUMER` account holding a saved [payment method](/guides/resources/payment-methods), which the SDK can tokenize so the card number never reaches you. Anything you charge without the buyer present, such as a subscription or a delayed charge, needs a saved card. If you sell one-off items to strangers, guests are fine. If you have accounts and repeat customers, save cards.
+A guest buyer's card goes inline on the charge request, which puts card data on your servers and inside your PCI scope. A returning buyer is a `CONSUMER` account with a saved [payment method](/guides/resources/payment-methods). Let the SDK tokenize it and you store a reference, not a card number. Anything you charge without the buyer present, such as a subscription or a delayed charge, needs a saved card. Guests are fine for one-off sales to strangers. Save cards as soon as you have repeat customers.
 
 ## Charge a card
 
@@ -39,9 +39,9 @@ POST /v3/cards/debit
 }
 ```
 
-`amount` is the full order total including tax and shipping, as a decimal string. `external_id` is your order reference and it makes the call idempotent: a retry with the same value returns the original transaction with a `409` instead of charging twice. `channel` defaults to `ECOM`. Use `MOTO` for orders you key in from a phone call.
+`amount` is the full order total including tax and shipping, as a decimal string. `external_id` is your order reference and it makes the call idempotent. A retry with the same value returns the original transaction with a `409` instead of charging twice. `channel` defaults to `ECOM`. Use `MOTO` for orders you key in from a phone call.
 
-`merchant_details.descriptor` is what the buyer sees on their statement. Make it match the name on your storefront. A charge the buyer does not recognize is the most common avoidable chargeback. The `ip_address` and `browser_info` fields feed risk scoring and 3-D Secure. Send them whenever you have them, because a charge with no device data is more likely to be challenged.
+`merchant_details.descriptor` is what the buyer sees on their statement. Make it match the name on your storefront, because a buyer who does not recognize a charge disputes it. The `ip_address` and `browser_info` fields feed risk scoring and 3-D Secure. Send them whenever you have them, because a charge with no device data is more likely to be challenged.
 
 The response is the transaction. Read `status` and `status_reason` together.
 
@@ -87,7 +87,7 @@ The first charge in a series is made with the buyer present, `initiator: CARDHOL
 | `RESUBMISSION` | Retrying a charge that was declined |
 | `CARD_ON_FILE` | The buyer came back and chose their saved card themselves |
 
-You run the schedule. The platform's payment schedules take bank accounts with a mandate, so card rebills come from your own scheduler calling the charge endpoint on the due date. Give each cycle its own `external_id`, such as the subscription ID plus the period, so a retried job cannot double-bill. When a rebill declines, retry with `processing_model: RESUBMISSION` on your own backoff rather than hammering the card.
+You run the schedule. Alviere's payment schedules debit bank accounts under a mandate, not cards, so card rebills come from your own scheduler calling the charge endpoint on the due date. Give each cycle its own `external_id`, such as the subscription ID plus the period, so a retried job cannot double-bill. When a rebill declines, retry with `processing_model: RESUBMISSION` on your own backoff rather than hammering the card.
 
 ## Fees
 
@@ -103,11 +103,11 @@ The refund comes out of your wallet, so sweeping every dollar to your bank the m
 
 ## Chargebacks
 
-A chargeback arrives against a specific charge and is worked with your program manager. Most of them are avoidable. A descriptor that matches your brand, a refund policy you honor quickly, capturing on shipment rather than at checkout, and refusing to ship on a failed address check remove the majority.
+A chargeback arrives against a specific charge, and your program manager works it with you. You can prevent most of them. Match the descriptor to your brand, honor refunds quickly, capture on shipment rather than at checkout, and do not ship to an address that failed verification.
 
 ## Getting paid
 
-Sales settle into your wallet on the card settlement schedule. The wallet's `balance` is what has settled, and `available` is what you can move now. Three ways to get it to your bank:
+Sales settle into your balance on the card settlement schedule. The wallet's `balance` is what has settled, and `available` is what you can move now. Get it to your bank in any of these ways.
 
 **On demand.** `POST /wallets/{wallet_uuid}/withdraw` for an amount. It moves to the `captive` bucket until your bank settles it, one to three banking days.
 
@@ -117,7 +117,7 @@ Sales settle into your wallet on the card settlement schedule. The wallet's `bal
 
 ## Reconciliation
 
-`GET /v3/transactions` filtered by your account lists every sale with its child fees, every refund with its parent, and every withdrawal with its status. The `metadata.order_id` you set on the charge comes back on all of them, so join on that. For end-of-day and month-end, [Periodic Reports](/guides/reporting/periodic-reports) deliver the same records as CSV on SFTP with the same UUIDs.
+`GET /v3/transactions` filtered by your account lists every sale with its child fees, every refund with its parent, and every withdrawal with its status. The `metadata.order_id` you set on the charge comes back on all of them, so join on that. For an end-of-day or month-end close, pull [Periodic Reports](/guides/reporting/periodic-reports) instead. They are the same transactions and UUIDs as CSV on SFTP.
 
 ## Related
 
