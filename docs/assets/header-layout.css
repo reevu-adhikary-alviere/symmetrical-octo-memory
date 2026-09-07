@@ -5,20 +5,8 @@ header.header a[href="/"] img {
   object-fit: contain;
 }
 
-/* Fallback: if Scalar serves the light logo in dark mode before the
-   darkMode asset loads, ensure it stays readable. */
-html.dark header.header a[href="/"] img,
-html[data-theme="dark"] header.header a[href="/"] img,
-body.dark header.header a[href="/"] img {
-  filter: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html:not(.light):not([data-theme="light"]) header.header a[href="/"] img[src*="logo.png"]:not([src*="logo-dark"]) {
-    filter: invert(1) brightness(1.15);
-  }
-}
-
+/* Scalar switches light-logo and dark-logo with the selected page theme.
+   Do not invert either asset based on the operating system color scheme. */
 .hive-header-nav-left .t-header__start,
 .hive-header-nav-left .header-left {
   flex: 1 1 auto;
