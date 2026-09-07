@@ -1,106 +1,135 @@
 ---
 title: Welcome
-description: "Platform definitions, integration guides, SDK documentation, webhook guidance, and the HIVE API reference"
+description: "Explore Alviere HIVE products, integration use cases, and developer tools."
 ---
 
-# Welcome to Alviere HIVE
+# Alviere product docs
 
-This portal documents how to integrate with the Alviere HIVE platform. It has platform definitions, integration guides, SDK documentation, webhook guidance, and the HIVE API reference.
+Explore the products and guides for integrating with Alviere HIVE.
 
-## The Alviere HIVE platform
+New to HIVE? [Start with the quickstart](/guides/getting-started/quickstart) or [learn how the platform fits together](/guides/overview/platform-overview).
 
-HIVE is the platform behind Alviere's financial services. Alviere runs some of it directly and delivers the rest through bank and network partners.
+Your Program determines which products and partner services are available. Your Alviere program manager configures it and issues your Portal access and API credentials.
 
-You access HIVE through a Program. A Program holds the modules, configuration, controls, and entities for one financial-services implementation.
+## Platform products
 
-## Core concepts
+Explore the resources and money movement flows in your integration.
 
-The core concepts are Programs, Accounts, Wallets, Treasury Vault, and the money movement flows between them. [Platform Overview](/guides/overview/platform-overview) has the full module and entity map.
+::::scalar-row
+:::scalar-card{title="Accounts & identity" icon="../assets/icons/lucide/users-round.svg" iconPosition="title"}
+Create consumer and business accounts and manage identity verification.
 
-### Program
+[Explore accounts](/guides/resources/accounts)
+:::
+:::scalar-card{title="Wallets" icon="../assets/icons/lucide/wallet.svg" iconPosition="title"}
+Manage customer balances and the wallets that hold their funds.
 
-A Program is a configured set of Alviere modules for one client. A client can run several Programs. Each has its own entity namespace, and data never crosses between them, even when the same client owns both.
+[Explore wallets](/guides/resources/wallets)
+:::
+::::
 
-The Program configuration sets transaction limits, card settings, service fees, KYC and KYB requirements, fraud controls, and compliance rules.
+::::scalar-row
+:::scalar-card{title="Payment acceptance" icon="../assets/icons/lucide/credit-card.svg" iconPosition="title"}
+Integrate card payments, pay by bank, and Alviere Checkout.
 
-Your Alviere program manager owns that configuration. The API cannot change it.
+[Explore payment acceptance](/guides/payment-acceptance/payment-acceptance)
+:::
+:::scalar-card{title="Card issuing" icon="../assets/icons/lucide/credit-card.svg" iconPosition="title"}
+Issue cards and manage their lifecycle, controls, and digital wallets.
 
-## Integration options
+[Explore card issuing](/guides/cards/card-issuing-overview)
+:::
+::::
 
-Your application talks to HIVE through the REST APIs or one of the SDKs. Which one fits depends on where the code runs and what it needs to do.
+::::scalar-row
+:::scalar-card{title="Money movement" icon="../assets/icons/lucide/arrow-left-right.svg" iconPosition="title"}
+Find guides for internal transfers, ACH, wire, and instant payments.
 
-### [The HIVE APIs](/api-v2)
+[Explore money movement](/guides/transactions/transactions-overview)
+:::
+:::scalar-card{title="Treasury vaults" icon="../assets/icons/lucide/vault.svg" iconPosition="title"}
+Manage program funds for prefunding, settlement, reserves, and fees.
 
-The API reference lists every operation with its request parameters, response objects, and any operation-specific rules. There are two versions. [Which API version?](/guides/getting-started/api-versions) explains when to use V2 and when to use V3.
+[Explore treasury](/guides/resources/treasury)
+:::
+::::
 
-The APIs are REST. They use standard HTTP methods, status codes, and bearer authentication.
+## Use cases
 
-### [UI SDK](https://websdk.alviere.com/quick-start/overview)
+Start with the flow you want to build.
 
-`@alviere/ui` is a component library for onboarding and payment flows. It ships forms, multi-step flows, and validated inputs.
+::::scalar-row
+:::scalar-card{title="Direct merchant ecommerce" icon="../assets/icons/lucide/shopping-bag.svg" iconPosition="title"}
+Accept payments for goods and services sold by your business.
 
-The package includes framework-independent Web Components and typed Svelte components. Both expose the same properties and events.
+[Build merchant payments](/guides/payment-acceptance/use-cases/card-config-direct-merchant)
+:::
+:::scalar-card{title="Marketplace payments" icon="../assets/icons/lucide/store.svg" iconPosition="title"}
+Charge buyers, direct funds to seller wallets, and collect commissions.
 
-UI SDK components use `@alviere/core` for authentication, validation, encryption, and calls to Alviere services.
+[Build marketplace payments](/guides/payment-acceptance/use-cases/card-config-marketplace)
+:::
+::::
 
-### [Core SDK](https://websdk.alviere.com/core/overview)
+::::scalar-row
+:::scalar-card{title="Bill payments" icon="../assets/icons/lucide/receipt-text.svg" iconPosition="title"}
+Collect a card payment and route funds to the biller.
 
-`@alviere/core` is the headless layer under the UI SDK. It has typed services for account management, payments, wallets, authentication, request encryption, validation, logging, and error handling.
+[Build bill payments](/guides/payment-acceptance/use-cases/card-config-bill-pay)
+:::
+:::scalar-card{title="Consumer banking app" icon="../assets/icons/lucide/smartphone.svg" iconPosition="title"}
+Start from the Bootstrap App for onboarding, wallets, cards, and transfers.
 
-Core has no interface components. Use it when your application already has its own design system and you want Alviere functionality inside it.
+[Explore the Bootstrap App](/guides/sdks/bootstrap-app/introduction)
+:::
+::::
 
-### [JavaScript SDK](/guides/sdks/overview)
+## Developer tools
 
-The JavaScript SDK handles browser-side payment, fraud, and card functionality.
+Set up your integration, handle events, and test documented scenarios.
 
-Your backend creates an authenticated web session. Your frontend loads the SDK with the session identifier and calls it from there. See [SDKs](/guides/sdks/overview).
+::::scalar-row
+:::scalar-card{title="Quickstart" icon="../assets/icons/lucide/rocket.svg" iconPosition="title"}
+Set up your first authenticated API request.
 
-The SDK collects payment methods, gathers fraud device data, and runs card operations such as PIN management.
+[Start integrating](/guides/getting-started/quickstart)
+:::
+:::scalar-card{title="Authentication" icon="../assets/icons/lucide/key-round.svg" iconPosition="title"}
+Authenticate requests with the credentials assigned to your Program.
 
-### [Mobile SDKs](/guides/sdks/overview)
+[Set up authentication](/guides/getting-started/authentication)
+:::
+::::
 
-The Mobile SDK documentation covers adding Alviere functionality to native iOS and Android applications.
+::::scalar-row
+:::scalar-card{title="API reference" icon="../assets/icons/lucide/book-open.svg" iconPosition="title"}
+Choose the API version for your integration before exploring endpoints.
 
-## Integration guides
+[Choose an API version](/guides/getting-started/api-versions)
+:::
+:::scalar-card{title="SDKs" icon="../assets/icons/lucide/terminal.svg" iconPosition="title"}
+Integrate browser and mobile functionality with Alviere SDKs.
 
-The guides cover what every integration needs before it can move money.
+[Explore SDKs](/guides/sdks/overview)
+:::
+::::
 
-### [Integration overview](/guides/getting-started/quickstart)
+::::scalar-row
+:::scalar-card{title="Webhooks" icon="../assets/icons/lucide/webhook.svg" iconPosition="title"}
+Subscribe to events and receive asynchronous updates.
 
-The quickstart walks through URLs, request and response formats, HTTP methods, and status codes, then makes a first authenticated call.
+[Receive events](/guides/more/webhooks)
+:::
+:::scalar-card{title="Sandbox & mock services" icon="../assets/icons/lucide/flask-conical.svg" iconPosition="title"}
+Test the supported mock scenarios before connecting to Production.
 
-You need Portal access and API credentials first. Your Alviere program manager issues both for your Program.
+[Explore test scenarios](/guides/sandbox-testing/mock-services)
+:::
+::::
 
-### [Authentication](/guides/getting-started/authentication)
+## Integration essentials
 
-How to authenticate HIVE API requests with the credentials assigned to your Program.
-
-Store credentials server-side. Never ship them in a client application.
-
-### [Environments](/guides/getting-started/environments)
-
-Alviere runs separate Sandbox and Production environments, each with its own Portal and API URLs.
-
-Sandbox is for development and testing. It has no connection to backend systems, so KYC and KYB validation, real-money wallet transfers, and bank-account transfers do not run there.
-
-Production connects to Alviere systems and partners. What is available depends on your Program configuration.
-
-### [Webhooks](/guides/more/webhooks)
-
-Webhooks push events from Alviere to you. When a transaction settles, Alviere posts the transaction details to your webhook consumer.
-
-Events are grouped into Subscriptions. Each Subscription has a URL you provide when you create it.
-
-Delivery is asynchronous and never blocks the operation that produced the event. Every event describes something that has already happened.
-
-### [Error codes](/guides/getting-started/error-codes)
-
-The error code reference lists the errors HIVE APIs return and what each error response contains.
-
-Use the HTTP status, error code, and error description together to decide how to handle a failed request.
-
-### [Mock services](/guides/sandbox-testing/mock-services)
-
-Mock services give you documented test scenarios that run without touching live financial rails.
-
-Mock behavior is limited to the scenarios in the guide. It does not reproduce every Production behavior or partner interaction.
+- [Environments](/guides/getting-started/environments): Sandbox and Production URLs and behavior. Sandbox does not connect to live financial rails.
+- [Error codes](/guides/getting-started/error-codes): interpret API failures and their descriptions.
+- [Idempotency](/guides/getting-started/idempotency): handle retries without repeating an operation.
+- [Changelog](/guides/more/changelog): follow changes to the platform.
