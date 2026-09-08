@@ -8,7 +8,9 @@
 .hive-guides-mega__trigger {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  min-height: 44px;
+  padding-inline: 8px;
 }
 
 .hive-guides-mega__trigger.link-active-single {

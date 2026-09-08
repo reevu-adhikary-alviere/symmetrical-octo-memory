@@ -74,3 +74,9 @@ aside .hive-section-header svg,
 aside[class*='sidebar'] [class*='back' i] svg {
   display: none !important;
 }
+
+/* Hide the vendor attribution while retaining the sidebar theme toggle. */
+aside.t-doc__sidebar a[href="https://www.scalar.com"],
+aside.t-doc__sidebar a[href="https://scalar.com/"] {
+  display: none;
+}

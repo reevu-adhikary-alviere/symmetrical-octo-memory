@@ -178,12 +178,38 @@
     document.body.classList.toggle('hive-landing', isLanding);
   }
 
+  function moveSearchToHeader() {
+    var headerRight = document.querySelector('header.header .t-header__end, header.header .header-right');
+    var row = document.querySelector('aside.t-doc__sidebar .search-row');
+    if (!headerRight || !row) return;
+    var moved = headerRight.querySelector('.hive-header-search');
+    if (window.innerWidth < 1024) {
+      if (moved) {
+        moved.classList.remove('hive-header-search');
+        row.prepend(moved);
+      }
+      row.classList.remove('hive-search-moved');
+      return;
+    }
+    var search = row.querySelector('button[role="search"]');
+    if (search) {
+      if (moved) moved.remove();
+      search.classList.add('hive-header-search');
+      search.setAttribute('aria-label', 'Search documentation');
+      headerRight.prepend(search);
+    }
+    if (headerRight.querySelector('.hive-header-search')) row.classList.add('hive-search-moved');
+  }
+
   function applyLayout() {
     moveNavToLeft();
     moveChangelogToRight();
+    moveSearchToHeader();
     markLandingRoute();
     relabelSectionHeader();
   }
+
+  window.addEventListener('resize', moveSearchToHeader);
 
   var observer = new MutationObserver(function () {
     applyLayout();

@@ -37,3 +37,17 @@ header.header a[href="/"] img {
 .hive-header-changelog {
   white-space: nowrap;
 }
+
+@media (min-width: 1024px) {
+  header.header .hive-header-search {
+    width: 200px;
+    flex: 0 0 auto;
+    background: var(--scalar-background-1);
+    color: var(--scalar-color-2);
+    border-color: var(--scalar-border-color);
+  }
+
+  aside.t-doc__sidebar .hive-search-moved {
+    display: none;
+  }
+}
